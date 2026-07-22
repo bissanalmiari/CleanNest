@@ -1,4 +1,4 @@
-import { UserRole, UserStatus } from "@/types/enums";
+import { UserRole, UserStatus, Gender, PreferredLanguage } from "@/types/enums";
 import { Schema, models, model, type Document, type Model } from "mongoose";
 
 export interface IUser extends Document {
@@ -9,6 +9,12 @@ export interface IUser extends Document {
   role: UserRole;
   status: UserStatus;
   avatarUrl?: string;
+
+  // Extended profile info
+  dateOfBirth?: Date | null;
+  gender?: Gender | null;
+  preferredLanguage: PreferredLanguage;
+  bio?: string | null;
 
   // Email-verification OTP (sent on register / resend-otp)
   emailVerificationOtpHash?: string | null;
@@ -62,6 +68,27 @@ const UserSchema = new Schema<IUser>(
     },
     avatarUrl: {
       type: String,
+      default: null,
+    },
+
+    dateOfBirth: {
+      type: Date,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other", "prefer_not_to_say"],
+      default: null,
+    },
+    preferredLanguage: {
+      type: String,
+      enum: ["en", "ar", "fr"],
+      default: "en",
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 300,
       default: null,
     },
 
