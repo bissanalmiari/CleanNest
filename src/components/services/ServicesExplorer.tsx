@@ -1,7 +1,12 @@
 "use client";
 
 import type { ChangeEvent, FormEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -13,7 +18,11 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+} from "motion/react";
 
 import ServiceCard from "@/components/services/ServiceCard";
 import { fetchServices } from "@/services/serviceApi";
@@ -106,19 +115,38 @@ function ServiceCardSkeleton() {
 }
 
 export default function ServicesExplorer() {
+  const resultsSectionRef =
+    useRef<HTMLDivElement>(null);
+
+  /*
+   * This ref remembers whether the next API response
+   * should move the screen to the results section.
+   */
+  const shouldScrollToResultsRef =
+    useRef(false);
+
   const [draftFilters, setDraftFilters] =
     useState<ServiceFilters>(initialFilters);
 
   const [appliedFilters, setAppliedFilters] =
     useState<ServiceFilters>(initialFilters);
 
-  const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [pagination, setPagination] =
-    useState<ServicesPagination>(initialPagination);
+  const [services, setServices] =
+    useState<Service[]>([]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [categories, setCategories] =
+    useState<string[]>([]);
+
+  const [pagination, setPagination] =
+    useState<ServicesPagination>(
+      initialPagination,
+    );
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   const loadServices = useCallback(
     async (
@@ -129,11 +157,18 @@ export default function ServicesExplorer() {
       setErrorMessage("");
 
       try {
-        const response = await fetchServices(filters, signal);
+        const response = await fetchServices(
+          filters,
+          signal,
+        );
 
         setServices(response.data.services);
-        setCategories(response.data.categories);
-        setPagination(response.data.pagination);
+        setCategories(
+          response.data.categories,
+        );
+        setPagination(
+          response.data.pagination,
+        );
       } catch (error) {
         if (
           error instanceof DOMException &&
@@ -159,17 +194,56 @@ export default function ServicesExplorer() {
   );
 
   useEffect(() => {
-    const controller = new AbortController();
+    const controller =
+      new AbortController();
+
+    /*
+     * Read and reset the scrolling request for this
+     * particular service request.
+     */
+    const shouldScroll =
+      shouldScrollToResultsRef.current;
+
+    shouldScrollToResultsRef.current =
+      false;
+
+    let scrollTimer: number | undefined;
 
     void loadServices(
       appliedFilters,
       controller.signal,
-    );
+    ).then(() => {
+      if (
+        controller.signal.aborted ||
+        !shouldScroll
+      ) {
+        return;
+      }
+
+      /*
+       * Give React enough time to render the new
+       * cards before starting the smooth scroll.
+       */
+      scrollTimer = window.setTimeout(() => {
+        resultsSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    });
 
     return () => {
       controller.abort();
+
+      if (scrollTimer !== undefined) {
+        window.clearTimeout(scrollTimer);
+      }
     };
   }, [appliedFilters, loadServices]);
+
+  function requestResultsScroll() {
+    shouldScrollToResultsRef.current = true;
+  }
 
   function handleInputChange(
     event: ChangeEvent<
@@ -193,6 +267,8 @@ export default function ServicesExplorer() {
   ) {
     event.preventDefault();
 
+    requestResultsScroll();
+
     setAppliedFilters({
       ...draftFilters,
       page: 1,
@@ -200,16 +276,25 @@ export default function ServicesExplorer() {
   }
 
   function handleReset() {
+    requestResultsScroll();
+
     setDraftFilters(initialFilters);
-    setAppliedFilters(initialFilters);
+
+    setAppliedFilters({
+      ...initialFilters,
+    });
   }
 
-  function handleCategoryChange(category: string) {
+  function handleCategoryChange(
+    category: string,
+  ) {
     const updatedFilters: ServiceFilters = {
       ...draftFilters,
       category,
       page: 1,
     };
+
+    requestResultsScroll();
 
     setDraftFilters(updatedFilters);
     setAppliedFilters(updatedFilters);
@@ -218,13 +303,16 @@ export default function ServicesExplorer() {
   function handleSortChange(
     event: ChangeEvent<HTMLSelectElement>,
   ) {
-    const sortValue = event.target.value as ServiceSort;
+    const sortValue =
+      event.target.value as ServiceSort;
 
     const updatedFilters: ServiceFilters = {
       ...draftFilters,
       sort: sortValue,
       page: 1,
     };
+
+    requestResultsScroll();
 
     setDraftFilters(updatedFilters);
     setAppliedFilters(updatedFilters);
@@ -244,16 +332,14 @@ export default function ServicesExplorer() {
       page,
     };
 
+    requestResultsScroll();
+
     setAppliedFilters(updatedFilters);
+
     setDraftFilters((currentFilters) => ({
       ...currentFilters,
       page,
     }));
-
-    window.scrollTo({
-      top: 420,
-      behavior: "smooth",
-    });
   }
 
   const hasActiveFilters =
@@ -325,16 +411,17 @@ export default function ServicesExplorer() {
 
             <h1 className="mt-6 font-heading text-4xl font-extrabold tracking-tight text-navy sm:text-5xl lg:text-6xl">
               Find the Right Cleaning
+
               <span className="mt-2 block bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent">
                 Service for Your Space
               </span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Search, filter, and compare CleanNest
-              services before choosing the option that
-              fits your home, office, or special cleaning
-              needs.
+              Search, filter, and compare
+              CleanNest services before choosing
+              the option that fits your home,
+              office, or special cleaning needs.
             </p>
           </motion.div>
 
@@ -368,8 +455,8 @@ export default function ServicesExplorer() {
                 </h2>
 
                 <p className="text-sm text-slate-500">
-                  Narrow the results to find the most
-                  suitable service.
+                  Narrow the results to find the
+                  most suitable service.
                 </p>
               </div>
             </div>
@@ -419,7 +506,9 @@ export default function ServicesExplorer() {
                     type="number"
                     min="0"
                     step="1"
-                    value={draftFilters.minPrice}
+                    value={
+                      draftFilters.minPrice
+                    }
                     onChange={handleInputChange}
                     placeholder="0"
                     className="min-h-[52px] w-full rounded-xl border border-primary/10 bg-white px-4 py-3 pl-9 text-sm text-navy outline-none transition-all placeholder:text-slate-400 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
@@ -447,7 +536,9 @@ export default function ServicesExplorer() {
                     type="number"
                     min="0"
                     step="1"
-                    value={draftFilters.maxPrice}
+                    value={
+                      draftFilters.maxPrice
+                    }
                     onChange={handleInputChange}
                     placeholder="150"
                     className="min-h-[52px] w-full rounded-xl border border-primary/10 bg-white px-4 py-3 pl-9 text-sm text-navy outline-none transition-all placeholder:text-slate-400 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
@@ -455,7 +546,7 @@ export default function ServicesExplorer() {
                 </div>
               </div>
 
-              {/* Search button */}
+              {/* Apply button */}
               <div className="flex items-end">
                 <motion.button
                   type="submit"
@@ -496,22 +587,27 @@ export default function ServicesExplorer() {
                     All services
                   </button>
 
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() =>
-                        handleCategoryChange(category)
-                      }
-                      className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
-                        draftFilters.category === category
-                          ? "border-primary bg-primary text-white shadow-md"
-                          : "border-primary/10 bg-white text-slate-600 hover:border-primary/30 hover:text-primary"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
+                  {categories.map(
+                    (category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() =>
+                          handleCategoryChange(
+                            category,
+                          )
+                        }
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                          draftFilters.category ===
+                          category
+                            ? "border-primary bg-primary text-white shadow-md"
+                            : "border-primary/10 bg-white text-slate-600 hover:border-primary/30 hover:text-primary"
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -528,17 +624,21 @@ export default function ServicesExplorer() {
                     id="service-sort"
                     name="sort"
                     value={draftFilters.sort}
-                    onChange={handleSortChange}
+                    onChange={
+                      handleSortChange
+                    }
                     className="mt-2 min-h-[46px] w-full rounded-xl border border-primary/10 bg-white px-4 py-2.5 text-sm font-semibold text-navy outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 sm:w-52"
                   >
-                    {sortOptions.map((option) => (
-                      <option
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </option>
-                    ))}
+                    {sortOptions.map(
+                      (option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                        >
+                          {option.label}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </div>
 
@@ -555,113 +655,57 @@ export default function ServicesExplorer() {
             </div>
           </motion.form>
 
-          {/* Results heading */}
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-primary">
-                Available options
-              </p>
+          {/* Results section */}
+          <div
+            ref={resultsSectionRef}
+            className="mt-10 scroll-mt-28"
+          >
+            {/* Results heading */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-primary">
+                  Available options
+                </p>
 
-              <h2 className="mt-2 font-heading text-2xl font-extrabold text-navy sm:text-3xl">
-                {isLoading
-                  ? "Loading services..."
-                  : `${pagination.totalServices} ${
-                      pagination.totalServices === 1
-                        ? "service"
-                        : "services"
-                    } found`}
-              </h2>
+                <h2
+                  aria-live="polite"
+                  className="mt-2 font-heading text-2xl font-extrabold text-navy sm:text-3xl"
+                >
+                  {isLoading
+                    ? "Loading services..."
+                    : `${
+                        pagination.totalServices
+                      } ${
+                        pagination.totalServices ===
+                        1
+                          ? "service"
+                          : "services"
+                      } found`}
+                </h2>
+              </div>
+
+              {hasActiveFilters && (
+                <div className="inline-flex items-center gap-2 self-start rounded-full border border-primary/10 bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm">
+                  <Filter className="h-4 w-4" />
+                  Filters applied
+                </div>
+              )}
             </div>
 
-            {hasActiveFilters && (
-              <div className="inline-flex items-center gap-2 self-start rounded-full border border-primary/10 bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm">
-                <Filter className="h-4 w-4" />
-                Filters applied
-              </div>
-            )}
-          </div>
-
-          {/* Results */}
-          <div className="mt-8">
-            {isLoading ? (
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {Array.from({
-                  length: 6,
-                }).map((_, index) => (
-                  <ServiceCardSkeleton
-                    key={`service-skeleton-${index}`}
-                  />
-                ))}
-              </div>
-            ) : errorMessage ? (
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                className="rounded-[1.75rem] border border-red-200 bg-red-50 px-6 py-12 text-center"
-              >
-                <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-
-                <h3 className="mt-4 font-heading text-2xl font-bold text-red-700">
-                  Services could not be loaded
-                </h3>
-
-                <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-red-600">
-                  {errorMessage}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    void loadServices(appliedFilters)
-                  }
-                  className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition-colors hover:bg-red-700"
-                >
-                  <LoaderCircle className="h-5 w-5" />
-                  Try Again
-                </button>
-              </motion.div>
-            ) : services.length === 0 ? (
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                className="rounded-[1.75rem] border border-primary/10 bg-white px-6 py-14 text-center shadow-card"
-              >
-                <Search className="mx-auto h-12 w-12 text-primary" />
-
-                <h3 className="mt-4 font-heading text-2xl font-bold text-navy">
-                  No services found
-                </h3>
-
-                <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600">
-                  Try changing the search term, category,
-                  or price range.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors hover:bg-primary-dark"
-                >
-                  <RotateCcw className="h-5 w-5" />
-                  Clear Filters
-                </button>
-              </motion.div>
-            ) : (
-              <AnimatePresence mode="wait">
+            {/* Results */}
+            <div className="mt-8">
+              {isLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({
+                    length: 6,
+                  }).map((_, index) => (
+                    <ServiceCardSkeleton
+                      key={`service-skeleton-${index}`}
+                    />
+                  ))}
+                </div>
+              ) : errorMessage ? (
                 <motion.div
-                  key={`${appliedFilters.search}-${appliedFilters.category}-${appliedFilters.sort}-${appliedFilters.page}`}
                   initial={{
                     opacity: 0,
                     y: 20,
@@ -670,87 +714,168 @@ export default function ServicesExplorer() {
                     opacity: 1,
                     y: 0,
                   }}
-                  exit={{
-                    opacity: 0,
-                    y: -20,
-                  }}
-                  className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+                  className="rounded-[1.75rem] border border-red-200 bg-red-50 px-6 py-12 text-center"
                 >
-                  {services.map((service, index) => (
-                    <ServiceCard
-                      key={service.id}
-                      service={service}
-                      index={index}
-                    />
-                  ))}
-                </motion.div>
-              </AnimatePresence>
-            )}
-          </div>
+                  <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
 
-          {/* Pagination */}
-          {!isLoading &&
-            !errorMessage &&
-            services.length > 0 &&
-            pagination.totalPages > 1 && (
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handlePageChange(
-                      pagination.page - 1,
-                    )
-                  }
-                  disabled={!pagination.hasPreviousPage}
-                  className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Previous
-                </button>
+                  <h3 className="mt-4 font-heading text-2xl font-bold text-red-700">
+                    Services could not be loaded
+                  </h3>
 
-                {Array.from(
-                  {
-                    length: pagination.totalPages,
-                  },
-                  (_, index) => index + 1,
-                ).map((pageNumber) => (
+                  <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-red-600">
+                    {errorMessage}
+                  </p>
+
                   <button
-                    key={pageNumber}
                     type="button"
                     onClick={() =>
-                      handlePageChange(pageNumber)
+                      void loadServices(
+                        appliedFilters,
+                      )
                     }
-                    aria-label={`Open page ${pageNumber}`}
-                    aria-current={
-                      pagination.page === pageNumber
-                        ? "page"
-                        : undefined
-                    }
-                    className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                      pagination.page === pageNumber
-                        ? "bg-primary text-white shadow-[0_10px_25px_rgba(30,111,217,0.25)]"
-                        : "border border-primary/10 bg-white text-navy hover:bg-primary-light hover:text-primary"
-                    }`}
+                    className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition-colors hover:bg-red-700"
                   >
-                    {pageNumber}
+                    <LoaderCircle className="h-5 w-5" />
+                    Try Again
                   </button>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    handlePageChange(
-                      pagination.page + 1,
-                    )
-                  }
-                  disabled={!pagination.hasNextPage}
-                  className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                </motion.div>
+              ) : services.length === 0 ? (
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: 20,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  className="rounded-[1.75rem] border border-primary/10 bg-white px-6 py-14 text-center shadow-card"
                 >
-                  Next
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            )}
+                  <Search className="mx-auto h-12 w-12 text-primary" />
+
+                  <h3 className="mt-4 font-heading text-2xl font-bold text-navy">
+                    No services found
+                  </h3>
+
+                  <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600">
+                    Try changing the search term,
+                    category, or price range.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors hover:bg-primary-dark"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                    Clear Filters
+                  </button>
+                </motion.div>
+              ) : (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${appliedFilters.search}-${appliedFilters.category}-${appliedFilters.sort}-${appliedFilters.page}`}
+                    initial={{
+                      opacity: 0,
+                      y: 20,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: -20,
+                    }}
+                    className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+                  >
+                    {services.map(
+                      (service, index) => (
+                        <ServiceCard
+                          key={service.id}
+                          service={service}
+                          index={index}
+                        />
+                      ),
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {!isLoading &&
+              !errorMessage &&
+              services.length > 0 &&
+              pagination.totalPages > 1 && (
+                <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handlePageChange(
+                        pagination.page - 1,
+                      )
+                    }
+                    disabled={
+                      !pagination.hasPreviousPage
+                    }
+                    className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Previous
+                  </button>
+
+                  {Array.from(
+                    {
+                      length:
+                        pagination.totalPages,
+                    },
+                    (_, index) => index + 1,
+                  ).map((pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      type="button"
+                      onClick={() =>
+                        handlePageChange(
+                          pageNumber,
+                        )
+                      }
+                      aria-label={`Open page ${pageNumber}`}
+                      aria-current={
+                        pagination.page ===
+                        pageNumber
+                          ? "page"
+                          : undefined
+                      }
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                        pagination.page ===
+                        pageNumber
+                          ? "bg-primary text-white shadow-[0_10px_25px_rgba(30,111,217,0.25)]"
+                          : "border border-primary/10 bg-white text-navy hover:bg-primary-light hover:text-primary"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handlePageChange(
+                        pagination.page + 1,
+                      )
+                    }
+                    disabled={
+                      !pagination.hasNextPage
+                    }
+                    className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+          </div>
         </div>
       </section>
     </MotionConfig>
