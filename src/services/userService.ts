@@ -3,11 +3,11 @@
 import "server-only";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User } from "@/models/User";
+import { User, type IUser } from "@/models/User";
 import { AppError, NotFoundError } from "@/lib/apiError";
 import type { PublicUser, UpdateProfileInput } from "@/types/user";
 
-function toPublicUser(userDoc: any): PublicUser {
+function toPublicUser(userDoc: IUser): PublicUser {
   return {
     id: userDoc._id.toString(),
     name: userDoc.name,

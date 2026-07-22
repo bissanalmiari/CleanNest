@@ -5,8 +5,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import jwt,  { type SignOptions } from "jsonwebtoken";
 import { connectDB } from "@/lib/db";
-import { User } from "@/models/User";
-import { UnauthorizedError } from "@/lib/apiError";
+import { User, type IUser } from "@/models/User";
+import { ForbiddenError, UnauthorizedError } from "@/lib/apiError";
 import type { PublicUser} from "@/types/user";
 import { UserRole } from "@/types/enums";
 
@@ -55,7 +55,7 @@ export async function clearAuthCookie() {
   cookieStore.delete(AUTH_COOKIE);
 }
 
-function toPublicUser(userDoc: any): PublicUser {
+function toPublicUser(userDoc: IUser): PublicUser {
   return {
     id: userDoc._id.toString(),
     name: userDoc.name,
@@ -89,5 +89,26 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
 export async function requireUser(): Promise<PublicUser> {
   const user = await getCurrentUser();
   if (!user) throw new UnauthorizedError("You must be logged in to do this");
+  return user;
+}
+
+/**
+ * Role middleware for API routes — the real security boundary for RBAC.
+ * Call at the top of any Route Handler that only specific roles may reach:
+ *
+ *   const admin = await requireRole("admin");
+ *
+ * Throws 401 if there's no session, 403 if the session's role isn't allowed.
+ * Client-side redirects (middleware, <RequireAuth>) are only a UX nicety —
+ * this function is what actually keeps a cleaner from calling an admin
+ * endpoint by hand.
+ */
+export async function requireRole(...allowedRoles: UserRole[]): Promise<PublicUser> {
+  const user = await requireUser();
+  if (!allowedRoles.includes(user.role)) {
+    throw new ForbiddenError(
+      `This action requires one of these roles: ${allowedRoles.join(", ")}`
+    );
+  }
   return user;
 }
