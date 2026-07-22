@@ -22,6 +22,24 @@ export class NotFoundError extends AppError {
   }
 }
 
+export class ForbiddenError extends AppError {
+  constructor(message = "You do not have permission to perform this action") {
+    super(message, 403);
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message = "Resource already exists") {
+    super(message, 409);
+  }
+}
+
+export class TooManyRequestsError extends AppError {
+  constructor(message = "Too many requests, please try again later") {
+    super(message, 429);
+  }
+}
+
 /** Central error -> HTTP response mapper. Use inside a try/catch in route handlers. */
 export function errorResponse(error: unknown) {
   if (error instanceof ZodError) {

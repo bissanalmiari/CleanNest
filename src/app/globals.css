@@ -8,4 +8,13 @@ html {
 
 body {
   @apply min-h-screen overflow-x-hidden bg-surface font-body text-navy antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: #ffffff;
+  color: #0b2545;
+  font-family: var(--font-inter), sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
