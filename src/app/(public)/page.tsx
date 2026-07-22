@@ -1,9 +1,28 @@
-export default function LandingPage() {
+import AboutSection from "@/components/home/AboutSection";
+import ContactSection from "@/components/home/ContactSection";
+import FAQSection from "@/components/home/FAQSection";
+import FloatingBookingOrb from "@/components/home/FloatingBookingOrb";
+import Footer from "@/components/home/Footer";
+import HeroSection from "@/components/home/HeroSection";
+import ReviewsSection from "@/components/home/ReviewsSection";
+import ServicesPreviewSection from "@/components/home/ServicesPreviewSection";
+import StatisticsSection from "@/components/home/StatisticsSection";
+import WhyChooseUsSection from "@/components/home/WhyChooseUsSection";
+
+export default function HomePage() {
   return (
-    <main>
-      <h1 className="font-heading text-3xl text-primary">
-        Book Trusted Cleaning Services in Minutes
-      </h1>
+    <main className="overflow-hidden">
+      <HeroSection />
+      <AboutSection />
+      <WhyChooseUsSection />
+      <ServicesPreviewSection />
+      <StatisticsSection />
+      <ReviewsSection />
+      <FAQSection />
+      <ContactSection />
+      <Footer />
+
+      <FloatingBookingOrb />
     </main>
   );
 }
