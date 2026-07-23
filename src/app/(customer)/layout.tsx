@@ -22,37 +22,37 @@ interface CustomerLayoutProps {
 const customerNavigation: DashboardNavigationItem[] = [
   {
     label: "Dashboard",
-    href: "/customer/dashboard",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
     label: "My Bookings",
-    href: "/customer/bookings",
+    href: "/bookings",
     icon: CalendarDays,
   },
   {
     label: "Book a Service",
-    href: "/customer/book-service",
+    href: "/book-service",
     icon: PlusCircle,
   },
   {
     label: "Saved Addresses",
-    href: "/customer/addresses",
+    href: "/addresses",
     icon: MapPin,
   },
   {
     label: "My Reviews",
-    href: "/customer/reviews",
+    href: "/reviews",
     icon: Star,
   },
   {
     label: "Profile",
-    href: "/customer/profile",
+    href: "/profile",
     icon: UserRound,
   },
   {
     label: "Settings",
-    href: "/customer/settings",
+    href: "/settings",
     icon: Settings,
   },
 ];
@@ -86,9 +86,8 @@ export default function CustomerLayout({
       />
 
       <main
-        className={`min-h-screen min-w-0 pt-16 transition-[margin-left] duration-300 ease-out lg:pt-0 ${
-          collapsed ? "lg:ml-[84px]" : "lg:ml-[250px]"
-        }`}
+        className={`min-h-screen min-w-0 pt-16 transition-[margin-left] duration-300 ease-out lg:pt-0 ${collapsed ? "lg:ml-[84px]" : "lg:ml-[250px]"
+          }`}
       >
         <div className="min-w-0">{children}</div>
       </main>
