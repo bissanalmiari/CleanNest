@@ -31,7 +31,7 @@ const customerNavigation: DashboardNavigationItem[] = [
   },
   {
     label: "Book a Service",
-    href: "/book",
+    href: "/book-service",
     icon: PlusCircle,
   },
   {
@@ -48,6 +48,11 @@ const customerNavigation: DashboardNavigationItem[] = [
     label: "Profile",
     href: "/profile",
     icon: UserRound,
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: Settings,
   },
 ];
 
@@ -80,9 +85,8 @@ export default function CustomerLayout({
       />
 
       <main
-        className={`min-h-screen min-w-0 pt-16 transition-[margin-left] duration-300 ease-out lg:pt-0 ${
-          collapsed ? "lg:ml-[84px]" : "lg:ml-[250px]"
-        }`}
+        className={`min-h-screen min-w-0 pt-16 transition-[margin-left] duration-300 ease-out lg:pt-0 ${collapsed ? "lg:ml-[84px]" : "lg:ml-[250px]"
+          }`}
       >
         <div className="min-w-0">{children}</div>
       </main>
