@@ -19,11 +19,11 @@ async function requireAdmin() {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     const admin = await requireAdmin();
-    const { id } = await params;
+    const { bookingId } = await params;
 
     const body = await request.json().catch(() => ({}));
     const { cleanerId } = body as { cleanerId?: string };
@@ -32,7 +32,7 @@ export async function POST(
       throw new AppError("cleanerId is required", 422);
     }
 
-    const assignment = await assignCleaner(id, cleanerId, admin.id);
+    const assignment = await assignCleaner(bookingId, cleanerId, admin.id);
     return successResponse(assignment, 201);
   } catch (error) {
     return errorResponse(error);

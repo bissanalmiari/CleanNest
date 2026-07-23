@@ -102,9 +102,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function AdminBookingDetailPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ bookingId: string }>();
   const router = useRouter();
-  const bookingId = params.id;
+  const bookingId = params.bookingId;
 
   const [data, setData] = useState<BookingDetailData | null>(null);
   const [loading, setLoading] = useState(true);
