@@ -18,7 +18,7 @@ export const runtime = "nodejs";
 
 interface RouteContext {
   params: Promise<{
-    bookingId: string;
+    id: string;
   }>;
 }
 
@@ -43,7 +43,7 @@ function formatValidationErrors(
 }
 
 /*
- * PATCH /api/admin/bookings/[bookingId]/assign-cleaner
+ * PATCH /api/admin/bookings/[id]/assign-cleaner
  *
  * Allows an administrator to assign, replace, or remove
  * a cleaner name from a pending or confirmed booking.
@@ -62,12 +62,12 @@ export async function PATCH(
      * Validate the booking ID received from
      * the dynamic route.
      */
-    const { bookingId } =
+    const { id } =
       await context.params;
 
     const paramsValidation =
       bookingIdParamsSchema.safeParse({
-        bookingId,
+        bookingId: id,
       });
 
     if (!paramsValidation.success) {

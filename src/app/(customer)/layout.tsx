@@ -2,6 +2,15 @@ import type { ReactNode } from "react";
 
 import { redirect } from "next/navigation";
 
+import {
+  CalendarDays,
+  LayoutDashboard,
+  MapPin,
+  PlusCircle,
+  Star,
+  UserRound,
+} from "lucide-react";
+
 import { getCurrentUser } from "@/lib/auth";
 
 import CustomerLayoutClient from "@/components/layout/CustomerLayoutClient";
