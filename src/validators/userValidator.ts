@@ -10,6 +10,16 @@ export const updateProfileSchema = z.object({
     .regex(/^[0-9+\-\s()]{6,20}$/, "Invalid phone number")
     .nullable()
     .optional(),
+  dateOfBirth: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .refine((val) => !Number.isNaN(new Date(val).getTime()), "Invalid date")
+    .nullable()
+    .optional(),
+  gender: z.enum(["male", "female"]).nullable().optional(),
+  preferredLanguage: z.enum(["en", "ar", "fr"]).optional(),
+  bio: z.string().trim().max(300, "Bio must be 300 characters or fewer").nullable().optional(),
 });
 
 export const changePasswordSchema = z

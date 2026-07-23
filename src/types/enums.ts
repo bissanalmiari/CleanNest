@@ -22,6 +22,9 @@ export type DiscountType = "percentage" | "fixed_amount";
 
 export type ContactMessageStatus = "new" | "in_progress" | "resolved";
 
+export type Gender = "male" | "female" ;
+export type PreferredLanguage = "en" | "ar" | "fr";
+
 export type DayOfWeek =
   | "monday"
   | "tuesday"
