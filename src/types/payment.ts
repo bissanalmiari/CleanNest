@@ -16,6 +16,10 @@ export interface Review {
   customerId: string;
   rating: number;
   comment?: string;
+  beforeImages: string[];
+  afterImages: string[];
   adminReply?: string;
   isVisible: boolean;
+  createdAt: string;
 }
+

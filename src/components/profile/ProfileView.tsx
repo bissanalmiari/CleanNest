@@ -81,8 +81,6 @@ const GENDER_LABELS: Record<
 > = {
   male: "Male",
   female: "Female",
-  prefer_not_to_say:
-    "Prefer not to say",
 };
 
 const LANGUAGE_LABELS: Record<

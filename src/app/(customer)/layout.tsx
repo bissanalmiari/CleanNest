@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   MapPin,
   PlusCircle,
-  Settings,
   Star,
   UserRound,
 } from "lucide-react";

@@ -253,31 +253,42 @@ export function EditProfileForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(
-        onSubmit,
-      )}
-      className="space-y-7"
-      noValidate
-    >
-      {/* Error message */}
-      {error && (
-        <div
-          role="alert"
-          className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700"
-        >
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {error && <Alert variant="error">{error}</Alert>}
 
-          <div>
-            <p className="font-extrabold">
-              Profile could not be
-              updated
-            </p>
+      <Input
+        label="Full name"
+        autoComplete="name"
+        error={errors.name?.message}
+        {...register("name")}
+      />
+      <Input
+        label="Phone"
+        type="tel"
+        autoComplete="tel"
+        placeholder="+961 00 000 000"
+        error={errors.phone?.message}
+        {...register("phone")}
+      />
+      <Input label="Email" value={user.email} disabled readOnly />
 
-            <p className="mt-1 text-sm font-semibold leading-6">
-              {error}
-            </p>
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Date of birth"
+          type="date"
+          error={errors.dateOfBirth?.message}
+          {...register("dateOfBirth")}
+        />
+
+        <div className="space-y-1.5">
+          <label htmlFor="gender" className="block text-sm font-medium text-navy">
+            Gender
+          </label>
+          <select id="gender" className={fieldClass} {...register("gender")}>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+
+          </select>
         </div>
       )}
 
