@@ -10,7 +10,6 @@ import { ChangePasswordForm } from "./ChangePasswordForm";
 const GENDER_LABELS: Record<string, string> = {
   male: "Male",
   female: "Female",
-
 };
 
 const LANGUAGE_LABELS: Record<string, string> = {

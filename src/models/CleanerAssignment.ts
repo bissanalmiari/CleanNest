@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document, Types, type Model } from "mongoose";
 import type { AssignmentStatus } from "@/types/enums";
 
 export interface ICleanerAssignment extends Document {
@@ -24,5 +24,8 @@ const cleanerAssignmentSchema = new Schema<ICleanerAssignment>(
   { timestamps: true }
 );
 
-export default mongoose.models.CleanerAssignment ||
+const CleanerAssignment: Model<ICleanerAssignment> =
+  mongoose.models.CleanerAssignment ||
   mongoose.model<ICleanerAssignment>("CleanerAssignment", cleanerAssignmentSchema);
+
+export default CleanerAssignment;

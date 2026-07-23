@@ -74,7 +74,6 @@ export function EditProfileForm({ user, onSaved }: Props) {
             Gender
           </label>
           <select id="gender" className={fieldClass} {...register("gender")}>
-            <option value="prefer_not_to_say">Prefer not to say</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
 

@@ -267,7 +267,7 @@ export default function Navbar() {
               }}
             >
               <Link
-                href="/register"
+                href="/signup"
                 className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-light px-3.5 py-2.5 text-sm font-bold text-primary transition-all hover:border-primary/35 hover:bg-blue-100"
               >
                 <UserPlus className="h-4 w-4" />
@@ -506,7 +506,7 @@ export default function Navbar() {
                       }}
                     >
                       <Link
-                        href="/register"
+                        href="/signup"
                         onClick={closeMenu}
                         className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-light px-5 py-3 font-bold text-primary transition-colors hover:bg-blue-100"
                       >

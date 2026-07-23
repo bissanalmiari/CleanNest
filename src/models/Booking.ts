@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document, Types, type Model } from "mongoose";
 import type {
   BookingSource,
   BookingStatus,
@@ -93,4 +93,8 @@ const bookingSchema = new Schema<IBooking>(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-export default mongoose.models.Booking || mongoose.model<IBooking>("Booking", bookingSchema);
+//Bissan chnge this 
+const Booking: Model<IBooking> =
+  mongoose.models.Booking || mongoose.model<IBooking>("Booking", bookingSchema);
+ 
+export default Booking;

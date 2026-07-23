@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   MapPin,
   PlusCircle,
-  Settings,
   Star,
   UserRound,
 } from "lucide-react";
@@ -22,38 +21,33 @@ interface CustomerLayoutProps {
 const customerNavigation: DashboardNavigationItem[] = [
   {
     label: "Dashboard",
-    href: "/customer/dashboard",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
     label: "My Bookings",
-    href: "/customer/bookings",
+    href: "/bookings",
     icon: CalendarDays,
   },
   {
     label: "Book a Service",
-    href: "/customer/book-service",
+    href: "/book",
     icon: PlusCircle,
   },
   {
     label: "Saved Addresses",
-    href: "/customer/addresses",
+    href: "/addresses",
     icon: MapPin,
   },
   {
     label: "My Reviews",
-    href: "/customer/reviews",
+    href: "/reviews",
     icon: Star,
   },
   {
     label: "Profile",
-    href: "/customer/profile",
+    href: "/profile",
     icon: UserRound,
-  },
-  {
-    label: "Settings",
-    href: "/customer/settings",
-    icon: Settings,
   },
 ];
 

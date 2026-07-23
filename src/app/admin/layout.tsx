@@ -11,6 +11,7 @@ import {
   Sparkles,
   Star,
   Tag,
+  UserRound,
   UserRoundCheck,
   Users,
 } from "lucide-react";
@@ -59,6 +60,11 @@ const adminNavigation: DashboardNavigationItem[] = [
     label: "Promo Codes",
     href: "/admin/promo-codes",
     icon: Tag,
+  },
+  {
+    label: "Profile",
+    href: "/admin/profile",
+    icon: UserRound,
   },
   {
     label: "Settings",
