@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document, Types, type Model } from "mongoose";
 
 export interface IAddress extends Document {
   customerId: Types.ObjectId; // -> USERS.id
@@ -10,6 +10,8 @@ export interface IAddress extends Document {
   floor?: string;
   apartment?: string;
   isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const addressSchema = new Schema<IAddress>(
@@ -27,4 +29,7 @@ const addressSchema = new Schema<IAddress>(
   { timestamps: true }
 );
 
-export default mongoose.models.Address || mongoose.model<IAddress>("Address", addressSchema);
+const Address: Model<IAddress> =
+  mongoose.models.Address || mongoose.model<IAddress>("Address", addressSchema);
+
+export default Address;
