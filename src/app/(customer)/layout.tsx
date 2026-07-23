@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { redirect } from "next/navigation";
-import { useState, type ReactNode } from "react";
+
 import {
   CalendarDays,
   LayoutDashboard,
