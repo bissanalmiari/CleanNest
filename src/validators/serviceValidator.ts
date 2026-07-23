@@ -3,23 +3,39 @@
 import { z } from "zod";
 import { objectIdSchema } from "./common";
 
-// POST /api/services (admin)
+// POST /api/admin/services (admin)
+// Field names below intentionally mirror src/models/Service.ts exactly —
+// price/durationMinutes, not basePrice/baseDurationMinutes — so a payload
+// that passes this schema also satisfies the Mongoose required-field
+// validators instead of failing after the fact.
 export const createServiceSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters").max(150),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
   slug: z
     .string()
     .trim()
     .toLowerCase()
     .min(2)
-    .max(150)
-    .regex(/^[a-z0-9-]+$/, "Slug may only contain lowercase letters, numbers, and hyphens"),
-  category: z.string().trim().min(1, "Category is required").max(100),
-  basePrice: z.number().positive("Base price must be greater than 0"),
-  baseDurationMinutes: z.number().int().min(15, "Duration must be at least 15 minutes"),
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug may only contain lowercase letters, numbers, and hyphens"),
+  shortDescription: z
+    .string()
+    .trim()
+    .min(1, "Short description is required")
+    .max(180, "Short description cannot exceed 180 characters"),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required")
+    .max(3000, "Service description cannot exceed 3000 characters"),
+  category: z.string().trim().min(1, "Category is required").max(80),
+  price: z.number().positive("Price must be greater than 0"),
+  durationMinutes: z.number().int().min(30, "Duration must be at least 30 minutes"),
+  features: z.array(z.string().trim().max(150)).optional().default([]),
+  imageUrl: z.string().trim().optional().default(""),
   isActive: z.boolean().optional().default(true),
 });
 
-// PATCH /api/services/[id] (admin)
+// PATCH /api/admin/services/[id] (admin)
 export const updateServiceSchema = createServiceSchema.partial();
 
 export const serviceIdParamSchema = z.object({

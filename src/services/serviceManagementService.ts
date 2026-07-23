@@ -90,24 +90,43 @@ export async function getServiceById(id: string) {
 export interface CreateServiceInput {
   name: string;
   slug?: string;
+  shortDescription?: string;
+  description?: string;
   category: string;
-  basePrice: number;
-  baseDurationMinutes: number;
+  price: number;
+  durationMinutes: number;
+  features?: string[];
+  imageUrl?: string;
   isActive?: boolean;
 }
 
 export async function createService(input: CreateServiceInput) {
   await connectDB();
 
-  const { name, category, basePrice, baseDurationMinutes } = input;
+  const {
+    name,
+    category,
+    price,
+    durationMinutes,
+    shortDescription,
+    description,
+    features,
+    imageUrl,
+  } = input;
 
   if (!name?.trim() || !category?.trim()) {
     throw new AppError("Name and category are required", 422);
   }
-  if (!(basePrice > 0)) {
-    throw new AppError("Base price must be a positive number", 422);
+  if (!shortDescription?.trim()) {
+    throw new AppError("Short description is required", 422);
   }
-  if (!(baseDurationMinutes > 0)) {
+  if (!description?.trim()) {
+    throw new AppError("Description is required", 422);
+  }
+  if (!(price > 0)) {
+    throw new AppError("Price must be a positive number", 422);
+  }
+  if (!(durationMinutes > 0)) {
     throw new AppError("Duration must be a positive number of minutes", 422);
   }
 
@@ -117,9 +136,13 @@ export async function createService(input: CreateServiceInput) {
   const service = await Service.create({
     name: name.trim(),
     slug,
+    shortDescription: shortDescription.trim(),
+    description: description.trim(),
     category: category.trim(),
-    basePrice,
-    baseDurationMinutes,
+    price,
+    durationMinutes,
+    features: features?.map((feature) => feature.trim()).filter(Boolean) ?? [],
+    imageUrl: imageUrl?.trim() ?? "",
     isActive: input.isActive ?? true,
   });
 
@@ -133,9 +156,13 @@ export async function createService(input: CreateServiceInput) {
 export interface UpdateServiceInput {
   name?: string;
   slug?: string; // only regenerated if explicitly provided
+  shortDescription?: string;
+  description?: string;
   category?: string;
-  basePrice?: number;
-  baseDurationMinutes?: number;
+  price?: number;
+  durationMinutes?: number;
+  features?: string[];
+  imageUrl?: string;
   isActive?: boolean;
 }
 
@@ -147,12 +174,12 @@ export async function updateService(id: string, input: UpdateServiceInput) {
     throw new NotFoundError("Service not found");
   }
 
-  if (input.basePrice !== undefined && !(input.basePrice > 0)) {
-    throw new AppError("Base price must be a positive number", 422);
+  if (input.price !== undefined && !(input.price > 0)) {
+    throw new AppError("Price must be a positive number", 422);
   }
   if (
-    input.baseDurationMinutes !== undefined &&
-    !(input.baseDurationMinutes > 0)
+    input.durationMinutes !== undefined &&
+    !(input.durationMinutes > 0)
   ) {
     throw new AppError("Duration must be a positive number of minutes", 422);
   }
@@ -167,10 +194,17 @@ export async function updateService(id: string, input: UpdateServiceInput) {
   }
 
   if (input.name !== undefined) service.name = input.name.trim();
+  if (input.shortDescription !== undefined)
+    service.shortDescription = input.shortDescription.trim();
+  if (input.description !== undefined)
+    service.description = input.description.trim();
   if (input.category !== undefined) service.category = input.category.trim();
-  if (input.basePrice !== undefined) service.basePrice = input.basePrice;
-  if (input.baseDurationMinutes !== undefined)
-    service.baseDurationMinutes = input.baseDurationMinutes;
+  if (input.price !== undefined) service.price = input.price;
+  if (input.durationMinutes !== undefined)
+    service.durationMinutes = input.durationMinutes;
+  if (input.features !== undefined)
+    service.features = input.features.map((feature) => feature.trim()).filter(Boolean);
+  if (input.imageUrl !== undefined) service.imageUrl = input.imageUrl.trim();
   if (input.isActive !== undefined) service.isActive = input.isActive;
 
   await service.save();

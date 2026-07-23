@@ -49,11 +49,7 @@ const customerNavigation: DashboardNavigationItem[] = [
     href: "/profile",
     icon: UserRound,
   },
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
+
 ];
 
 export default function CustomerLayout({
