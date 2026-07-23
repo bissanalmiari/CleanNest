@@ -16,6 +16,10 @@ function toPublicUser(userDoc: IUser): PublicUser {
     role: userDoc.role,
     status: userDoc.status,
     avatarUrl: userDoc.avatarUrl ?? null,
+    dateOfBirth: userDoc.dateOfBirth ? userDoc.dateOfBirth.toISOString().slice(0, 10) : null,
+    gender: userDoc.gender ?? null,
+    preferredLanguage: userDoc.preferredLanguage,
+    bio: userDoc.bio ?? null,
     createdAt: userDoc.createdAt.toISOString(),
     updatedAt: userDoc.updatedAt.toISOString(),
   };
@@ -40,6 +44,12 @@ export async function updateUserProfile(
 
   if (input.name !== undefined) userDoc.name = input.name;
   if (input.phone !== undefined) userDoc.phone = input.phone ?? undefined;
+  if (input.dateOfBirth !== undefined) {
+    userDoc.dateOfBirth = input.dateOfBirth ? new Date(input.dateOfBirth) : null;
+  }
+  if (input.gender !== undefined) userDoc.gender = input.gender;
+  if (input.preferredLanguage !== undefined) userDoc.preferredLanguage = input.preferredLanguage;
+  if (input.bio !== undefined) userDoc.bio = input.bio;
 
   await userDoc.save();
   return toPublicUser(userDoc);
