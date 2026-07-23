@@ -1,6 +1,15 @@
 import type { ReactNode } from "react";
 
 import { redirect } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import {
+  CalendarDays,
+  LayoutDashboard,
+  MapPin,
+  PlusCircle,
+  Star,
+  UserRound,
+} from "lucide-react";
 
 import { getCurrentUser } from "@/lib/auth";
 

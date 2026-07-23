@@ -1,4 +1,4 @@
-import type { UserRole, UserStatus } from "./enums";
+import type { UserRole, UserStatus, Gender, PreferredLanguage } from "./enums";
 
 // Plain client-side shapes (no Mongoose Document methods) — what API responses
 // actually look like once serialized to JSON.
@@ -11,6 +11,10 @@ export interface PublicUser {
   role: UserRole;
   status: UserStatus;
   avatarUrl: string | null;
+  dateOfBirth: string | null;
+  gender: Gender | null;
+  preferredLanguage: PreferredLanguage;
+  bio: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +36,10 @@ export interface Address {
 export interface UpdateProfileInput {
   name?: string;
   phone?: string | null;
+  dateOfBirth?: string | null;
+  gender?: Gender | null;
+  preferredLanguage?: PreferredLanguage;
+  bio?: string | null;
 }
 
 export interface ChangePasswordInput {
