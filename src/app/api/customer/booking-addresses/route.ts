@@ -1,9 +1,6 @@
 import { Types } from "mongoose";
 
-import {
-  AppError,
-  errorResponse,
-} from "@/lib/apiError";
+import { AppError, errorResponse } from "@/lib/apiError";
 
 import { successResponse } from "@/lib/apiResponse";
 import { requireUser } from "@/lib/auth";
@@ -49,29 +46,17 @@ interface ServiceAreaRecord {
   isActive?: unknown;
 }
 
-function readString(
-  value: unknown,
-  fallback = "",
-): string {
-  return typeof value === "string"
-    ? value.trim()
-    : fallback;
+function readString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value.trim() : fallback;
 }
 
-function readNumber(
-  value: unknown,
-  fallback = 0,
-): number {
+function readNumber(value: unknown, fallback = 0): number {
   const parsedValue = Number(value);
 
-  return Number.isFinite(parsedValue)
-    ? parsedValue
-    : fallback;
+  return Number.isFinite(parsedValue) ? parsedValue : fallback;
 }
 
-function objectIdToString(
-  value: unknown,
-): string {
+function objectIdToString(value: unknown): string {
   if (typeof value === "string") {
     return value;
   }
@@ -88,44 +73,25 @@ function objectIdToString(
   return "";
 }
 
-function createLocationKey(
-  city: unknown,
-  area: unknown,
-): string {
-  return `${readString(city).toLowerCase()}::${readString(
-    area,
-  ).toLowerCase()}`;
+function createLocationKey(city: unknown, area: unknown): string {
+  return `${readString(city).toLowerCase()}::${readString(area).toLowerCase()}`;
 }
 
-function createFullAddress(
-  address: AddressRecord,
-): string {
-  const building = readString(
-    address.building,
-  );
+function createFullAddress(address: AddressRecord): string {
+  const building = readString(address.building);
 
-  const floor = readString(
-    address.floor,
-  );
+  const floor = readString(address.floor);
 
-  const apartment = readString(
-    address.apartment,
-  );
+  const apartment = readString(address.apartment);
 
   return [
     readString(address.street),
 
-    building
-      ? `Building ${building}`
-      : "",
+    building ? `Building ${building}` : "",
 
-    floor
-      ? `Floor ${floor}`
-      : "",
+    floor ? `Floor ${floor}` : "",
 
-    apartment
-      ? `Apartment ${apartment}`
-      : "",
+    apartment ? `Apartment ${apartment}` : "",
 
     readString(address.area),
     readString(address.city),
@@ -142,43 +108,23 @@ function createFullAddress(
  */
 export async function GET() {
   try {
-    const currentUser =
-      await requireUser();
+    const currentUser = await requireUser();
 
-    if (
-      currentUser.role !== "customer"
-    ) {
-      throw new AppError(
-        "Only customers can view booking addresses.",
-        403,
-      );
+    if (currentUser.role !== "customer") {
+      throw new AppError("Only customers can view booking addresses.", 403);
     }
 
-    if (
-      !Types.ObjectId.isValid(
-        currentUser.id,
-      )
-    ) {
-      throw new AppError(
-        "The current customer ID is invalid.",
-        422,
-      );
+    if (!Types.ObjectId.isValid(currentUser.id)) {
+      throw new AppError("The current customer ID is invalid.", 422);
     }
 
     await connectDB();
 
-    const customerObjectId =
-      new Types.ObjectId(
-        currentUser.id,
-      );
+    const customerObjectId = new Types.ObjectId(currentUser.id);
 
-    const [
-      addressDocuments,
-      serviceAreaDocuments,
-    ] = await Promise.all([
+    const [addressDocuments, serviceAreaDocuments] = await Promise.all([
       AddressModel.find({
-        customerId:
-          customerObjectId,
+        customerId: customerObjectId,
 
         isActive: true,
       })
@@ -200,196 +146,160 @@ export async function GET() {
         .exec(),
     ]);
 
-    const addresses =
-      addressDocuments as unknown as AddressRecord[];
+    const addresses = addressDocuments as unknown as AddressRecord[];
 
-    const serviceAreas =
-      serviceAreaDocuments as unknown as ServiceAreaRecord[];
+    const serviceAreas = serviceAreaDocuments as unknown as ServiceAreaRecord[];
 
-    const serviceAreasById =
-      new Map<
-        string,
-        ServiceAreaRecord
-      >();
+    const serviceAreasById = new Map<string, ServiceAreaRecord>();
 
-    const serviceAreasByLocation =
-      new Map<
-        string,
-        ServiceAreaRecord
-      >();
+    const serviceAreasByLocation = new Map<string, ServiceAreaRecord>();
 
-    for (
-      const serviceArea of serviceAreas
-    ) {
-      const serviceAreaId =
-        objectIdToString(
-          serviceArea._id,
-        );
+    for (const serviceArea of serviceAreas) {
+      const serviceAreaId = objectIdToString(serviceArea._id);
 
       if (serviceAreaId) {
-        serviceAreasById.set(
-          serviceAreaId,
-          serviceArea,
-        );
+        serviceAreasById.set(serviceAreaId, serviceArea);
       }
 
       serviceAreasByLocation.set(
-        createLocationKey(
-          serviceArea.city,
-          serviceArea.area,
-        ),
-        serviceArea,
+        createLocationKey(serviceArea.city, serviceArea.area),
+        serviceArea
       );
     }
 
-    const bookingAddresses =
-      addresses.map((address) => {
-        const storedServiceAreaId =
-          objectIdToString(
-            address.serviceAreaId,
-          );
+    const bookingAddresses = await Promise.all(
+      addresses.map(async (address) => {
+        const storedServiceAreaId = objectIdToString(address.serviceAreaId);
 
         /*
          * Prefer the address's stored serviceAreaId.
          * Older addresses without it fall back to city + area.
          */
-        const serviceArea =
-          serviceAreasById.get(
-            storedServiceAreaId,
-          ) ??
-          serviceAreasByLocation.get(
-            createLocationKey(
-              address.city,
-              address.area,
-            ),
-          ) ??
+        let serviceArea =
+          serviceAreasById.get(storedServiceAreaId) ??
+          serviceAreasByLocation.get(createLocationKey(address.city, address.area)) ??
           null;
 
-        const serviceAreaId =
-          serviceArea
-            ? objectIdToString(
-                serviceArea._id,
-              )
-            : "";
+        const city = readString(address.city);
 
-        const city =
-          readString(address.city);
+        const area = readString(address.area);
 
-        const area =
-          readString(address.area);
+        /*
+         * Customer-created locations automatically become active service
+         * areas. This also backfills addresses saved before serviceAreaId was
+         * assigned automatically.
+         */
+        if (!serviceArea && city && area) {
+          const createdServiceArea = await ServiceAreaModel.findOneAndUpdate(
+            {
+              city,
+              area,
+            },
+            {
+              $set: {
+                isActive: true,
+              },
+              $setOnInsert: {
+                serviceFee: 0,
+                maximumConcurrentBookings: 3,
+              },
+            },
+            {
+              upsert: true,
+              new: true,
+              setDefaultsOnInsert: true,
+            }
+          )
+            .collation({
+              locale: "en",
+              strength: 2,
+            })
+            .lean()
+            .exec();
+
+          if (createdServiceArea) {
+            serviceArea = createdServiceArea as unknown as ServiceAreaRecord;
+
+            const createdServiceAreaId = objectIdToString(serviceArea._id);
+
+            if (!createdServiceAreaId) {
+              throw new AppError("The new service area could not be identified.", 500);
+            }
+
+            serviceAreasById.set(createdServiceAreaId, serviceArea);
+
+            serviceAreasByLocation.set(
+              createLocationKey(serviceArea.city, serviceArea.area),
+              serviceArea
+            );
+
+            await AddressModel.updateOne(
+              {
+                _id: address._id,
+                customerId: customerObjectId,
+              },
+              {
+                $set: {
+                  serviceAreaId: createdServiceAreaId,
+                },
+              }
+            ).exec();
+          }
+        }
+
+        const serviceAreaId = serviceArea ? objectIdToString(serviceArea._id) : "";
 
         return {
-          id:
-            objectIdToString(
-              address._id,
-            ),
+          id: objectIdToString(address._id),
 
-          label:
-            readString(
-              address.label,
-              "Saved address",
-            ),
+          label: readString(address.label, "Saved address"),
 
           city,
           area,
 
-          street:
-            readString(
-              address.street,
-            ),
+          street: readString(address.street),
 
-          building:
-            readString(
-              address.building,
-            ),
+          building: readString(address.building),
 
-          floor:
-            readString(
-              address.floor,
-            ),
+          floor: readString(address.floor),
 
-          apartment:
-            readString(
-              address.apartment,
-            ),
+          apartment: readString(address.apartment),
 
-          postalCode:
-            readString(
-              address.postalCode,
-            ),
+          postalCode: readString(address.postalCode),
 
-          landmark:
-            readString(
-              address.landmark,
-            ),
+          landmark: readString(address.landmark),
 
-          accessInstructions:
-            readString(
-              address.accessInstructions,
-            ),
+          accessInstructions: readString(address.accessInstructions),
 
-          contactPhone:
-            readString(
-              address.contactPhone,
-            ),
+          contactPhone: readString(address.contactPhone),
 
-          fullAddress:
-            createFullAddress(
-              address,
-            ),
+          fullAddress: createFullAddress(address),
 
-          isDefault:
-            address.isDefault === true,
+          isDefault: address.isDefault === true,
 
-          isServiceable:
-            Boolean(serviceArea),
+          isServiceable: Boolean(serviceArea),
 
           serviceAreaId,
 
-          serviceAreaLabel:
-            serviceArea
-              ? `${readString(
-                  serviceArea.area,
-                )}, ${readString(
-                  serviceArea.city,
-                )}`
-              : `${area}, ${city}`,
+          serviceAreaLabel: serviceArea
+            ? `${readString(serviceArea.area)}, ${readString(serviceArea.city)}`
+            : `${area}, ${city}`,
 
-          serviceFee:
-            serviceArea
-              ? Math.max(
-                  0,
-                  readNumber(
-                    serviceArea.serviceFee,
-                  ),
-                )
-              : 0,
+          serviceFee: serviceArea ? Math.max(0, readNumber(serviceArea.serviceFee)) : 0,
 
-          maximumConcurrentBookings:
-            serviceArea
-              ? Math.max(
-                  1,
-                  readNumber(
-                    serviceArea.maximumConcurrentBookings,
-                    1,
-                  ),
-                )
-              : 0,
+          maximumConcurrentBookings: serviceArea
+            ? Math.max(1, readNumber(serviceArea.maximumConcurrentBookings, 1))
+            : 0,
         };
-      });
+      })
+    );
 
     return successResponse({
-      addresses:
-        bookingAddresses,
+      addresses: bookingAddresses,
 
-      total:
-        bookingAddresses.length,
+      total: bookingAddresses.length,
 
-      serviceableTotal:
-        bookingAddresses.filter(
-          (address) =>
-            address.isServiceable,
-        ).length,
+      serviceableTotal: bookingAddresses.filter((address) => address.isServiceable).length,
     });
   } catch (error) {
     return errorResponse(error);
