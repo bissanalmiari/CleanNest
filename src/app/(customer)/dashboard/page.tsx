@@ -2,16 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  CalendarClock,
-  CheckCircle2,
-  DollarSign,
-  ListChecks,
-  Plus,
-  XCircle,
-} from "lucide-react";
+import { CalendarClock, CheckCircle2, DollarSign, ListChecks, Plus, XCircle } from "lucide-react";
 
-import { RequireAuth } from "@/components/auth/RequireAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { useCustomerDashboard } from "@/hooks/useCustomerDashboard";
 import { Button } from "@/components/shared/button";
@@ -77,12 +69,7 @@ function DashboardContent() {
               <Plus className="h-4 w-4" /> Book a service
             </Button>
           </Link>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => logout()}
-            isLoading={logoutLoading}
-          >
+          <Button variant="secondary" size="sm" onClick={() => logout()} isLoading={logoutLoading}>
             Log out
           </Button>
         </div>
@@ -154,9 +141,5 @@ function DashboardContent() {
 }
 
 export default function CustomerDashboardPage() {
-  return (
-    <RequireAuth allowedRoles={["customer"]}>
-      <DashboardContent />
-    </RequireAuth>
-  );
+  return <DashboardContent />;
 }
