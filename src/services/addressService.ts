@@ -2,6 +2,7 @@
 import "server-only";
 import { connectDB } from "@/lib/db";
 import Address, { type IAddress } from "@/models/Address";
+import ServiceArea from "@/models/ServiceArea";
 import { NotFoundError } from "@/lib/apiError";
 import type { Address as AddressDTO } from "@/types/user";
 import type { CreateAddressValues, UpdateAddressValues } from "@/validators/addressValidator";
@@ -10,6 +11,7 @@ function toDTO(doc: IAddress): AddressDTO {
   return {
     id: doc._id.toString(),
     customerId: doc.customerId.toString(),
+    serviceAreaId: doc.serviceAreaId?.toString(),
     label: doc.label,
     city: doc.city,
     area: doc.area,
@@ -35,6 +37,41 @@ async function findOwnedAddress(customerId: string, addressId: string): Promise<
 }
 
 /**
+ * Resolves the service-area reference from the customer-facing city and area.
+ * A new location becomes an active service area automatically with safe
+ * defaults; an existing inactive location is reactivated without replacing
+ * its configured fee or capacity.
+ */
+async function findOrCreateServiceAreaId(city: string, area: string) {
+  const serviceArea = await ServiceArea.findOneAndUpdate(
+    {
+      city: city.trim(),
+      area: area.trim(),
+    },
+    {
+      $set: {
+        isActive: true,
+      },
+      $setOnInsert: {
+        serviceFee: 0,
+        maximumConcurrentBookings: 3,
+      },
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    }
+  )
+    .collation({ locale: "en", strength: 2 })
+    .select("_id")
+    .lean()
+    .exec();
+
+  return serviceArea?._id;
+}
+
+/**
  * Creates a new address for the customer. If this is their first address, or
  * `isDefault` was explicitly requested, it's set as the default and any
  * previous default is cleared (a customer can only have one default at a time).
@@ -45,7 +82,10 @@ export async function createAddress(
 ): Promise<AddressDTO> {
   await connectDB();
 
-  const existingCount = await Address.countDocuments({ customerId });
+  const [existingCount, serviceAreaId] = await Promise.all([
+    Address.countDocuments({ customerId }),
+    findOrCreateServiceAreaId(input.city, input.area),
+  ]);
   const shouldBeDefault = input.isDefault || existingCount === 0;
 
   if (shouldBeDefault) {
@@ -55,6 +95,7 @@ export async function createAddress(
   const doc = await Address.create({
     ...input,
     customerId,
+    serviceAreaId,
     isDefault: shouldBeDefault,
   });
 
@@ -76,6 +117,13 @@ export async function updateAddress(
       { customerId, isDefault: true, _id: { $ne: doc._id } },
       { $set: { isDefault: false } }
     );
+  }
+
+  if (input.city !== undefined || input.area !== undefined) {
+    const city = input.city ?? doc.city;
+    const area = input.area ?? doc.area;
+
+    doc.serviceAreaId = await findOrCreateServiceAreaId(city, area);
   }
 
   Object.assign(doc, input);

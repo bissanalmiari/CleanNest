@@ -22,6 +22,7 @@ export interface PublicUser {
 export interface Address {
   id: string;
   customerId: string;
+  serviceAreaId?: string;
   label: string;
   city: string;
   area: string;
@@ -31,7 +32,6 @@ export interface Address {
   apartment?: string;
   isDefault: boolean;
 }
-
 
 export interface UpdateProfileInput {
   name?: string;

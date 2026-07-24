@@ -19,13 +19,13 @@ async function requireAdmin() {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     await requireAdmin();
-    const { id } = await params;
+    const { bookingId } = await params;
 
-    const result = await getBookingById(id);
+    const result = await getBookingById(bookingId);
     return successResponse(result);
   } catch (error) {
     return errorResponse(error);

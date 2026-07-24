@@ -7,6 +7,7 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
+import { createServiceSchema } from "@/validators/serviceValidator";
 import {
   getAllServices,
   createService,
@@ -47,7 +48,8 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json().catch(() => ({}));
-    const service = await createService(body);
+    const input = createServiceSchema.parse(body);
+    const service = await createService(input);
 
     return successResponse(service, 201);
   } catch (error) {

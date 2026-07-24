@@ -8,6 +8,7 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
+import { updateServiceSchema } from "@/validators/serviceValidator";
 import {
   getServiceById,
   updateService,
@@ -46,7 +47,8 @@ export async function PATCH(
     const { id } = await params;
 
     const body = await request.json().catch(() => ({}));
-    const service = await updateService(id, body);
+    const input = updateServiceSchema.parse(body);
+    const service = await updateService(id, input);
 
     return successResponse(service);
   } catch (error) {

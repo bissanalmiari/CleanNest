@@ -1,21 +1,16 @@
-// Supabase Storage config, used for profile avatar uploads.
-// Requires: npm install @supabase/supabase-js
-// Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_AVATAR_BUCKET
-//
-// Uses the SERVICE ROLE key (not the anon key) because this only ever runs
-// server-side, inside a Route Handler — it needs to bypass Storage RLS to
-// write into another user's avatar path safely, after we've already
-// verified the caller's identity via requireUser().
+
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 export const AVATAR_BUCKET = process.env.SUPABASE_AVATAR_BUCKET || "avatars";
+export const REVIEW_BUCKET = process.env.SUPABASE_REVIEW_BUCKET || "review-images";
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.warn(
-    "[supabase] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set — avatar uploads will fail"
+    "[supabase] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set — uploads will fail"
   );
 }
 
@@ -29,33 +24,55 @@ const EXTENSION_BY_MIME: Record<string, string> = {
   "image/webp": "webp",
 };
 
+export function extensionForMime(mimeType: string): string {
+  return EXTENSION_BY_MIME[mimeType] ?? "jpg";
+}
+
+/** Generic upload into any bucket/path — the building block the two helpers below use. */
+async function uploadToBucket(
+  bucket: string,
+  path: string,
+  buffer: Buffer,
+  mimeType: string,
+  options: { upsert: boolean }
+): Promise<{ url: string; path: string }> {
+  const { error } = await supabaseAdmin.storage.from(bucket).upload(path, buffer, {
+    contentType: mimeType,
+    upsert: options.upsert,
+  });
+
+  if (error) {
+    throw new Error(`Failed to upload to ${bucket}: ${error.message}`);
+  }
+
+  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
+  return { url: `${data.publicUrl}?v=${Date.now()}`, path };
+}
+
 /**
- * Uploads a profile picture to the `avatars` bucket at a per-user path
- * (avatars/{userId}.{ext}), overwriting any previous avatar for that user,
- * and returns its public URL.
+ * Uploads a profile picture to the avatars bucket at a per-user path
+ * (avatars/{userId}.{ext}), overwriting any previous avatar for that user.
  */
 export async function uploadAvatarToSupabase(
   userId: string,
   buffer: Buffer,
   mimeType: string
 ): Promise<{ url: string; path: string }> {
-  const ext = EXTENSION_BY_MIME[mimeType] ?? "jpg";
-  const path = `${userId}.${ext}`;
+  const path = `${userId}.${extensionForMime(mimeType)}`;
+  return uploadToBucket(AVATAR_BUCKET, path, buffer, mimeType, { upsert: true });
+}
 
-  const { error } = await supabaseAdmin.storage.from(AVATAR_BUCKET).upload(path, buffer, {
-    contentType: mimeType,
-    upsert: true, // overwrite the previous avatar for this user
-  });
-
-  if (error) {
-    throw new Error(`Failed to upload avatar: ${error.message}`);
-  }
-
-  const { data } = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(path);
-
-  // Cache-bust so the browser/CDN doesn't keep showing the old image after
-  // an overwrite — same path, new content, different query string.
-  const url = `${data.publicUrl}?v=${Date.now()}`;
-
-  return { url, path };
+/**
+ * Uploads a single before/after review photo to the review-images bucket, at
+ * review-images/{bookingId}/{before|after}-{timestamp}.{ext}. Never overwrites
+ * — each photo gets its own unique path, since a review can have several.
+ */
+export async function uploadReviewImageToSupabase(
+  bookingId: string,
+  slot: "before" | "after",
+  buffer: Buffer,
+  mimeType: string
+): Promise<{ url: string; path: string }> {
+  const path = `${bookingId}/${slot}-${Date.now()}.${extensionForMime(mimeType)}`;
+  return uploadToBucket(REVIEW_BUCKET, path, buffer, mimeType, { upsert: false });
 }

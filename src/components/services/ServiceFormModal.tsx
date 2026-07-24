@@ -1,7 +1,4 @@
 // src/components/services/ServiceFormModal.tsx
-// Shared modal used for both creating and editing a service. A single
-// component keeps the two flows visually and behaviorally identical.
-
 "use client";
 
 import { useState } from "react";
@@ -10,9 +7,12 @@ import { X, Loader2 } from "lucide-react";
 export interface ServiceFormData {
   _id?: string;
   name: string;
+  slug: string;
+  shortDescription: string;
+  description: string;
   category: string;
-  basePrice: number;
-  baseDurationMinutes: number;
+  price: number;
+  durationMinutes: number;
   isActive: boolean;
 }
 
@@ -25,9 +25,12 @@ interface ServiceFormModalProps {
 
 interface FormState {
   name: string;
+  slug: string;
+  shortDescription: string;
+  description: string;
   category: string;
-  basePrice: string;
-  baseDurationMinutes: string;
+  price: string;
+  durationMinutes: string;
   isActive: boolean;
 }
 
@@ -35,19 +38,33 @@ type FieldErrors = Partial<Record<keyof FormState, string>>;
 
 const EMPTY_FORM: FormState = {
   name: "",
+  slug: "",
+  shortDescription: "",
+  description: "",
   category: "",
-  basePrice: "",
-  baseDurationMinutes: "",
+  price: "",
+  durationMinutes: "",
   isActive: true,
 };
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 function toFormState(data?: ServiceFormData): FormState {
   if (!data) return EMPTY_FORM;
   return {
     name: data.name,
+    slug: data.slug,
+    shortDescription: data.shortDescription,
+    description: data.description,
     category: data.category,
-    basePrice: String(data.basePrice),
-    baseDurationMinutes: String(data.baseDurationMinutes),
+    price: String(data.price),
+    durationMinutes: String(data.durationMinutes),
     isActive: data.isActive,
   };
 }
@@ -59,28 +76,46 @@ export default function ServiceFormModal({
   onSuccess,
 }: ServiceFormModalProps) {
   const [form, setForm] = useState<FormState>(toFormState(initialData));
+  const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleNameChange = (value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      name: value,
+      slug: slugTouched ? prev.slug : slugify(value),
+    }));
+  };
 
   const validate = (): boolean => {
     const nextErrors: FieldErrors = {};
 
     if (!form.name.trim()) nextErrors.name = "Name is required";
+    if (!form.slug.trim()) {
+      nextErrors.slug = "Slug is required";
+    } else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) {
+      nextErrors.slug = "Use lowercase letters, numbers, and hyphens only";
+    }
+    if (!form.shortDescription.trim()) {
+      nextErrors.shortDescription = "Short description is required";
+    } else if (form.shortDescription.trim().length > 180) {
+      nextErrors.shortDescription = "Short description cannot exceed 180 characters";
+    }
+    if (!form.description.trim()) {
+      nextErrors.description = "Description is required";
+    }
     if (!form.category.trim()) nextErrors.category = "Category is required";
 
-    const price = Number(form.basePrice);
-    if (!form.basePrice || Number.isNaN(price) || price <= 0) {
-      nextErrors.basePrice = "Enter a price greater than 0";
+    const price = Number(form.price);
+    if (!form.price || Number.isNaN(price) || price <= 0) {
+      nextErrors.price = "Enter a price greater than 0";
     }
 
-    const duration = Number(form.baseDurationMinutes);
-    if (
-      !form.baseDurationMinutes ||
-      Number.isNaN(duration) ||
-      duration <= 0
-    ) {
-      nextErrors.baseDurationMinutes = "Enter a duration greater than 0";
+    const duration = Number(form.durationMinutes);
+    if (!form.durationMinutes || Number.isNaN(duration) || duration < 30) {
+      nextErrors.durationMinutes = "Duration must be at least 30 minutes";
     }
 
     setErrors(nextErrors);
@@ -96,9 +131,12 @@ export default function ServiceFormModal({
 
     const payload = {
       name: form.name.trim(),
+      slug: form.slug.trim(),
+      shortDescription: form.shortDescription.trim(),
+      description: form.description.trim(),
       category: form.category.trim(),
-      basePrice: Number(form.basePrice),
-      baseDurationMinutes: Number(form.baseDurationMinutes),
+      price: Number(form.price),
+      durationMinutes: Number(form.durationMinutes),
       isActive: form.isActive,
     };
 
@@ -114,25 +152,27 @@ export default function ServiceFormModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const json: { success: boolean; error?: string } = await res.json();
+      const json: { success: boolean; error?: string; issues?: Record<string, string> } =
+        await res.json();
 
       if (!json.success) {
+        if (json.issues) {
+          setErrors(json.issues as FieldErrors);
+        }
         throw new Error(json.error ?? "Failed to save service");
       }
 
       onSuccess();
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "Failed to save service"
-      );
+      setSubmitError(err instanceof Error ? err.message : "Failed to save service");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-card border border-navy/[0.06] bg-surface shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 p-4 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-lg overflow-hidden rounded-card border border-navy/[0.06] bg-surface shadow-2xl my-8">
         <div className="flex items-center justify-between border-b border-navy/[0.06] px-6 py-4">
           <h2 className="font-heading text-lg font-semibold text-navy">
             {mode === "create" ? "Add Service" : "Edit Service"}
@@ -146,7 +186,7 @@ export default function ServiceFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
           {submitError && (
             <div className="rounded-xl border border-status-cancelled/20 bg-status-cancelled/5 px-3.5 py-2.5 text-sm font-medium text-status-cancelled">
               {submitError}
@@ -160,13 +200,68 @@ export default function ServiceFormModal({
             <input
               type="text"
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => handleNameChange(e.target.value)}
               className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 px-3.5 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
               placeholder="Standard Home Cleaning"
             />
             {errors.name && (
+              <p className="mt-1 text-xs font-medium text-status-cancelled">{errors.name}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-navy/50">
+              Slug
+            </label>
+            <input
+              type="text"
+              value={form.slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setForm({ ...form, slug: e.target.value });
+              }}
+              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 px-3.5 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
+              placeholder="standard-home-cleaning"
+            />
+            {errors.slug && (
+              <p className="mt-1 text-xs font-medium text-status-cancelled">{errors.slug}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-navy/50">
+              Short Description
+            </label>
+            <input
+              type="text"
+              value={form.shortDescription}
+              onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
+              maxLength={180}
+              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 px-3.5 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
+              placeholder="Reliable, thorough home cleaning"
+            />
+            {errors.shortDescription && (
               <p className="mt-1 text-xs font-medium text-status-cancelled">
-                {errors.name}
+                {errors.shortDescription}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-navy/50">
+              Description
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={4}
+              maxLength={3000}
+              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 px-3.5 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
+              placeholder="Full details of what's included in this service..."
+            />
+            {errors.description && (
+              <p className="mt-1 text-xs font-medium text-status-cancelled">
+                {errors.description}
               </p>
             )}
           </div>
@@ -183,32 +278,26 @@ export default function ServiceFormModal({
               placeholder="Residential"
             />
             {errors.category && (
-              <p className="mt-1 text-xs font-medium text-status-cancelled">
-                {errors.category}
-              </p>
+              <p className="mt-1 text-xs font-medium text-status-cancelled">{errors.category}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-navy/50">
-                Base Price ($)
+                Price ($)
               </label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
-                value={form.basePrice}
-                onChange={(e) =>
-                  setForm({ ...form, basePrice: e.target.value })
-                }
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
                 className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 px-3.5 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
                 placeholder="80"
               />
-              {errors.basePrice && (
-                <p className="mt-1 text-xs font-medium text-status-cancelled">
-                  {errors.basePrice}
-                </p>
+              {errors.price && (
+                <p className="mt-1 text-xs font-medium text-status-cancelled">{errors.price}</p>
               )}
             </div>
 
@@ -218,18 +307,16 @@ export default function ServiceFormModal({
               </label>
               <input
                 type="number"
-                min="0"
+                min="30"
                 step="5"
-                value={form.baseDurationMinutes}
-                onChange={(e) =>
-                  setForm({ ...form, baseDurationMinutes: e.target.value })
-                }
+                value={form.durationMinutes}
+                onChange={(e) => setForm({ ...form, durationMinutes: e.target.value })}
                 className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 px-3.5 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
                 placeholder="120"
               />
-              {errors.baseDurationMinutes && (
+              {errors.durationMinutes && (
                 <p className="mt-1 text-xs font-medium text-status-cancelled">
-                  {errors.baseDurationMinutes}
+                  {errors.durationMinutes}
                 </p>
               )}
             </div>
@@ -239,9 +326,7 @@ export default function ServiceFormModal({
             <input
               type="checkbox"
               checked={form.isActive}
-              onChange={(e) =>
-                setForm({ ...form, isActive: e.target.checked })
-              }
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
               className="h-4 w-4 rounded border-navy/20 text-primary focus:ring-primary/30"
             />
             Active (visible to customers)
