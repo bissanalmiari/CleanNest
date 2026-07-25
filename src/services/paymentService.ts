@@ -79,12 +79,13 @@ export async function listPaymentsForCustomer(
     "_id"
   );
 
-  const match: Record<string, unknown> = {
+  const customerMatch: Record<string, unknown> = {
     bookingId: { $in: customerBookingIds },
   };
+  const match: Record<string, unknown> = { ...customerMatch };
   if (filters.status) match.status = filters.status;
 
-  const [payments, total] = await Promise.all([
+  const [payments, total, summary] = await Promise.all([
     Payment.find(match)
       .populate({
         path: "bookingId",
@@ -95,9 +96,19 @@ export async function listPaymentsForCustomer(
       .skip((page - 1) * limit)
       .limit(limit),
     Payment.countDocuments(match),
+    Payment.aggregate([
+      { $match: customerMatch },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          total: { $sum: "$amount" },
+        },
+      },
+    ]),
   ]);
 
-  return { payments, total, page, limit };
+  return { payments, total, page, limit, summary };
 }
 
 /** Returns a single payment, guaranteeing it belongs to this customer. */
@@ -251,7 +262,6 @@ export async function getAllPayments(filters: AdminPaymentListFilters = {}) {
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
 
   const match: Record<string, unknown> = {};
-  if (filters.status) match.status = filters.status;
   if (filters.method) match.method = filters.method;
 
   if (filters.dateFrom || filters.dateTo) {
@@ -277,6 +287,11 @@ export async function getAllPayments(filters: AdminPaymentListFilters = {}) {
     ];
   }
 
+  // Keep the finance summary scoped to search, method, and date filters while
+  // allowing the status tabs to continue showing every available status.
+  const summaryMatch = { ...match };
+  if (filters.status) match.status = filters.status;
+
   const [payments, total, summary] = await Promise.all([
     Payment.find(match)
       .populate({
@@ -292,12 +307,20 @@ export async function getAllPayments(filters: AdminPaymentListFilters = {}) {
       .limit(limit),
     Payment.countDocuments(match),
     Payment.aggregate([
-      { $match: match },
+      { $match: summaryMatch },
       {
         $group: {
           _id: "$status",
           count: { $sum: 1 },
-          total: { $sum: "$amount" },
+          total: {
+            $sum: {
+              $cond: [
+                { $eq: ["$status", "refunded"] },
+                { $ifNull: ["$refundAmount", "$amount"] },
+                "$amount",
+              ],
+            },
+          },
         },
       },
     ]),

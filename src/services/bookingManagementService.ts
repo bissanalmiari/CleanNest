@@ -209,6 +209,15 @@ export async function assignCleaners(
     throw new AppError("One or more selected cleaners are unavailable", 422);
   }
 
+  const existingIds = new Set(
+    existingAssignments.map((assignment) => String(assignment.cleanerId))
+  );
+  const newCleanerIds = uniqueCleanerIds.filter((id) => !existingIds.has(id));
+
+  if (newCleanerIds.length === 0) {
+    throw new AppError("The selected cleaners are already assigned", 409);
+  }
+
   // A fresh assignment on a still-pending booking implicitly confirms it —
   // but not for an unpaid card booking; payment must clear first.
   if (booking.status === "pending") {
@@ -225,13 +234,14 @@ export async function assignCleaners(
     const previousStatus = booking.status;
     booking.status = "confirmed";
     await booking.save();
-  const existingIds = new Set(
-    existingAssignments.map((assignment) => String(assignment.cleanerId))
-  );
-  const newCleanerIds = uniqueCleanerIds.filter((id) => !existingIds.has(id));
 
-  if (newCleanerIds.length === 0) {
-    throw new AppError("The selected cleaners are already assigned", 409);
+    await BookingStatusHistory.create({
+      bookingId,
+      previousStatus,
+      newStatus: "confirmed",
+      changedByUserId: assignedByUserId,
+      reason: "Booking confirmed when cleaners were assigned.",
+    });
   }
 
   const assignments = await CleanerAssignment.insertMany(
@@ -282,6 +292,8 @@ export async function changeBookingStatus(
       "This booking is paid by card and cannot be confirmed until the customer completes payment.",
       409
     );
+  }
+
   if (currentStatus === "pending" && newStatus === "confirmed") {
     const assignedCleanerCount = await CleanerAssignment.countDocuments({
       bookingId,

@@ -215,7 +215,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 24,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -231,7 +231,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -246,7 +246,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 17,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -260,7 +260,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 9,
-            repeat: Infinity,
+            repeat: 0,
             repeatDelay: 2,
             ease: "easeInOut",
           }}
@@ -287,7 +287,7 @@ export default function ReviewsSection() {
               transition={{
                 duration: particle.duration,
                 delay: particle.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -330,7 +330,7 @@ export default function ReviewsSection() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -381,6 +381,52 @@ export default function ReviewsSection() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {trustItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  className="flex items-center gap-3 rounded-2xl border border-primary/10 bg-white p-4 shadow-sm"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm font-bold text-navy">
+                    {item.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="relative mt-12 overflow-hidden rounded-[2rem] bg-navy px-6 py-9 shadow-[0_28px_80px_rgba(11,37,69,0.24)] sm:px-9 lg:px-12">
+            <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-300/10" />
+            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
+                  <Sparkles className="h-4 w-4" />
+                  Experience it yourself
+                </div>
+                <h3 className="mt-3 max-w-2xl font-heading text-2xl font-black text-white sm:text-3xl">
+                  Join customers who trust CleanNest with their spaces.
+                </h3>
+                <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-blue-100/65">
+                  Select your service, choose a convenient time, and enjoy a
+                  simpler cleaning experience.
+                </p>
+              </div>
+
+              <Link
+                href="/book-service"
+                className="group inline-flex min-h-[54px] shrink-0 items-center justify-center gap-3 rounded-xl bg-white px-7 font-black text-primary shadow-xl transition hover:bg-cyan-50"
+              >
+                Book Your Cleaning
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
           </div>
         </div>
 

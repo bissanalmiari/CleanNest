@@ -54,7 +54,7 @@ function getRangeStart(range: ReportRange): Date | null {
 }
 
 function dateFormatForRange(range: ReportRange): string {
-  return range === "year" ? "%Y-%m" : "%Y-%m-%d";
+  return range === "year" || range === "all" ? "%Y-%m" : "%Y-%m-%d";
 }
 
 /* ------------------------------------------------------------------ */

@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   Suspense,
   useState,
-  type FormEvent,
 } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -13,7 +12,6 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  Eye,
   KeyRound,
   LockKeyhole,
   Mail,

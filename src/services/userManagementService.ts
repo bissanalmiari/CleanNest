@@ -7,6 +7,7 @@ import "server-only";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import Booking from "@/models/Booking";
+import CleanerAssignment from "@/models/CleanerAssignment";
 import { AppError, NotFoundError } from "@/lib/apiError";
 
 /* ------------------------------------------------------------------ */
@@ -42,7 +43,12 @@ export async function getAllUsers(filters: UserListFilters = {}) {
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(100, Math.max(1, limit));
 
-  const [users, total] = await Promise.all([
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const [users, total, roleSummary, statusSummary, newThisMonth] =
+    await Promise.all([
     User.find(match)
       .select("-passwordHash")
       .sort({ createdAt: -1 })
@@ -51,9 +57,41 @@ export async function getAllUsers(filters: UserListFilters = {}) {
       .lean()
       .exec(),
     User.countDocuments(match),
+    User.aggregate([
+      { $group: { _id: "$role", count: { $sum: 1 } } },
+    ]),
+    User.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+    User.countDocuments({ createdAt: { $gte: startOfMonth } }),
   ]);
 
-  return { users, total, page: safePage, limit: safeLimit };
+  const roleCounts = new Map(
+    roleSummary.map((item) => [String(item._id), Number(item.count)])
+  );
+  const statusCounts = new Map(
+    statusSummary.map((item) => [String(item._id), Number(item.count)])
+  );
+
+  return {
+    users,
+    total,
+    page: safePage,
+    limit: safeLimit,
+    summary: {
+      totalUsers: roleSummary.reduce(
+        (sum, item) => sum + Number(item.count),
+        0
+      ),
+      admins: roleCounts.get("admin") ?? 0,
+      customers: roleCounts.get("customer") ?? 0,
+      cleaners: roleCounts.get("cleaner") ?? 0,
+      active: statusCounts.get("active") ?? 0,
+      suspended: statusCounts.get("suspended") ?? 0,
+      pendingVerification: statusCounts.get("pending_verification") ?? 0,
+      newThisMonth,
+    },
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -69,11 +107,12 @@ export async function getUserById(id: string) {
     throw new NotFoundError("User not found");
   }
 
-  // Booking count only makes sense for customers, but computing it is
-  // harmless (and simply returns 0) for other roles too.
-  const bookingCount = await Booking.countDocuments({ customerId: id });
+  const [bookingCount, assignmentCount] = await Promise.all([
+    Booking.countDocuments({ customerId: id }),
+    CleanerAssignment.countDocuments({ cleanerId: id }),
+  ]);
 
-  return { user, bookingCount };
+  return { user, bookingCount, assignmentCount };
 }
 
 /* ------------------------------------------------------------------ */

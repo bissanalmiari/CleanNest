@@ -1,20 +1,34 @@
-// src/app/(admin)/admin-reports/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AlertCircle,
+  ArrowUpRight,
   BarChart3,
-  DollarSign,
-  Receipt,
-  TrendingUp,
-  ClipboardList,
+  CalendarCheck2,
   CheckCircle2,
+  CircleDollarSign,
+  ClipboardList,
+  Clock3,
+  CreditCard,
+  RefreshCw,
   Sparkles,
+  Target,
   Trophy,
+  TrendingUp,
+  XCircle,
 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+
 import RevenueTrendChart from "@/components/reports/RevenueTrendChart";
 
 type ReportRange = "week" | "month" | "year" | "all";
+type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -35,17 +49,11 @@ interface RevenueReport {
   series: RevenuePoint[];
 }
 
-type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
-
 interface BookingReport {
   totalBookings: number;
   statusBreakdown: Record<BookingStatus, number>;
   completionRate: number;
+  series: Array<{ date: string; count: number }>;
 }
 
 interface PopularServiceRow {
@@ -56,348 +64,716 @@ interface PopularServiceRow {
   revenue: number;
 }
 
-const RANGE_OPTIONS: { value: ReportRange; label: string }[] = [
-  { value: "week", label: "7 Days" },
-  { value: "month", label: "30 Days" },
-  { value: "year", label: "12 Months" },
-  { value: "all", label: "All Time" },
+const RANGE_OPTIONS: Array<{
+  value: ReportRange;
+  label: string;
+  shortLabel: string;
+}> = [
+  { value: "week", label: "Last 7 days", shortLabel: "7D" },
+  { value: "month", label: "Last 30 days", shortLabel: "30D" },
+  { value: "year", label: "Last 12 months", shortLabel: "12M" },
+  { value: "all", label: "All time", shortLabel: "All" },
 ];
+
+const EMPTY_BREAKDOWN: Record<BookingStatus, number> = {
+  pending: 0,
+  confirmed: 0,
+  in_progress: 0,
+  completed: 0,
+  cancelled: 0,
+};
 
 const STATUS_META: Record<
   BookingStatus,
-  { label: string; badgeClass: string; icon: typeof ClipboardList }
+  {
+    label: string;
+    icon: typeof ClipboardList;
+    color: string;
+    bar: string;
+    dot: string;
+  }
 > = {
   pending: {
     label: "Pending",
-    badgeClass: "bg-status-pending/10 text-status-pending",
-    icon: ClipboardList,
+    icon: Clock3,
+    color: "bg-amber-50 text-amber-700",
+    bar: "bg-amber-400",
+    dot: "#f59e0b",
   },
   confirmed: {
     label: "Confirmed",
-    badgeClass: "bg-status-confirmed/10 text-status-confirmed",
-    icon: CheckCircle2,
+    icon: CalendarCheck2,
+    color: "bg-blue-50 text-blue-700",
+    bar: "bg-blue-500",
+    dot: "#3b82f6",
   },
   in_progress: {
-    label: "In Progress",
-    badgeClass: "bg-status-inProgress/10 text-status-inProgress",
-    icon: TrendingUp,
+    label: "In progress",
+    icon: Sparkles,
+    color: "bg-cyan-50 text-cyan-700",
+    bar: "bg-cyan-500",
+    dot: "#06b6d4",
   },
   completed: {
     label: "Completed",
-    badgeClass: "bg-status-confirmed/10 text-status-confirmed",
     icon: CheckCircle2,
+    color: "bg-emerald-50 text-emerald-700",
+    bar: "bg-emerald-500",
+    dot: "#10b981",
   },
   cancelled: {
     label: "Cancelled",
-    badgeClass: "bg-status-cancelled/10 text-status-cancelled",
-    icon: ClipboardList,
+    icon: XCircle,
+    color: "bg-red-50 text-red-700",
+    bar: "bg-red-400",
+    dot: "#f87171",
   },
 };
 
+function formatMoney(value: number, compact = false) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: compact ? "compact" : "standard",
+    maximumFractionDigits: compact ? 1 : 2,
+  }).format(value);
+}
+
+function percent(value: number) {
+  return `${Math.min(100, Math.max(0, value)).toFixed(
+    Number.isInteger(value) ? 0 : 1,
+  )}%`;
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={index}
+          className="h-[126px] animate-pulse rounded-[1.5rem] border border-white/10 bg-white/[0.07]"
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function AdminReportsPage() {
+  const reduceMotion = useReducedMotion();
   const [range, setRange] = useState<ReportRange>("month");
-
   const [revenue, setRevenue] = useState<RevenueReport | null>(null);
-  const [revenueLoading, setRevenueLoading] = useState(true);
-
   const [bookings, setBookings] = useState<BookingReport | null>(null);
-  const [bookingsLoading, setBookingsLoading] = useState(true);
-
-  const [popularServices, setPopularServices] = useState<PopularServiceRow[]>([]);
-  const [servicesLoading, setServicesLoading] = useState(true);
-
+  const [popularServices, setPopularServices] = useState<PopularServiceRow[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchRevenue = useCallback(async (r: ReportRange) => {
-    setRevenueLoading(true);
-    try {
-      const res = await fetch(`/api/admin/reports/revenue?range=${r}`);
-      const json: ApiEnvelope<RevenueReport> = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Failed to load revenue");
-      setRevenue(json.data ?? null);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to load revenue");
-    } finally {
-      setRevenueLoading(false);
-    }
-  }, []);
+  const fetchReports = useCallback(
+    async (currentRange: ReportRange, isRefresh = false) => {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
 
-  const fetchBookings = useCallback(async (r: ReportRange) => {
-    setBookingsLoading(true);
-    try {
-      const res = await fetch(`/api/admin/reports/bookings?range=${r}`);
-      const json: ApiEnvelope<BookingReport> = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Failed to load bookings");
-      setBookings(json.data ?? null);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to load bookings");
-    } finally {
-      setBookingsLoading(false);
-    }
-  }, []);
+      try {
+        const [revenueResponse, bookingsResponse, servicesResponse] =
+          await Promise.all([
+            fetch(`/api/admin/reports/revenue?range=${currentRange}`, {
+              cache: "no-store",
+            }),
+            fetch(`/api/admin/reports/bookings?range=${currentRange}`, {
+              cache: "no-store",
+            }),
+            fetch(
+              `/api/admin/reports/popular-services?range=${currentRange}&limit=6`,
+              { cache: "no-store" },
+            ),
+          ]);
 
-  const fetchPopularServices = useCallback(async (r: ReportRange) => {
-    setServicesLoading(true);
-    try {
-      const res = await fetch(`/api/admin/reports/popular-services?range=${r}&limit=5`);
-      const json: ApiEnvelope<{ services: PopularServiceRow[] }> = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Failed to load services");
-      setPopularServices(json.data?.services ?? []);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to load services");
-    } finally {
-      setServicesLoading(false);
-    }
-  }, []);
+        const [revenueJson, bookingsJson, servicesJson] = (await Promise.all([
+          revenueResponse.json(),
+          bookingsResponse.json(),
+          servicesResponse.json(),
+        ])) as [
+          ApiEnvelope<RevenueReport>,
+          ApiEnvelope<BookingReport>,
+          ApiEnvelope<{ services: PopularServiceRow[] }>,
+        ];
+
+        if (!revenueResponse.ok || !revenueJson.success) {
+          throw new Error(revenueJson.error ?? "Revenue report failed.");
+        }
+        if (!bookingsResponse.ok || !bookingsJson.success) {
+          throw new Error(bookingsJson.error ?? "Booking report failed.");
+        }
+        if (!servicesResponse.ok || !servicesJson.success) {
+          throw new Error(servicesJson.error ?? "Service report failed.");
+        }
+
+        setRevenue(revenueJson.data ?? null);
+        setBookings(bookingsJson.data ?? null);
+        setPopularServices(servicesJson.data?.services ?? []);
+        setErrorMessage(null);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Reports could not be loaded.",
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    fetchRevenue(range);
-    fetchBookings(range);
-    fetchPopularServices(range);
-  }, [range, fetchRevenue, fetchBookings, fetchPopularServices]);
+    void fetchReports(range);
+  }, [fetchReports, range]);
 
-  const maxPopularCount = Math.max(1, ...popularServices.map((s) => s.bookingCount));
+  const breakdown = bookings?.statusBreakdown ?? EMPTY_BREAKDOWN;
+  const activePipeline =
+    breakdown.pending + breakdown.confirmed + breakdown.in_progress;
+  const cancellationRate =
+    bookings && bookings.totalBookings > 0
+      ? (breakdown.cancelled / bookings.totalBookings) * 100
+      : 0;
+  const maximumServiceBookings = Math.max(
+    1,
+    ...popularServices.map((service) => service.bookingCount),
+  );
+  const totalServiceRevenue = popularServices.reduce(
+    (sum, service) => sum + service.revenue,
+    0,
+  );
+  const currentRangeLabel =
+    RANGE_OPTIONS.find((option) => option.value === range)?.label ??
+    "Selected period";
+
+  const donutBackground = useMemo(() => {
+    const total = Math.max(1, bookings?.totalBookings ?? 0);
+    let cursor = 0;
+    const segments = (
+      Object.keys(STATUS_META) as BookingStatus[]
+    ).map((status) => {
+      const start = cursor;
+      cursor += (breakdown[status] / total) * 100;
+      return `${STATUS_META[status].dot} ${start}% ${cursor}%`;
+    });
+    return `conic-gradient(${segments.join(", ")})`;
+  }, [bookings?.totalBookings, breakdown]);
 
   return (
-    <div className="min-h-screen bg-surface p-6 sm:p-8">
-      <div className="mx-auto max-w-6xl space-y-8">
-        {/* Header */}
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-[0_6px_16px_rgba(30,111,217,0.35)]">
-            <BarChart3 size={21} strokeWidth={2.25} />
-          </span>
-          <div className="min-w-0">
-            <h1 className="font-heading text-2xl font-semibold tracking-tight text-navy">
-              Reports
-            </h1>
-            <p className="mt-0.5 text-sm text-navy/55">
-              Revenue, booking activity, and service performance at a glance.
-            </p>
-          </div>
+    <main className="relative min-h-screen overflow-hidden bg-[#f3f7fc] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(30,111,217,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(30,111,217,0.045) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
+      />
+      <div className="pointer-events-none absolute -right-40 top-24 h-[500px] w-[500px] rounded-full bg-indigo-200/25 blur-3xl" />
 
-          <div className="ml-auto flex gap-1 rounded-full border border-navy/[0.06] bg-surface-soft p-1">
-            {RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setRange(opt.value)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                  range === opt.value
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-navy/60 hover:text-navy"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+      <div className="relative mx-auto max-w-[1450px] space-y-6">
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(125deg,#071d38_0%,#0b315d_52%,#2749a5_100%)] p-6 text-white shadow-[0_30px_90px_rgba(11,37,69,0.22)] sm:p-8 lg:p-10"
+        >
+          <div className="absolute -right-24 -top-32 h-80 w-80 rounded-full border border-cyan-200/20 bg-cyan-300/10" />
+          <div className="absolute -bottom-48 left-[28%] h-96 w-96 rounded-full bg-indigo-400/25 blur-3xl" />
+
+          <div className="relative">
+            <div className="flex flex-col gap-7 xl:flex-row xl:items-start xl:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-4 py-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-cyan-300" />
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-100">
+                    Business intelligence
+                  </p>
+                </div>
+                <h1 className="mt-6 max-w-3xl font-heading text-4xl font-black leading-[1.04] tracking-[-0.045em] sm:text-5xl">
+                  Performance you can read.
+                  <span className="block text-cyan-300">
+                    Decisions you can trust.
+                  </span>
+                </h1>
+                <p className="mt-5 max-w-2xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
+                  Follow revenue, booking health, and service demand through
+                  one focused operational view.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div
+                  role="tablist"
+                  aria-label="Report date range"
+                  className="flex max-w-full gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.07] p-1.5"
+                >
+                  {RANGE_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={range === option.value}
+                      onClick={() => setRange(option.value)}
+                      className={`min-h-10 shrink-0 rounded-xl px-3.5 text-xs font-extrabold transition ${
+                        range === option.value
+                          ? "bg-white text-navy shadow-[0_10px_25px_rgba(0,0,0,0.16)]"
+                          : "text-blue-100/65 hover:bg-white/[0.08] hover:text-white"
+                      }`}
+                    >
+                      <span className="sm:hidden">{option.shortLabel}</span>
+                      <span className="hidden sm:inline">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void fetchReports(range, true)}
+                  disabled={refreshing}
+                  className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.07] px-4 text-xs font-extrabold text-blue-100 transition hover:bg-white/[0.12] disabled:cursor-wait disabled:opacity-60"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 text-cyan-300 ${
+                      refreshing ? "animate-spin" : ""
+                    }`}
+                  />
+                  Refresh data
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-9">
+              {loading && !revenue && !bookings ? (
+                <DashboardSkeleton />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <ExecutiveMetric
+                    icon={CircleDollarSign}
+                    label="Revenue"
+                    value={formatMoney(revenue?.totalRevenue ?? 0, true)}
+                    note={`${revenue?.transactionCount ?? 0} paid transactions`}
+                    accent="cyan"
+                  />
+                  <ExecutiveMetric
+                    icon={CreditCard}
+                    label="Average payment"
+                    value={formatMoney(
+                      revenue?.averageTransactionValue ?? 0,
+                    )}
+                    note="Per successful transaction"
+                    accent="blue"
+                  />
+                  <ExecutiveMetric
+                    icon={ClipboardList}
+                    label="Total bookings"
+                    value={(bookings?.totalBookings ?? 0).toLocaleString()}
+                    note={`${activePipeline} currently active`}
+                    accent="violet"
+                  />
+                  <ExecutiveMetric
+                    icon={Target}
+                    label="Completion rate"
+                    value={percent(bookings?.completionRate ?? 0)}
+                    note={`${breakdown.completed} completed services`}
+                    accent="emerald"
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </motion.section>
 
         {errorMessage && (
-          <div className="rounded-card border border-status-cancelled/20 bg-status-cancelled/5 px-4 py-3 text-sm font-medium text-status-cancelled">
-            {errorMessage}
+          <div className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 text-sm font-semibold text-red-600">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              {errorMessage}
+            </div>
+            <button
+              type="button"
+              onClick={() => void fetchReports(range)}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-xs font-extrabold text-white"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry reports
+            </button>
           </div>
         )}
 
-        {/* Revenue section */}
-        <section className="space-y-4">
-          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-navy">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-light text-primary">
-              <DollarSign size={15} />
-            </span>
-            Revenue
-          </h2>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="space-y-4 rounded-card border border-navy/[0.06] bg-surface p-5 shadow-card lg:col-span-1">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="rounded-[2rem] border border-slate-200/80 bg-white p-5 shadow-[0_20px_60px_rgba(11,37,69,0.08)] sm:p-7">
+            <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-medium text-navy/45">Total Revenue</p>
-                {revenueLoading ? (
-                  <div className="mt-1.5 h-7 w-24 animate-pulse rounded bg-navy/[0.06]" />
-                ) : (
-                  <p className="mt-1 font-heading text-2xl font-bold text-navy">
-                    ${revenue?.totalRevenue.toLocaleString() ?? 0}
-                  </p>
-                )}
-              </div>
-              <div>
-                <p className="flex items-center gap-1.5 text-xs font-medium text-navy/45">
-                  <Receipt size={12} /> Transactions
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
+                  Revenue movement
                 </p>
-                {revenueLoading ? (
-                  <div className="mt-1.5 h-6 w-16 animate-pulse rounded bg-navy/[0.06]" />
-                ) : (
-                  <p className="mt-1 font-heading text-lg font-semibold text-navy">
-                    {revenue?.transactionCount ?? 0}
-                  </p>
-                )}
+                <h2 className="mt-2 font-heading text-2xl font-black tracking-[-0.03em] text-navy">
+                  Paid transaction trend
+                </h2>
               </div>
-              <div>
-                <p className="text-xs font-medium text-navy/45">Average Value</p>
-                {revenueLoading ? (
-                  <div className="mt-1.5 h-6 w-16 animate-pulse rounded bg-navy/[0.06]" />
-                ) : (
-                  <p className="mt-1 font-heading text-lg font-semibold text-navy">
-                    ${revenue?.averageTransactionValue.toLocaleString() ?? 0}
-                  </p>
-                )}
+              <div className="rounded-2xl bg-primary-light px-4 py-3 text-right">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.13em] text-primary/60">
+                  Selected range
+                </p>
+                <p className="mt-1 text-xs font-extrabold text-primary">
+                  {currentRangeLabel}
+                </p>
               </div>
             </div>
-
-            <div className="rounded-card border border-navy/[0.06] bg-surface p-5 shadow-card lg:col-span-2">
+            <div className="mt-5">
               <RevenueTrendChart
                 data={revenue?.series ?? []}
-                loading={revenueLoading}
+                loading={loading}
               />
             </div>
           </div>
-        </section>
 
-        {/* Bookings section */}
-        <section className="space-y-4">
-          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-navy">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-light text-primary">
-              <ClipboardList size={15} />
-            </span>
-            Bookings
-          </h2>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            {(Object.keys(STATUS_META) as BookingStatus[]).map((status) => {
-              const meta = STATUS_META[status];
-              const Icon = meta.icon;
-              return (
-                <div
-                  key={status}
-                  className="rounded-card border border-navy/[0.06] bg-surface p-4 shadow-card"
-                >
-                  <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full ${meta.badgeClass}`}
-                  >
-                    <Icon size={15} />
-                  </span>
-                  <p className="mt-2 text-xs font-medium text-navy/45">
-                    {meta.label}
-                  </p>
-                  {bookingsLoading ? (
-                    <div className="mt-1 h-6 w-10 animate-pulse rounded bg-navy/[0.06]" />
-                  ) : (
-                    <p className="font-heading text-xl font-bold text-navy">
-                      {bookings?.statusBreakdown[status] ?? 0}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="rounded-card border border-navy/[0.06] bg-surface p-5 shadow-card">
+          <div className="rounded-[2rem] bg-[linear-gradient(145deg,#0b2545,#154f9e)] p-6 text-white shadow-[0_20px_55px_rgba(11,37,69,0.18)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-navy/45">Completion Rate</p>
-                {bookingsLoading ? (
-                  <div className="mt-1.5 h-7 w-16 animate-pulse rounded bg-navy/[0.06]" />
-                ) : (
-                  <p className="mt-1 font-heading text-2xl font-bold text-navy">
-                    {bookings?.completionRate ?? 0}%
-                  </p>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-300">
+                  Booking health
+                </p>
+                <h2 className="mt-2 font-heading text-xl font-black">
+                  Status distribution
+                </h2>
+              </div>
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.08] text-cyan-300">
+                <BarChart3 className="h-5 w-5" />
+              </span>
+            </div>
+
+            <div className="mt-7 flex items-center gap-6">
+              <div
+                className="relative h-32 w-32 shrink-0 rounded-full"
+                style={{ background: donutBackground }}
+              >
+                <div className="absolute inset-[14px] flex flex-col items-center justify-center rounded-full bg-[#10325a]">
+                  <span className="font-heading text-2xl font-black">
+                    {bookings?.totalBookings ?? 0}
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-blue-100/50">
+                    bookings
+                  </span>
+                </div>
+              </div>
+              <div className="min-w-0 flex-1 space-y-2.5">
+                {(Object.keys(STATUS_META) as BookingStatus[]).map(
+                  (status) => (
+                    <div
+                      key={status}
+                      className="flex items-center justify-between gap-3 text-xs"
+                    >
+                      <span className="flex items-center gap-2 font-semibold text-blue-100/65">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: STATUS_META[status].dot }}
+                        />
+                        {STATUS_META[status].label}
+                      </span>
+                      <span className="font-extrabold text-white">
+                        {breakdown[status]}
+                      </span>
+                    </div>
+                  ),
                 )}
               </div>
-              <p className="text-sm text-navy/50">
-                {bookingsLoading ? "" : `${bookings?.totalBookings ?? 0} total bookings`}
-              </p>
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-navy/[0.06]">
-              <div
-                className="h-full rounded-full bg-status-confirmed transition-all"
-                style={{ width: `${bookings?.completionRate ?? 0}%` }}
+
+            <div className="mt-7 grid grid-cols-2 gap-3 border-t border-white/10 pt-5">
+              <SmallInsight
+                label="Active pipeline"
+                value={String(activePipeline)}
+              />
+              <SmallInsight
+                label="Cancellation"
+                value={percent(cancellationRate)}
               />
             </div>
           </div>
         </section>
 
-        {/* Popular services section */}
-        <section className="space-y-4">
-          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-navy">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-light text-primary">
-              <Sparkles size={15} />
-            </span>
-            Popular Services
-          </h2>
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_20px_60px_rgba(11,37,69,0.08)]">
+            <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-violet-600">
+                  Service demand
+                </p>
+                <h2 className="mt-2 font-heading text-2xl font-black tracking-[-0.03em] text-navy">
+                  Top-performing services
+                </h2>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-violet-700">
+                <Trophy className="h-3.5 w-3.5" />
+                Ranked by bookings
+              </div>
+            </div>
 
-          <div className="overflow-hidden rounded-card border border-navy/[0.06] bg-surface shadow-card">
-            {servicesLoading ? (
-              <div className="space-y-3 p-5">
-                {Array.from({ length: 4 }).map((_, i) => (
+            {loading ? (
+              <div className="space-y-3 p-6">
+                {Array.from({ length: 5 }).map((_, index) => (
                   <div
-                    key={i}
-                    className="h-10 animate-pulse rounded-lg bg-navy/[0.04]"
+                    key={index}
+                    className="h-16 animate-pulse rounded-2xl bg-slate-100"
                   />
                 ))}
               </div>
             ) : popularServices.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-navy/40">
-                <Sparkles size={24} className="text-navy/20" />
-                <span className="text-sm font-medium">
-                  No bookings in this period yet
+              <div className="flex min-h-[340px] flex-col items-center justify-center p-8 text-center">
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-300">
+                  <Sparkles className="h-6 w-6" />
                 </span>
+                <h3 className="mt-4 font-heading text-lg font-bold text-navy">
+                  No service activity yet
+                </h3>
+                <p className="mt-2 text-sm text-slate-500">
+                  Service rankings will appear after bookings are created.
+                </p>
               </div>
             ) : (
-              <ul className="divide-y divide-navy/[0.05]">
-                {popularServices.map((service, i) => (
-                  <li
+              <div className="divide-y divide-slate-100">
+                {popularServices.map((service, index) => (
+                  <ServiceRanking
                     key={service.serviceId}
-                    className="flex items-center gap-4 px-6 py-3.5"
-                  >
-                    <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        i === 0
-                          ? "bg-primary text-white"
-                          : "bg-surface-soft text-navy/50"
-                      }`}
-                    >
-                      {i === 0 ? <Trophy size={14} /> : `#${i + 1}`}
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-navy">
-                        {service.serviceName}
-                      </p>
-                      <p className="text-xs text-navy/45">{service.category}</p>
-                    </div>
-
-                    <div className="w-32 shrink-0">
-                      <div className="h-1.5 overflow-hidden rounded-full bg-navy/[0.06]">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{
-                            width: `${
-                              (service.bookingCount / maxPopularCount) * 100
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="w-20 shrink-0 text-right">
-                      <p className="text-sm font-semibold text-navy">
-                        {service.bookingCount}
-                      </p>
-                      <p className="text-[11px] text-navy/40">bookings</p>
-                    </div>
-
-                    <div className="w-24 shrink-0 text-right">
-                      <p className="text-sm font-semibold text-navy">
-                        ${service.revenue.toLocaleString()}
-                      </p>
-                      <p className="text-[11px] text-navy/40">revenue</p>
-                    </div>
-                  </li>
+                    service={service}
+                    rank={index + 1}
+                    maximumBookings={maximumServiceBookings}
+                  />
                 ))}
-              </ul>
+              </div>
             )}
           </div>
+
+          <aside className="space-y-5">
+            <div className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_rgba(11,37,69,0.08)]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-600">
+                    Operations pulse
+                  </p>
+                  <h2 className="mt-2 font-heading text-xl font-black text-navy">
+                    Key observations
+                  </h2>
+                </div>
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                  <TrendingUp className="h-5 w-5" />
+                </span>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <Observation
+                  icon={Trophy}
+                  title="Demand leader"
+                  value={popularServices[0]?.serviceName ?? "No data yet"}
+                  tone="violet"
+                />
+                <Observation
+                  icon={CheckCircle2}
+                  title="Services completed"
+                  value={breakdown.completed.toLocaleString()}
+                  tone="emerald"
+                />
+                <Observation
+                  icon={CircleDollarSign}
+                  title="Top-service revenue"
+                  value={formatMoney(totalServiceRevenue, true)}
+                  tone="blue"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_rgba(11,37,69,0.08)]">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary">
+                Booking completion
+              </p>
+              <div className="mt-3 flex items-end justify-between gap-4">
+                <p className="font-heading text-4xl font-black tracking-[-0.05em] text-navy">
+                  {percent(bookings?.completionRate ?? 0)}
+                </p>
+                <span className="mb-1 text-xs font-bold text-slate-400">
+                  {breakdown.completed} of{" "}
+                  {Math.max(
+                    0,
+                    (bookings?.totalBookings ?? 0) - breakdown.cancelled,
+                  )}
+                </span>
+              </div>
+              <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                <motion.div
+                  initial={reduceMotion ? false : { width: 0 }}
+                  animate={{
+                    width: `${Math.min(
+                      100,
+                      bookings?.completionRate ?? 0,
+                    )}%`,
+                  }}
+                  transition={{ duration: 0.65, ease: "easeOut" }}
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#10b981,#22d3ee)]"
+                />
+              </div>
+              <p className="mt-4 text-xs font-medium leading-5 text-slate-500">
+                Cancelled bookings are excluded from the completion-rate
+                denominator.
+              </p>
+            </div>
+          </aside>
         </section>
+      </div>
+    </main>
+  );
+}
+
+function ExecutiveMetric({
+  icon: Icon,
+  label,
+  value,
+  note,
+  accent,
+}: {
+  icon: typeof BarChart3;
+  label: string;
+  value: string;
+  note: string;
+  accent: "cyan" | "blue" | "violet" | "emerald";
+}) {
+  const accents = {
+    cyan: "bg-cyan-300 text-navy",
+    blue: "bg-blue-300 text-navy",
+    violet: "bg-violet-300 text-navy",
+    emerald: "bg-emerald-300 text-navy",
+  };
+
+  return (
+    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.08] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <span
+          className={`flex h-10 w-10 items-center justify-center rounded-xl ${accents[accent]}`}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-blue-100/55">
+          {label}
+        </p>
+      </div>
+      <p className="mt-4 font-heading text-2xl font-black tracking-[-0.04em] text-white">
+        {value}
+      </p>
+      <p className="mt-1 text-[10px] font-bold text-blue-100/50">{note}</p>
+    </div>
+  );
+}
+
+function SmallInsight({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-white/[0.07] p-3">
+      <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-blue-100/45">
+        {label}
+      </p>
+      <p className="mt-1.5 font-heading text-lg font-black text-white">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ServiceRanking({
+  service,
+  rank,
+  maximumBookings,
+}: {
+  service: PopularServiceRow;
+  rank: number;
+  maximumBookings: number;
+}) {
+  return (
+    <div className="group grid gap-4 px-5 py-5 transition hover:bg-violet-50/30 sm:grid-cols-[48px_minmax(0,1fr)_110px_120px] sm:items-center sm:px-7">
+      <span
+        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xs font-black ${
+          rank === 1
+            ? "bg-violet-600 text-white shadow-[0_10px_24px_rgba(124,58,237,0.2)]"
+            : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        {rank === 1 ? <Trophy className="h-4 w-4" /> : `#${rank}`}
+      </span>
+
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="truncate font-heading text-sm font-bold text-navy">
+            {service.serviceName}
+          </h3>
+          <ArrowUpRight className="h-3.5 w-3.5 text-slate-300 transition group-hover:text-violet-500" />
+        </div>
+        <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+          {service.category}
+        </p>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-[linear-gradient(90deg,#7c3aed,#22d3ee)]"
+            style={{
+              width: `${(service.bookingCount / maximumBookings) * 100}%`,
+            }}
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+          Bookings
+        </p>
+        <p className="mt-1 font-heading text-lg font-black text-navy">
+          {service.bookingCount}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+          Revenue
+        </p>
+        <p className="mt-1 font-heading text-lg font-black text-navy">
+          {formatMoney(service.revenue, true)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Observation({
+  icon: Icon,
+  title,
+  value,
+  tone,
+}: {
+  icon: typeof Trophy;
+  title: string;
+  value: string;
+  tone: "violet" | "emerald" | "blue";
+}) {
+  const tones = {
+    violet: "bg-violet-50 text-violet-600",
+    emerald: "bg-emerald-50 text-emerald-600",
+    blue: "bg-blue-50 text-blue-600",
+  };
+
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5">
+      <span
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tones[tone]}`}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+          {title}
+        </p>
+        <p className="mt-1 truncate text-sm font-bold text-navy">{value}</p>
       </div>
     </div>
   );

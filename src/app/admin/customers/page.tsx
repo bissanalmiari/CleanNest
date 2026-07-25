@@ -1,22 +1,36 @@
-// src/app/admin/customers/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type MouseEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
-  Search,
-  Users,
-  Mail,
-  Phone,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  UserPlus,
-  Pencil,
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
   Ban,
+  CalendarDays,
   CheckCircle2,
+  ChevronRight,
+  Mail,
+  Pencil,
+  Phone,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Sparkles,
   Trash2,
+  UserCheck,
+  UserPlus,
+  Users,
+  UserX,
 } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+
 import { AccountStatusBadge } from "@/components/users/UserBadges";
 import CustomerFormModal, {
   type CustomerFormValues,
@@ -27,6 +41,13 @@ interface CustomerListRow extends CustomerRow {
   status: string;
   avatarUrl?: string;
   createdAt: string;
+}
+
+interface CustomerSummary {
+  totalCustomers: number;
+  activeCustomers: number;
+  suspendedCustomers: number;
+  newThisMonth: number;
 }
 
 interface ApiEnvelope<T> {
@@ -40,113 +61,205 @@ interface CustomerListData {
   total: number;
   page: number;
   limit: number;
+  summary: CustomerSummary;
 }
 
+type StatusFilter = "" | "active" | "suspended";
+
 interface FiltersState {
-  status: string;
+  status: StatusFilter;
   search: string;
 }
 
 const EMPTY_FILTERS: FiltersState = { status: "", search: "" };
+const EMPTY_SUMMARY: CustomerSummary = {
+  totalCustomers: 0,
+  activeCustomers: 0,
+  suspendedCustomers: 0,
+  newThisMonth: 0,
+};
 
-const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
+const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
+  { value: "", label: "All customers" },
   { value: "active", label: "Active" },
   { value: "suspended", label: "Suspended" },
 ];
 
-const ROW_ACCENT: Record<string, string> = {
-  active: "border-l-status-confirmed",
-  suspended: "border-l-status-cancelled",
-};
-
-function initials(name: string): string {
+function initials(name: string) {
   return name
-    .split(" ")
+    .trim()
+    .split(/\s+/)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
 }
 
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Beirut",
+  }).format(date);
+}
+
+function CustomerTableSkeleton() {
+  return (
+    <div className="space-y-2 p-3" aria-label="Loading customers">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div
+          key={index}
+          className="grid animate-pulse grid-cols-[minmax(240px,1.25fr)_minmax(220px,1fr)_150px_130px] items-center gap-5 rounded-2xl px-4 py-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-2xl bg-slate-100" />
+            <div className="space-y-2">
+              <div className="h-3.5 w-32 rounded-full bg-slate-100" />
+              <div className="h-2.5 w-20 rounded-full bg-slate-100" />
+            </div>
+          </div>
+          <div className="h-3 w-40 rounded-full bg-slate-100" />
+          <div className="h-6 w-20 rounded-full bg-slate-100" />
+          <div className="h-8 w-24 rounded-xl bg-slate-100" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminCustomersPage() {
   const router = useRouter();
-
+  const reduceMotion = useReducedMotion();
   const [filters, setFilters] = useState<FiltersState>(EMPTY_FILTERS);
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<CustomerListData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+  const [actionId, setActionId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<CustomerRow | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerRow | null>(
+    null,
+  );
 
   const fetchCustomers = useCallback(
-    async (currentFilters: FiltersState, currentPage: number) => {
-      setLoading(true);
+    async (
+      currentFilters: FiltersState,
+      currentPage: number,
+      isRefresh = false,
+    ) => {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+
       try {
-        const params = new URLSearchParams({ page: String(currentPage) });
-        if (currentFilters.status) params.set("status", currentFilters.status);
-        if (currentFilters.search) params.set("search", currentFilters.search);
-
-        const res = await fetch(`/api/admin/customers?${params.toString()}`);
-        const json: ApiEnvelope<CustomerListData> = await res.json();
-
-        if (!json.success) {
-          throw new Error(json.error ?? "Failed to load customers");
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          limit: "12",
+        });
+        if (currentFilters.status) {
+          params.set("status", currentFilters.status);
         }
+        if (currentFilters.search) {
+          params.set("search", currentFilters.search);
+        }
+
+        const response = await fetch(
+          `/api/admin/customers?${params.toString()}`,
+          { cache: "no-store" },
+        );
+        const json: ApiEnvelope<CustomerListData> = await response.json();
+
+        if (!response.ok || !json.success) {
+          throw new Error(json.error ?? "Failed to load customers.");
+        }
+
         setData(json.data ?? null);
         setErrorMessage(null);
-      } catch (err) {
+      } catch (error) {
         setErrorMessage(
-          err instanceof Error ? err.message : "Failed to load customers"
+          error instanceof Error
+            ? error.message
+            : "Failed to load customers.",
         );
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
-    fetchCustomers(filters, page);
-  }, [filters, page, fetchCustomers]);
+    void fetchCustomers(filters, page);
+  }, [fetchCustomers, filters, page]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    const timeout = window.setTimeout(() => {
+      const normalizedSearch = searchInput.trim();
       setPage(1);
-      setFilters((prev) => ({ ...prev, search: searchInput }));
-    }, 400);
-    return () => clearTimeout(timeout);
+      setFilters((current) =>
+        current.search === normalizedSearch
+          ? current
+          : { ...current, search: normalizedSearch },
+      );
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
   }, [searchInput]);
 
-  const handleFilterChange = (patch: Partial<FiltersState>) => {
+  const summary = useMemo(
+    () => data?.summary ?? EMPTY_SUMMARY,
+    [data],
+  );
+  const totalPages = data
+    ? Math.max(1, Math.ceil(data.total / data.limit))
+    : 1;
+  const hasFilters = Boolean(filters.status || filters.search);
+
+  const statusCounts = useMemo(
+    () => ({
+      "": summary.totalCustomers,
+      active: summary.activeCustomers,
+      suspended: summary.suspendedCustomers,
+    }),
+    [summary],
+  );
+
+  function handleFilterChange(status: StatusFilter) {
     setPage(1);
-    setFilters((prev) => ({ ...prev, ...patch }));
-  };
+    setFilters((current) => ({ ...current, status }));
+  }
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
+  function clearFilters() {
+    setSearchInput("");
+    setPage(1);
+    setFilters(EMPTY_FILTERS);
+  }
 
-  const refresh = () => fetchCustomers(filters, page);
-
-  const openAddModal = () => {
+  function openAddModal() {
     setEditingCustomer(null);
     setModalOpen(true);
-  };
+  }
 
-  const openEditModal = (e: React.MouseEvent, customer: CustomerListRow) => {
-    e.stopPropagation();
+  function openEditModal(
+    event: MouseEvent<HTMLButtonElement>,
+    customer: CustomerListRow,
+  ) {
+    event.stopPropagation();
     setEditingCustomer(customer);
     setModalOpen(true);
-  };
+  }
 
-  const handleFormSubmit = async (values: CustomerFormValues) => {
+  async function handleFormSubmit(values: CustomerFormValues) {
     const isEdit = editingCustomer !== null;
     const url = isEdit
-      ? `/api/admin/customers/${editingCustomer!._id}`
+      ? `/api/admin/customers/${editingCustomer._id}`
       : "/api/admin/customers";
     const method = isEdit ? "PATCH" : "POST";
-
     const body = isEdit
       ? { name: values.name, email: values.email, phone: values.phone || null }
       : {
@@ -156,284 +269,380 @@ export default function AdminCustomersPage() {
           password: values.password,
         };
 
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const json: ApiEnvelope<unknown> = await res.json();
+    const json: ApiEnvelope<unknown> = await response.json();
 
-    if (!json.success) {
-      throw new Error(json.error ?? "Something went wrong");
+    if (!response.ok || !json.success) {
+      throw new Error(json.error ?? "Customer could not be saved.");
     }
 
     setModalOpen(false);
     setEditingCustomer(null);
-    refresh();
-  };
+    await fetchCustomers(filters, page, true);
+  }
 
-  const handleToggleBlock = async (e: React.MouseEvent, customer: CustomerListRow) => {
-    e.stopPropagation();
+  async function handleToggleBlock(
+    event: MouseEvent<HTMLButtonElement>,
+    customer: CustomerListRow,
+  ) {
+    event.stopPropagation();
     const action = customer.status === "suspended" ? "unblock" : "block";
-    const confirmMsg =
+    const confirmed = window.confirm(
       action === "block"
-        ? `Block ${customer.name}? They won't be able to sign in.`
-        : `Unblock ${customer.name}?`;
-    if (!window.confirm(confirmMsg)) return;
+        ? `Suspend ${customer.name}? They will not be able to sign in.`
+        : `Restore access for ${customer.name}?`,
+    );
+    if (!confirmed) return;
 
-    const res = await fetch(`/api/admin/customers/${customer._id}/block`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
-    });
-    const json: ApiEnvelope<unknown> = await res.json();
+    setActionId(customer._id);
+    try {
+      const response = await fetch(
+        `/api/admin/customers/${customer._id}/block`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        },
+      );
+      const json: ApiEnvelope<unknown> = await response.json();
 
-    if (!json.success) {
-      alert(json.error ?? "Something went wrong");
-      return;
+      if (!response.ok || !json.success) {
+        throw new Error(json.error ?? "Account status could not be changed.");
+      }
+
+      await fetchCustomers(filters, page, true);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "The action failed.",
+      );
+    } finally {
+      setActionId(null);
     }
-    refresh();
-  };
+  }
 
-  const handleDelete = async (e: React.MouseEvent, customer: CustomerListRow) => {
-    e.stopPropagation();
+  async function handleDelete(
+    event: MouseEvent<HTMLButtonElement>,
+    customer: CustomerListRow,
+  ) {
+    event.stopPropagation();
     if (
       !window.confirm(
-        `Delete ${customer.name} permanently? This cannot be undone.`
+        `Permanently delete ${customer.name}? This action cannot be undone.`,
       )
-    )
-      return;
-
-    const res = await fetch(`/api/admin/customers/${customer._id}`, {
-      method: "DELETE",
-    });
-    const json: ApiEnvelope<unknown> = await res.json();
-
-    if (!json.success) {
-      alert(json.error ?? "Something went wrong");
+    ) {
       return;
     }
-    refresh();
-  };
+
+    setActionId(customer._id);
+    try {
+      const response = await fetch(`/api/admin/customers/${customer._id}`, {
+        method: "DELETE",
+      });
+      const json: ApiEnvelope<unknown> = await response.json();
+
+      if (!response.ok || !json.success) {
+        throw new Error(json.error ?? "Customer could not be deleted.");
+      }
+
+      if (data?.users.length === 1 && page > 1) {
+        setPage((current) => current - 1);
+      } else {
+        await fetchCustomers(filters, page, true);
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "The action failed.",
+      );
+    } finally {
+      setActionId(null);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-surface p-6 sm:p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-[0_6px_16px_rgba(30,111,217,0.35)]">
-            <Users size={21} strokeWidth={2.25} />
-          </span>
-          <div className="min-w-0">
-            <h1 className="font-heading text-2xl font-semibold tracking-tight text-navy">
-              Customers
-            </h1>
-            <p className="mt-0.5 text-sm text-navy/55">
-              View, add, edit, and manage customer accounts.
-            </p>
+    <main className="relative min-h-screen overflow-hidden bg-[#f3f7fc] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(30,111,217,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(30,111,217,0.045) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-40 top-24 h-[460px] w-[460px] rounded-full bg-cyan-200/30 blur-3xl"
+      />
+
+      <div className="relative mx-auto max-w-[1450px] space-y-6">
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+          className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(125deg,#071d38_0%,#0b315d_52%,#1675cf_100%)] p-6 text-white shadow-[0_30px_90px_rgba(11,37,69,0.22)] sm:p-8 lg:p-10"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute -right-24 -top-32 h-80 w-80 rounded-full border border-cyan-200/20 bg-cyan-300/10"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute -bottom-44 left-[28%] h-96 w-96 rounded-full bg-primary/25 blur-3xl"
+          />
+
+          <div className="relative grid items-end gap-9 xl:grid-cols-[minmax(0,1fr)_680px]">
+            <div>
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-4 py-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-100">
+                  Customer relationship hub
+                </p>
+              </div>
+
+              <h1 className="mt-6 max-w-xl font-heading text-4xl font-black leading-[1.04] tracking-[-0.045em] sm:text-5xl">
+                Know your customers.
+                <span className="block text-cyan-300">Serve them better.</span>
+              </h1>
+
+              <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
+                Manage every customer account, monitor access, and keep their
+                information organized from one dependable workspace.
+              </p>
+
+              <button
+                type="button"
+                onClick={openAddModal}
+                className="group mt-7 inline-flex min-h-[52px] items-center gap-3 rounded-2xl bg-white px-6 text-sm font-extrabold text-navy shadow-[0_16px_35px_rgba(0,0,0,0.18)] transition hover:bg-cyan-50"
+              >
+                <UserPlus className="h-4 w-4 text-primary" />
+                Add new customer
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <MetricCard
+                icon={Users}
+                label="All customers"
+                value={summary.totalCustomers}
+                accent="cyan"
+                loading={loading && !data}
+              />
+              <MetricCard
+                icon={UserCheck}
+                label="Active accounts"
+                value={summary.activeCustomers}
+                accent="emerald"
+                loading={loading && !data}
+              />
+              <MetricCard
+                icon={Sparkles}
+                label="New this month"
+                value={summary.newThisMonth}
+                accent="blue"
+                loading={loading && !data}
+              />
+              <MetricCard
+                icon={UserX}
+                label="Suspended"
+                value={summary.suspendedCustomers}
+                accent="amber"
+                loading={loading && !data}
+              />
+            </div>
           </div>
+        </motion.section>
 
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="ml-auto flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
-          >
-            <UserPlus size={16} /> Add Customer
-          </button>
+        <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_20px_60px_rgba(11,37,69,0.08)]">
+          <div className="border-b border-slate-100 p-5 sm:p-6">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
+                  Customer directory
+                </p>
+                <h2 className="mt-2 font-heading text-2xl font-black tracking-[-0.03em] text-navy">
+                  Account management
+                </h2>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  Select a customer to view their full account profile.
+                </p>
+              </div>
 
-          {data && !loading && (
-            <span className="flex items-center gap-1.5 rounded-full border border-navy/10 bg-surface px-3.5 py-1.5 text-sm font-semibold text-navy shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              {data.total} {data.total === 1 ? "customer" : "customers"}
-            </span>
-          )}
-        </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="relative min-w-0 sm:w-[340px]">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={searchInput}
+                    onChange={(event) => setSearchInput(event.target.value)}
+                    placeholder="Search name, email, or phone..."
+                    className="min-h-[48px] w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-medium text-navy outline-none transition placeholder:text-slate-400 focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void fetchCustomers(filters, page, true)}
+                  disabled={refreshing}
+                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 text-xs font-extrabold text-navy transition hover:border-primary/30 hover:bg-primary-light disabled:cursor-wait disabled:opacity-60"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 text-primary ${
+                      refreshing ? "animate-spin" : ""
+                    }`}
+                  />
+                  Refresh
+                </button>
+              </div>
+            </div>
 
-        {errorMessage && (
-          <div className="rounded-card border border-status-cancelled/20 bg-status-cancelled/5 px-4 py-3 text-sm font-medium text-status-cancelled">
-            {errorMessage}
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-3 rounded-card border border-navy/[0.06] bg-surface p-3.5 shadow-card">
-          <div className="relative min-w-[240px] flex-1">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/35"
-              strokeWidth={2.25}
-            />
-            <input
-              type="text"
-              placeholder="Search by name, email, or phone..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 py-2.5 pl-10 pr-3 text-sm text-navy placeholder:text-navy/35 transition-all focus:border-primary/40 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-primary/10"
-            />
-          </div>
-
-          <div className="h-8 w-px bg-navy/10" />
-
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange({ status: e.target.value })}
-            className="rounded-xl border border-navy/10 bg-surface-soft/60 px-3.5 py-2.5 text-sm font-medium text-navy transition-colors focus:border-primary/40 focus:outline-none"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="overflow-hidden rounded-card border border-navy/[0.06] bg-surface shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-navy/[0.06] bg-surface-soft/50 text-[11px] font-semibold uppercase tracking-wider text-navy/40">
-                  <th className="py-3.5 pl-6 pr-3">
-                    <span className="flex items-center gap-1.5">
-                      <Users size={13} /> Name
-                    </span>
-                  </th>
-                  <th className="px-3 py-3.5">
-                    <span className="flex items-center gap-1.5">
-                      <Mail size={13} /> Email
-                    </span>
-                  </th>
-                  <th className="px-3 py-3.5">
-                    <span className="flex items-center gap-1.5">
-                      <Phone size={13} /> Phone
-                    </span>
-                  </th>
-                  <th className="px-3 py-3.5">Status</th>
-                  <th className="px-3 py-3.5">
-                    <span className="flex items-center gap-1.5">
-                      <Calendar size={13} /> Joined
-                    </span>
-                  </th>
-                  <th className="py-3.5 pl-3 pr-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i} className="border-b border-navy/[0.05] last:border-0">
-                      <td colSpan={6} className="px-6 py-4">
-                        <div className="h-4 w-full animate-pulse rounded-full bg-navy/[0.06]" />
-                      </td>
-                    </tr>
-                  ))
-                ) : !data || data.users.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-soft">
-                          <Users size={24} className="text-navy/25" strokeWidth={1.75} />
-                        </span>
-                        <span className="text-sm font-medium text-navy/40">
-                          No customers match these filters
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  data.users.map((customer) => (
-                    <tr
-                      key={customer._id}
-                      onClick={() => router.push(`/admin/customers/${customer._id}`)}
-                      className={`group cursor-pointer border-b border-l-[3px] border-navy/[0.05] last:border-b-0 transition-colors hover:bg-surface-soft/60 ${
-                        ROW_ACCENT[customer.status] ?? "border-l-transparent"
+            <div
+              role="tablist"
+              aria-label="Filter customer accounts"
+              className="mt-5 flex gap-2 overflow-x-auto pb-1"
+            >
+              {STATUS_OPTIONS.map((option) => {
+                const active = filters.status === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => handleFilterChange(option.value)}
+                    className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-extrabold transition ${
+                      active
+                        ? "bg-navy text-white shadow-[0_10px_24px_rgba(11,37,69,0.18)]"
+                        : "border border-slate-200 bg-slate-50 text-slate-500 hover:border-primary/20 hover:bg-primary-light hover:text-primary"
+                    }`}
+                  >
+                    {option.label}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] ${
+                        active
+                          ? "bg-white/15 text-cyan-100"
+                          : "bg-white text-slate-400"
                       }`}
                     >
-                      <td className="py-3.5 pl-6 pr-3">
-                        <span className="flex items-center gap-3 font-semibold text-navy">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-light text-[11px] font-bold text-primary ring-2 ring-status-confirmed/30">
-                            {initials(customer.name)}
-                          </span>
-                          <span className="transition-colors group-hover:text-primary">
-                            {customer.name}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-3 py-3.5 text-navy/60">{customer.email}</td>
-                      <td className="px-3 py-3.5 text-navy/50">
-                        {customer.phone ?? "—"}
-                      </td>
-                      <td className="px-3 py-3.5">
-                        <AccountStatusBadge status={customer.status} />
-                      </td>
-                      <td className="px-3 py-3.5 text-navy/45">
-                        {new Date(customer.createdAt).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </td>
-                      <td className="py-3.5 pl-3 pr-6">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            title="Edit"
-                            onClick={(e) => openEditModal(e, customer)}
-                            className="rounded-lg p-1.5 text-navy/40 transition-colors hover:bg-primary-light hover:text-primary"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            type="button"
-                            title={customer.status === "suspended" ? "Unblock" : "Block"}
-                            onClick={(e) => handleToggleBlock(e, customer)}
-                            className="rounded-lg p-1.5 text-navy/40 transition-colors hover:bg-status-pending/10 hover:text-status-pending"
-                          >
-                            {customer.status === "suspended" ? (
-                              <CheckCircle2 size={15} />
-                            ) : (
-                              <Ban size={15} />
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            title="Delete"
-                            onClick={(e) => handleDelete(e, customer)}
-                            className="rounded-lg p-1.5 text-navy/40 transition-colors hover:bg-status-cancelled/10 hover:text-status-cancelled"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      {statusCounts[option.value]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {data && totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-navy/[0.06] bg-surface-soft/40 px-6 py-3.5 text-sm">
-              <span className="text-navy/50">
-                Page <span className="font-semibold text-navy">{data.page}</span>{" "}
-                of {totalPages} · {data.total} customers
-              </span>
+          <div aria-live="polite">
+            {errorMessage ? (
+              <ErrorState
+                message={errorMessage}
+                onRetry={() => void fetchCustomers(filters, page)}
+              />
+            ) : loading ? (
+              <CustomerTableSkeleton />
+            ) : !data || data.users.length === 0 ? (
+              <EmptyState hasFilters={hasFilters} onClear={clearFilters} />
+            ) : (
+              <>
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full min-w-[920px] text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-400">
+                        <th className="px-6 py-4">Customer</th>
+                        <th className="px-4 py-4">Contact</th>
+                        <th className="px-4 py-4">Account status</th>
+                        <th className="px-4 py-4">Joined CleanNest</th>
+                        <th className="px-6 py-4 text-right">Quick actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <AnimatePresence initial={false}>
+                        {data.users.map((customer, index) => (
+                          <CustomerTableRow
+                            key={customer._id}
+                            customer={customer}
+                            index={index}
+                            reduceMotion={Boolean(reduceMotion)}
+                            busy={actionId === customer._id}
+                            onOpen={() =>
+                              router.push(
+                                `/admin/customers/${customer._id}`,
+                              )
+                            }
+                            onEdit={(event) =>
+                              openEditModal(event, customer)
+                            }
+                            onToggle={(event) =>
+                              void handleToggleBlock(event, customer)
+                            }
+                            onDelete={(event) =>
+                              void handleDelete(event, customer)
+                            }
+                          />
+                        ))}
+                      </AnimatePresence>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="space-y-3 p-4 md:hidden">
+                  {data.users.map((customer) => (
+                    <CustomerMobileCard
+                      key={customer._id}
+                      customer={customer}
+                      busy={actionId === customer._id}
+                      onOpen={() =>
+                        router.push(`/admin/customers/${customer._id}`)
+                      }
+                      onEdit={(event) => openEditModal(event, customer)}
+                      onToggle={(event) =>
+                        void handleToggleBlock(event, customer)
+                      }
+                      onDelete={(event) =>
+                        void handleDelete(event, customer)
+                      }
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {data && totalPages > 1 && !loading && !errorMessage && (
+            <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <p className="text-xs font-semibold text-slate-500">
+                Page <span className="font-extrabold text-navy">{data.page}</span>{" "}
+                of{" "}
+                <span className="font-extrabold text-navy">{totalPages}</span>
+                <span className="mx-2 text-slate-300">•</span>
+                {data.total} matching accounts
+              </p>
               <div className="flex gap-2">
                 <button
                   type="button"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
-                  className="flex items-center gap-1 rounded-full border border-navy/10 bg-surface px-3 py-1.5 font-medium text-navy transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-30 disabled:hover:border-navy/10 disabled:hover:text-navy"
+                  onClick={() => setPage((current) => current - 1)}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-extrabold text-navy transition hover:border-primary/30 hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <ChevronLeft size={14} /> Prev
+                  <ArrowLeft className="h-4 w-4" />
+                  Previous
                 </button>
                 <button
                   type="button"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="flex items-center gap-1 rounded-full border border-navy/10 bg-surface px-3 py-1.5 font-medium text-navy transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-30 disabled:hover:border-navy/10 disabled:hover:text-navy"
+                  onClick={() => setPage((current) => current + 1)}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-navy px-4 text-xs font-extrabold text-white transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Next <ChevronRight size={14} />
+                  Next
+                  <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       <CustomerFormModal
@@ -445,6 +654,320 @@ export default function AdminCustomersPage() {
         }}
         onSubmit={handleFormSubmit}
       />
+    </main>
+  );
+}
+
+interface MetricCardProps {
+  icon: typeof Users;
+  label: string;
+  value: number;
+  accent: "cyan" | "emerald" | "blue" | "amber";
+  loading: boolean;
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  accent,
+  loading,
+}: MetricCardProps) {
+  const accents = {
+    cyan: "bg-cyan-300 text-navy",
+    emerald: "bg-emerald-300 text-navy",
+    blue: "bg-blue-300 text-navy",
+    amber: "bg-amber-300 text-navy",
+  };
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-sm">
+      <span
+        className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
+      {loading ? (
+        <div className="mt-4 h-7 w-14 animate-pulse rounded-lg bg-white/10" />
+      ) : (
+        <p className="mt-4 font-heading text-2xl font-black tracking-[-0.04em] text-white">
+          {value.toLocaleString()}
+        </p>
+      )}
+      <p className="mt-1 text-[9px] font-extrabold uppercase tracking-[0.13em] text-blue-100/55">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+interface CustomerActions {
+  customer: CustomerListRow;
+  busy: boolean;
+  onOpen: () => void;
+  onEdit: (event: MouseEvent<HTMLButtonElement>) => void;
+  onToggle: (event: MouseEvent<HTMLButtonElement>) => void;
+  onDelete: (event: MouseEvent<HTMLButtonElement>) => void;
+}
+
+function CustomerTableRow({
+  customer,
+  index,
+  reduceMotion,
+  busy,
+  onOpen,
+  onEdit,
+  onToggle,
+  onDelete,
+}: CustomerActions & { index: number; reduceMotion: boolean }) {
+  return (
+    <motion.tr
+      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24, delay: Math.min(index * 0.025, 0.15) }}
+      onClick={onOpen}
+      className="group cursor-pointer border-b border-slate-100 last:border-0 hover:bg-primary/[0.025]"
+    >
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <CustomerAvatar customer={customer} />
+          <div className="min-w-0">
+            <p className="truncate font-heading text-sm font-bold text-navy transition group-hover:text-primary">
+              {customer.name}
+            </p>
+            <p className="mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">
+              ID {customer._id.slice(-8)}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-4">
+        <p className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+          <Mail className="h-3.5 w-3.5 text-primary" />
+          {customer.email}
+        </p>
+        <p className="mt-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+          <Phone className="h-3.5 w-3.5" />
+          {customer.phone || "No phone provided"}
+        </p>
+      </td>
+      <td className="px-4 py-4">
+        <AccountStatusBadge status={customer.status} />
+      </td>
+      <td className="px-4 py-4">
+        <p className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <CalendarDays className="h-3.5 w-3.5 text-primary" />
+          {formatDate(customer.createdAt)}
+        </p>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center justify-end gap-1.5">
+          <ActionButton
+            label="Edit customer"
+            icon={Pencil}
+            onClick={onEdit}
+            disabled={busy}
+          />
+          <ActionButton
+            label={
+              customer.status === "suspended"
+                ? "Restore customer"
+                : "Suspend customer"
+            }
+            icon={customer.status === "suspended" ? CheckCircle2 : Ban}
+            tone="warning"
+            onClick={onToggle}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Delete customer"
+            icon={Trash2}
+            tone="danger"
+            onClick={onDelete}
+            disabled={busy}
+          />
+          <ChevronRight className="ml-1 h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+        </div>
+      </td>
+    </motion.tr>
+  );
+}
+
+function CustomerMobileCard({
+  customer,
+  busy,
+  onOpen,
+  onEdit,
+  onToggle,
+  onDelete,
+}: CustomerActions) {
+  return (
+    <article
+      onClick={onOpen}
+      className="rounded-[1.4rem] border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(11,37,69,0.06)]"
+    >
+      <div className="flex items-start gap-3">
+        <CustomerAvatar customer={customer} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-heading text-sm font-bold text-navy">
+            {customer.name}
+          </p>
+          <p className="mt-1 truncate text-xs font-medium text-slate-500">
+            {customer.email}
+          </p>
+        </div>
+        <AccountStatusBadge status={customer.status} />
+      </div>
+      <div className="mt-4 grid gap-2 rounded-2xl bg-slate-50 p-3 text-xs font-medium text-slate-500">
+        <span className="flex items-center gap-2">
+          <Phone className="h-3.5 w-3.5 text-primary" />
+          {customer.phone || "No phone provided"}
+        </span>
+        <span className="flex items-center gap-2">
+          <CalendarDays className="h-3.5 w-3.5 text-primary" />
+          Joined {formatDate(customer.createdAt)}
+        </span>
+      </div>
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-primary">
+          View profile
+        </span>
+        <div className="flex gap-1.5">
+          <ActionButton
+            label="Edit customer"
+            icon={Pencil}
+            onClick={onEdit}
+            disabled={busy}
+          />
+          <ActionButton
+            label={
+              customer.status === "suspended"
+                ? "Restore customer"
+                : "Suspend customer"
+            }
+            icon={customer.status === "suspended" ? CheckCircle2 : Ban}
+            tone="warning"
+            onClick={onToggle}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Delete customer"
+            icon={Trash2}
+            tone="danger"
+            onClick={onDelete}
+            disabled={busy}
+          />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CustomerAvatar({ customer }: { customer: CustomerListRow }) {
+  return (
+    <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,#e6f0fd,#d6f7fb)] text-xs font-black text-primary shadow-[inset_0_0_0_1px_rgba(30,111,217,0.08)]">
+      {initials(customer.name) || "CU"}
+      <span
+        className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
+          customer.status === "active" ? "bg-emerald-400" : "bg-red-400"
+        }`}
+      />
+    </span>
+  );
+}
+
+function ActionButton({
+  label,
+  icon: Icon,
+  tone = "default",
+  onClick,
+  disabled,
+}: {
+  label: string;
+  icon: typeof Pencil;
+  tone?: "default" | "warning" | "danger";
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+  disabled: boolean;
+}) {
+  const styles = {
+    default: "hover:bg-primary-light hover:text-primary",
+    warning: "hover:bg-amber-50 hover:text-amber-600",
+    danger: "hover:bg-red-50 hover:text-red-600",
+  };
+
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition disabled:cursor-wait disabled:opacity-40 ${styles[tone]}`}
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+}
+
+function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+        <AlertCircle className="h-6 w-6" />
+      </span>
+      <h3 className="mt-5 font-heading text-lg font-bold text-navy">
+        Customer directory unavailable
+      </h3>
+      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+        {message}
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-navy px-5 text-xs font-extrabold text-white transition hover:bg-primary"
+      >
+        <RefreshCw className="h-4 w-4" />
+        Try again
+      </button>
+    </div>
+  );
+}
+
+function EmptyState({
+  hasFilters,
+  onClear,
+}: {
+  hasFilters: boolean;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex min-h-[390px] flex-col items-center justify-center p-8 text-center">
+      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light text-primary shadow-[0_14px_35px_rgba(11,37,69,0.08)]">
+        <Users className="h-7 w-7" />
+      </span>
+      <h3 className="mt-5 font-heading text-xl font-black text-navy">
+        {hasFilters ? "No matching customers" : "No customers yet"}
+      </h3>
+      <p className="mt-2 max-w-md text-sm font-medium leading-6 text-slate-500">
+        {hasFilters
+          ? "Try a different name, email, phone number, or account status."
+          : "Customer accounts will appear here as soon as they join CleanNest."}
+      </p>
+      {hasFilters && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="mt-5 rounded-xl bg-navy px-5 py-3 text-xs font-extrabold text-white transition hover:bg-primary"
+        >
+          Clear all filters
+        </button>
+      )}
     </div>
   );
 }

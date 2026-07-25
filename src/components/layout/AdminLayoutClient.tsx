@@ -6,6 +6,9 @@ import {
   CreditCard,
   LayoutDashboard,
   Megaphone,
+  MessageSquareText,
+  Settings,
+  ShieldCheck,
   Sparkles,
   Tag,
   UserRoundCheck,
@@ -65,6 +68,21 @@ const adminNavigation: AuthenticatedNavigationItem[] = [
     label: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
+  },
+  {
+    label: "Reviews",
+    href: "/admin/reviews",
+    icon: MessageSquareText,
+  },
+  {
+    label: "Admin Users",
+    href: "/admin/admin-users",
+    icon: ShieldCheck,
+  },
+  {
+    label: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
   },
 ];
 

@@ -29,18 +29,21 @@ export function RoleBadge({ role }: { role: string }) {
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-status-confirmed/10 text-status-confirmed ring-1 ring-status-confirmed/15",
   inactive: "bg-navy/5 text-navy/50 ring-1 ring-navy/10",
+  pending_verification: "bg-status-pending/10 text-status-pending ring-1 ring-status-pending/15",
   suspended: "bg-status-cancelled/10 text-status-cancelled ring-1 ring-status-cancelled/15",
 };
 
 const STATUS_DOT: Record<string, string> = {
   active: "bg-status-confirmed",
   inactive: "bg-navy/40",
+  pending_verification: "bg-status-pending",
   suspended: "bg-status-cancelled",
 };
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Active",
   inactive: "Inactive",
+  pending_verification: "Pending verification",
   suspended: "Suspended",
 };
 

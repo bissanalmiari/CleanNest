@@ -31,7 +31,8 @@ export async function getAllCustomers(filters: CustomerListFilters = {}) {
 
   const { search, status, page = 1, limit = 20 } = filters;
 
-  const match: Record<string, unknown> = { role: ROLE };
+  const customerMatch: Record<string, unknown> = { role: ROLE };
+  const match: Record<string, unknown> = { ...customerMatch };
 
   if (status) match.status = status;
 
@@ -46,7 +47,11 @@ export async function getAllCustomers(filters: CustomerListFilters = {}) {
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(100, Math.max(1, limit));
 
-  const [customers, total] = await Promise.all([
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const [customers, total, statusSummary, newThisMonth] = await Promise.all([
     User.find(match)
       .select("-passwordHash")
       .sort({ createdAt: -1 })
@@ -55,9 +60,35 @@ export async function getAllCustomers(filters: CustomerListFilters = {}) {
       .lean()
       .exec(),
     User.countDocuments(match),
+    User.aggregate([
+      { $match: customerMatch },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+    User.countDocuments({
+      ...customerMatch,
+      createdAt: { $gte: startOfMonth },
+    }),
   ]);
 
-  return { users: customers, total, page: safePage, limit: safeLimit };
+  const statusCounts = new Map(
+    statusSummary.map((item) => [String(item._id), Number(item.count)])
+  );
+
+  return {
+    users: customers,
+    total,
+    page: safePage,
+    limit: safeLimit,
+    summary: {
+      totalCustomers: statusSummary.reduce(
+        (sum, item) => sum + Number(item.count),
+        0
+      ),
+      activeCustomers: statusCounts.get("active") ?? 0,
+      suspendedCustomers: statusCounts.get("suspended") ?? 0,
+      newThisMonth,
+    },
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -112,6 +143,7 @@ export async function createCustomer(input: CreateCustomerInput) {
   });
 
   const { passwordHash: _omit, ...safeUser } = user.toObject();
+  void _omit;
   return safeUser;
 }
 
@@ -147,6 +179,7 @@ export async function updateCustomer(userId: string, input: UpdateCustomerInput)
   await user.save();
 
   const { passwordHash: _omit, ...safeUser } = user.toObject();
+  void _omit;
   return safeUser;
 }
 
