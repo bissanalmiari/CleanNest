@@ -14,6 +14,7 @@ export interface Review {
   id: string;
   bookingId: string;
   customerId: string;
+  customerName?: string;
   rating: number;
   comment?: string;
   beforeImages: string[];

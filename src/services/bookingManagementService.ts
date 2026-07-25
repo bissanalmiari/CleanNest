@@ -184,8 +184,19 @@ export async function assignCleaner(
     status: "assigned",
   });
 
-  // A fresh assignment on a still-pending booking implicitly confirms it.
+  // A fresh assignment on a still-pending booking implicitly confirms it —
+  // but not for an unpaid card booking; payment must clear first.
   if (booking.status === "pending") {
+    if (
+      booking.paymentMethod === "card" &&
+      booking.paymentStatus !== "paid"
+    ) {
+      throw new AppError(
+        "This booking is paid by card and cannot be confirmed until the customer completes payment.",
+        409
+      );
+    }
+
     const previousStatus = booking.status;
     booking.status = "confirmed";
     await booking.save();
@@ -225,6 +236,17 @@ export async function changeBookingStatus(
     throw new AppError(
       `Cannot change status from "${currentStatus}" to "${newStatus}"`,
       422
+    );
+  }
+
+  if (
+    newStatus === "confirmed" &&
+    booking.paymentMethod === "card" &&
+    booking.paymentStatus !== "paid"
+  ) {
+    throw new AppError(
+      "This booking is paid by card and cannot be confirmed until the customer completes payment.",
+      409
     );
   }
 

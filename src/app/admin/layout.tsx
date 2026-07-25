@@ -62,6 +62,11 @@ const adminNavigation: DashboardNavigationItem[] = [
     icon: Tag,
   },
   {
+    label: "Payments",
+    href: "/admin/payments",
+    icon: UserRound,
+  },
+  {
     label: "Profile",
     href: "/admin/profile",
     icon: UserRound,

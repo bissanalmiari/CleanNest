@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useReviews } from "@/hooks/useReviews";
 import { RatingStars } from "./RatingStars";
 import { Alert } from "@/components/ui/Alert";
@@ -16,6 +18,10 @@ interface ReviewsSectionProps {
   currentUserId?: string;
   canModerate?: boolean; // true for admin — shows visibility toggle affordance elsewhere
   onDelete?: (reviewId: string) => void;
+  /** Cap how many reviews are fetched/shown, e.g. 3 for a homepage teaser. */
+  limit?: number;
+  /** If set, renders a "View all reviews" link below the list pointing here. */
+  viewAllHref?: string;
 }
 
 export function ReviewsSection({
@@ -24,13 +30,15 @@ export function ReviewsSection({
   cleanerId,
   currentUserId,
   onDelete,
+  limit,
+  viewAllHref,
 }: ReviewsSectionProps) {
   const { reviews, loading, error, fetchReviews, deleteReview } = useReviews();
 
   useEffect(() => {
-    fetchReviews({ bookingId, customerId, cleanerId });
+    fetchReviews({ bookingId, customerId, cleanerId, limit });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingId, customerId, cleanerId]);
+  }, [bookingId, customerId, cleanerId, limit]);
 
   async function handleDelete(reviewId: string) {
     const result = await deleteReview(reviewId);
@@ -57,6 +65,18 @@ export function ReviewsSection({
           onDelete={() => handleDelete(review.id)}
         />
       ))}
+
+      {viewAllHref && (
+        <div className="flex justify-center pt-2">
+          <Link
+            href={viewAllHref}
+            className="group inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-6 py-3 text-sm font-bold text-primary shadow-card transition-colors hover:bg-primary-light"
+          >
+            View All Reviews
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
