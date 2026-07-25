@@ -33,7 +33,7 @@ const orbitParticles = [
 
 export default function FloatingBookingOrb() {
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <div className="pointer-events-none fixed bottom-5 right-4 z-[100] sm:bottom-7 sm:right-7">
         <motion.div
           initial={{
@@ -60,7 +60,7 @@ export default function FloatingBookingOrb() {
             initial={false}
             className="pointer-events-none absolute right-[calc(100%+12px)] hidden whitespace-nowrap sm:block"
           >
-            <div className="translate-x-3 scale-95 rounded-2xl border border-primary/10 bg-white/95 px-4 py-3 opacity-0 shadow-[0_18px_50px_rgba(11,37,69,0.18)] backdrop-blur-xl transition-all duration-300 group-hover:translate-x-0 group-hover:scale-100 group-hover:opacity-100">
+            <div className="translate-x-3 scale-95 rounded-2xl border border-primary/10 bg-white/95 px-4 py-3 opacity-0 shadow-[0_18px_50px_rgba(11,37,69,0.18)] backdrop-blur-md transition-all duration-300 group-hover:translate-x-0 group-hover:scale-100 group-hover:opacity-100">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
                   <CalendarCheck2 className="h-5 w-5" />
@@ -91,7 +91,7 @@ export default function FloatingBookingOrb() {
             }}
             transition={{
               duration: 3.5,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           />
@@ -106,7 +106,7 @@ export default function FloatingBookingOrb() {
             }}
             transition={{
               duration: 2.4,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeOut",
             }}
           />
@@ -121,7 +121,7 @@ export default function FloatingBookingOrb() {
             transition={{
               duration: 2.4,
               delay: 1.2,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeOut",
             }}
           />
@@ -135,7 +135,7 @@ export default function FloatingBookingOrb() {
             }}
             transition={{
               duration: 13,
-              repeat: Infinity,
+              repeat: 0,
               ease: "linear",
             }}
           >
@@ -159,7 +159,7 @@ export default function FloatingBookingOrb() {
               transition={{
                 duration: particle.duration,
                 delay: particle.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -172,7 +172,7 @@ export default function FloatingBookingOrb() {
             }}
             transition={{
               duration: 3.2,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           >
@@ -199,7 +199,7 @@ export default function FloatingBookingOrb() {
                   }}
                   transition={{
                     duration: 2.2,
-                    repeat: Infinity,
+                    repeat: 0,
                     repeatDelay: 1.8,
                     ease: "easeInOut",
                   }}
@@ -215,7 +215,7 @@ export default function FloatingBookingOrb() {
                   }}
                   transition={{
                     duration: 2.5,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                   className="relative"
@@ -233,7 +233,7 @@ export default function FloatingBookingOrb() {
                   }}
                   transition={{
                     duration: 3,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "linear",
                   }}
                 >
@@ -252,7 +252,7 @@ export default function FloatingBookingOrb() {
             }}
             transition={{
               duration: 2,
-              repeat: Infinity,
+              repeat: 0,
             }}
           >
             <ShieldCheck className="h-3.5 w-3.5" />
@@ -268,7 +268,7 @@ export default function FloatingBookingOrb() {
             }}
             transition={{
               duration: 2.5,
-              repeat: Infinity,
+              repeat: 0,
             }}
           >
             <Star className="h-4 w-4 fill-current" />

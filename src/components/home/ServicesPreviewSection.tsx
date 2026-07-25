@@ -125,7 +125,7 @@ function SpotlightCard({
         rotateY,
         transformPerspective: 1200,
       }}
-      className={`group relative overflow-hidden rounded-[2rem] border border-primary/10 bg-white/85 shadow-[0_18px_55px_rgba(11,37,69,0.10)] backdrop-blur-xl transition-shadow duration-500 hover:shadow-[0_35px_90px_rgba(11,37,69,0.17)] ${className}`}
+      className={`group relative overflow-hidden rounded-[2rem] border border-primary/10 bg-white/85 shadow-[0_18px_55px_rgba(11,37,69,0.10)] backdrop-blur-md transition-shadow duration-500 hover:shadow-[0_35px_90px_rgba(11,37,69,0.17)] ${className}`}
     >
       <motion.div
         aria-hidden="true"
@@ -190,7 +190,7 @@ const officeFeatures = [
 
 export default function ServicesPreviewSection() {
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section
         id="services"
         className="relative isolate overflow-hidden bg-surface-soft py-24 font-body sm:py-28 lg:py-32"
@@ -215,7 +215,7 @@ export default function ServicesPreviewSection() {
           }}
           transition={{
             duration: 24,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -231,7 +231,7 @@ export default function ServicesPreviewSection() {
           }}
           transition={{
             duration: 14,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -246,7 +246,7 @@ export default function ServicesPreviewSection() {
           }}
           transition={{
             duration: 16,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -262,7 +262,7 @@ export default function ServicesPreviewSection() {
           }}
           transition={{
             duration: 5,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         >
@@ -279,7 +279,7 @@ export default function ServicesPreviewSection() {
           }}
           transition={{
             duration: 6,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         >
@@ -311,7 +311,7 @@ export default function ServicesPreviewSection() {
               whileHover={{
                 scale: 1.05,
               }}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-xl"
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-md"
             >
               <motion.span
                 animate={{
@@ -320,7 +320,7 @@ export default function ServicesPreviewSection() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -380,7 +380,7 @@ export default function ServicesPreviewSection() {
                 }}
                 transition={{
                   duration: 6,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -393,7 +393,7 @@ export default function ServicesPreviewSection() {
                 }}
                 transition={{
                   duration: 7,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -406,7 +406,7 @@ export default function ServicesPreviewSection() {
                 }}
                 transition={{
                   duration: 5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 2,
                   ease: "easeInOut",
                 }}
@@ -415,7 +415,7 @@ export default function ServicesPreviewSection() {
               <div className="relative grid h-full items-center gap-10 lg:grid-cols-[1fr_0.9fr]">
                 <div>
                   <div className="flex items-center justify-between gap-4">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-lg backdrop-blur-xl">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-lg backdrop-blur-md">
                       <Home className="h-7 w-7" />
                     </span>
 
@@ -488,12 +488,12 @@ export default function ServicesPreviewSection() {
                     }}
                     transition={{
                       duration: 30,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "linear",
                     }}
                   />
 
-                  <div className="relative space-y-3 rounded-[1.75rem] border border-white/10 bg-white/10 p-5 shadow-[0_25px_60px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+                  <div className="relative space-y-3 rounded-[1.75rem] border border-white/10 bg-white/10 p-5 shadow-[0_25px_60px_rgba(0,0,0,0.22)] backdrop-blur-md">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
@@ -511,7 +511,7 @@ export default function ServicesPreviewSection() {
                         }}
                         transition={{
                           duration: 2.2,
-                          repeat: Infinity,
+                          repeat: 0,
                         }}
                         className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-400/15 text-green-300"
                       >
@@ -707,7 +707,7 @@ export default function ServicesPreviewSection() {
                         }
                         transition={{
                           duration: 2,
-                          repeat: Infinity,
+                          repeat: 0,
                         }}
                         className={`flex h-8 w-8 items-center justify-center rounded-lg ${task.completed
                             ? "bg-emerald-100 text-emerald-600"
@@ -883,7 +883,7 @@ export default function ServicesPreviewSection() {
               }}
               transition={{
                 duration: 7,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -896,7 +896,7 @@ export default function ServicesPreviewSection() {
               }}
               transition={{
                 duration: 8,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -909,7 +909,7 @@ export default function ServicesPreviewSection() {
               }}
               transition={{
                 duration: 5,
-                repeat: Infinity,
+                repeat: 0,
                 repeatDelay: 2,
                 ease: "easeInOut",
               }}
@@ -973,7 +973,7 @@ export default function ServicesPreviewSection() {
                       }}
                       transition={{
                         duration: 2.4,
-                        repeat: Infinity,
+                        repeat: 0,
                         repeatDelay: 1.5,
                       }}
                     />

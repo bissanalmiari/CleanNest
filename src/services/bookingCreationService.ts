@@ -15,6 +15,7 @@ import BookingModel from "@/models/Booking";
 import BookingAddonModel from "@/models/BookingAddOn";
 import BookingStatusHistoryModel from "@/models/BookingStatusHistory";
 import PromoCodeModel from "@/models/PromoCode";
+import PromoCodeUsageModel from "@/models/PromoCodeUsage";
 import ServiceAreaModel from "@/models/ServiceArea";
 import PaymentModel from "@/models/Payment";
 
@@ -234,9 +235,15 @@ async function generateBookingNumber(
 
 async function consumePromoCodeUsage({
     promoCodeId,
+    customerId,
+    bookingId,
+    discountAmount,
     session,
 }: {
     promoCodeId?: string;
+    customerId: Types.ObjectId;
+    bookingId: Types.ObjectId;
+    discountAmount: number;
     session: ClientSession;
 }) {
     if (!promoCodeId) {
@@ -248,6 +255,58 @@ async function consumePromoCodeUsage({
             promoCodeId,
             "Promo-code ID",
         );
+
+    const promoCode =
+        await PromoCodeModel.findById(
+            promoObjectId,
+        )
+            .select(
+                "perCustomerLimit",
+            )
+            .session(session)
+            .lean()
+            .exec();
+
+    if (!promoCode) {
+        throw new AppError(
+            "The selected promo code could not be found.",
+            404,
+        );
+    }
+
+    const [
+        trackedUsageCount,
+        bookingUsageCount,
+    ] = await Promise.all([
+        PromoCodeUsageModel.countDocuments({
+            promoCodeId:
+                promoObjectId,
+            customerId,
+        }).session(session),
+        BookingModel.countDocuments({
+            promoCodeId:
+                promoObjectId,
+            customerId,
+            _id: {
+                $ne: bookingId,
+            },
+        }).session(session),
+    ]);
+    const customerUsageCount =
+        Math.max(
+            trackedUsageCount,
+            bookingUsageCount,
+        );
+
+    if (
+        customerUsageCount >=
+        promoCode.perCustomerLimit
+    ) {
+        throw new AppError(
+            "You have already used this promo code the maximum number of times.",
+            409,
+        );
+    }
 
     /*
      * The usage condition and increment happen atomically,
@@ -289,6 +348,23 @@ async function consumePromoCodeUsage({
             409,
         );
     }
+
+    await PromoCodeUsageModel.create(
+        [
+            {
+                promoCodeId:
+                    promoObjectId,
+                customerId,
+                bookingId,
+                discountAmount,
+                usedAt:
+                    new Date(),
+            },
+        ],
+        {
+            session,
+        },
+    );
 }
 
 export async function createCustomerBooking({
@@ -405,7 +481,8 @@ export async function createCustomerBooking({
      * MongoDB. Client-submitted prices are never trusted.
      */
     const priceQuote =
-        await calculateBookingPrice({
+        await calculateBookingPrice(
+          {
             serviceId: input.serviceId,
 
             promoCodeId:
@@ -415,7 +492,11 @@ export async function createCustomerBooking({
             property: input.property,
             addOns: input.addOns,
             frequency: input.frequency,
-        });
+          },
+          {
+            customerId,
+          },
+        );
 
     const estimatedDurationMinutes =
         priceQuote.estimatedDurationMinutes;
@@ -592,6 +673,14 @@ export async function createCustomerBooking({
                                     baseAmount:
                                         priceQuote.baseAmount,
 
+                                    serviceBaseAmount:
+                                        priceQuote
+                                            .serviceBaseAmount,
+
+                                    propertyAdjustmentAmount:
+                                        priceQuote
+                                            .propertyAdjustmentAmount,
+
                                     addOnsAmount:
                                         priceQuote
                                             .addOnsAmount,
@@ -748,6 +837,11 @@ export async function createCustomerBooking({
                     await consumePromoCodeUsage({
                         promoCodeId:
                             priceQuote.promoCode?.id,
+                        customerId:
+                            customerObjectId,
+                        bookingId,
+                        discountAmount:
+                            priceQuote.discountAmount,
                         session,
                     });
 

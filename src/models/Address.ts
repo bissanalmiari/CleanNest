@@ -24,6 +24,11 @@ export interface IAddress extends Document {
   accessInstructions?: string;
   contactPhone?: string;
 
+  propertyType: "apartment" | "house" | "office" | "other";
+  bedrooms: number;
+  bathrooms: number;
+  propertySize: number;
+
   isDefault: boolean;
   isActive: boolean;
 
@@ -179,6 +184,38 @@ const addressSchema = new Schema<IAddress>(
         "Contact phone format is invalid.",
       ],
       default: undefined,
+    },
+
+    /*
+     * A saved address is also a reusable home profile. These details are
+     * copied into future bookings so returning customers do not have to
+     * describe the same property every time.
+     */
+    propertyType: {
+      type: String,
+      enum: ["apartment", "house", "office", "other"],
+      default: "apartment",
+    },
+
+    bedrooms: {
+      type: Number,
+      min: [0, "Bedrooms cannot be negative."],
+      max: [30, "Bedrooms cannot exceed 30."],
+      default: 1,
+    },
+
+    bathrooms: {
+      type: Number,
+      min: [0, "Bathrooms cannot be negative."],
+      max: [30, "Bathrooms cannot exceed 30."],
+      default: 1,
+    },
+
+    propertySize: {
+      type: Number,
+      min: [20, "Property size must be at least 20 square metres."],
+      max: [2000, "Property size cannot exceed 2,000 square metres."],
+      default: 80,
     },
 
     isDefault: {

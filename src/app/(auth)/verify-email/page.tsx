@@ -189,7 +189,7 @@ function VerifyEmailForm() {
           }}
           transition={{
             duration: 3.5,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
           className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-gradient-to-br from-primary via-blue-600 to-cyan-500 text-white shadow-[0_18px_45px_rgba(30,111,217,0.3)]"
@@ -205,7 +205,7 @@ function VerifyEmailForm() {
             }}
             transition={{
               duration: 2,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           >
@@ -249,7 +249,7 @@ function VerifyEmailForm() {
           }}
           transition={{
             duration: 3,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm"

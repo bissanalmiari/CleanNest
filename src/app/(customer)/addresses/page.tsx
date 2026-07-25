@@ -177,7 +177,7 @@ function AddressesContent() {
         }
         transition={{
           duration: 10,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -196,7 +196,7 @@ function AddressesContent() {
         }
         transition={{
           duration: 12,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -283,7 +283,7 @@ function AddressesContent() {
               </p>
 
               {defaultAddress && (
-                <div className="mt-7 flex max-w-xl items-start gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.07] p-5 backdrop-blur-xl">
+                <div className="mt-7 flex max-w-xl items-start gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.07] p-5 backdrop-blur-md">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-400 text-navy">
                     <Star className="h-5 w-5 fill-current" />
                   </span>
@@ -306,7 +306,7 @@ function AddressesContent() {
             </div>
 
             {/* Hero map illustration */}
-            <div className="relative min-h-[280px] overflow-hidden rounded-[1.9rem] border border-white/10 bg-white/[0.07] p-5 backdrop-blur-xl">
+            <div className="relative min-h-[280px] overflow-hidden rounded-[1.9rem] border border-white/10 bg-white/[0.07] p-5 backdrop-blur-md">
               <div
                 aria-hidden="true"
                 className="absolute inset-0 opacity-[0.14]"
@@ -345,7 +345,7 @@ function AddressesContent() {
                   }
                   transition={{
                     duration: 3,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                   className="absolute left-[14%] top-[30%] flex h-12 w-12 items-center justify-center rounded-2xl border-4 border-navy bg-primary text-white shadow-xl"
@@ -363,7 +363,7 @@ function AddressesContent() {
                   }
                   transition={{
                     duration: 3.5,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                   className="absolute right-[16%] top-[12%] flex h-11 w-11 items-center justify-center rounded-2xl border-4 border-navy bg-cyan-300 text-navy shadow-xl"
@@ -381,7 +381,7 @@ function AddressesContent() {
                   }
                   transition={{
                     duration: 2.4,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                   className="absolute bottom-[5%] left-[52%] flex h-12 w-12 items-center justify-center rounded-full border-4 border-navy bg-emerald-400 text-navy shadow-xl"
@@ -429,7 +429,7 @@ function AddressesContent() {
         </section>
 
         {/* Address collection */}
-        <section className="mt-7 overflow-hidden rounded-[2rem] border border-white bg-white/90 shadow-[0_25px_75px_rgba(11,37,69,0.1)] backdrop-blur-xl">
+        <section className="mt-7 overflow-hidden rounded-[2rem] border border-white bg-white/90 shadow-[0_25px_75px_rgba(11,37,69,0.1)] backdrop-blur-md">
           <div className="border-b border-primary/10 p-5 sm:p-7">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div>
@@ -782,7 +782,7 @@ interface AddressStatProps {
 
 function AddressStat({ icon: Icon, label, value, description }: AddressStatProps) {
   return (
-    <div className="rounded-[1.7rem] border border-white bg-white/90 p-5 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-xl">
+    <div className="rounded-[1.7rem] border border-white bg-white/90 p-5 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-md">
       <div className="flex items-start justify-between gap-4">
         <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-primary">
           <Icon className="h-5 w-5" />
@@ -857,7 +857,7 @@ function EmptyAddressState({ prefersReducedMotion }: { prefersReducedMotion: boo
         }
         transition={{
           duration: 4,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
         className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-navy text-cyan-300 shadow-[0_20px_50px_rgba(11,37,69,0.2)]"

@@ -49,6 +49,7 @@ interface AddressFormProps {
   loading: boolean;
   error: string | null;
   submitLabel: string;
+  onBeginEditing?: () => void;
 }
 
 interface AddressFieldProps {
@@ -148,7 +149,14 @@ function createPreviewAddress({
   ];
 }
 
-export function AddressForm({ address, onSubmit, loading, error, submitLabel }: AddressFormProps) {
+export function AddressForm({
+  address,
+  onSubmit,
+  loading,
+  error,
+  submitLabel,
+  onBeginEditing,
+}: AddressFormProps) {
   const {
     register,
     handleSubmit,
@@ -240,6 +248,8 @@ export function AddressForm({ address, onSubmit, loading, error, submitLabel }: 
   }
 
   function selectLabelSuggestion(label: string) {
+    onBeginEditing?.();
+
     setValue("label", label, {
       shouldDirty: true,
       shouldTouch: true,
@@ -248,7 +258,14 @@ export function AddressForm({ address, onSubmit, loading, error, submitLabel }: 
   }
 
   return (
-    <form onSubmit={handleSubmit(handleAddressSubmit)} className="space-y-7" noValidate>
+    <form
+      onSubmit={handleSubmit(handleAddressSubmit)}
+      onChange={() => {
+        onBeginEditing?.();
+      }}
+      className="space-y-7"
+      noValidate
+    >
       {/* API error */}
       {error && (
         <div

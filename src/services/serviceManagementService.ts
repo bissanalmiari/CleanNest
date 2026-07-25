@@ -95,6 +95,9 @@ export interface CreateServiceInput {
   category: string;
   price: number;
   durationMinutes: number;
+  includedSquareMeters?: number;
+  pricePerAdditionalSquareMeter?: number;
+  minutesPerAdditionalSquareMeter?: number;
   features?: string[];
   imageUrl?: string;
   isActive?: boolean;
@@ -108,6 +111,9 @@ export async function createService(input: CreateServiceInput) {
     category,
     price,
     durationMinutes,
+    includedSquareMeters,
+    pricePerAdditionalSquareMeter,
+    minutesPerAdditionalSquareMeter,
     shortDescription,
     description,
     features,
@@ -141,6 +147,9 @@ export async function createService(input: CreateServiceInput) {
     category: category.trim(),
     price,
     durationMinutes,
+    includedSquareMeters: includedSquareMeters ?? 60,
+    pricePerAdditionalSquareMeter: pricePerAdditionalSquareMeter ?? 0.4,
+    minutesPerAdditionalSquareMeter: minutesPerAdditionalSquareMeter ?? 0.75,
     features: features?.map((feature) => feature.trim()).filter(Boolean) ?? [],
     imageUrl: imageUrl?.trim() ?? "",
     isActive: input.isActive ?? true,
@@ -161,6 +170,9 @@ export interface UpdateServiceInput {
   category?: string;
   price?: number;
   durationMinutes?: number;
+  includedSquareMeters?: number;
+  pricePerAdditionalSquareMeter?: number;
+  minutesPerAdditionalSquareMeter?: number;
   features?: string[];
   imageUrl?: string;
   isActive?: boolean;
@@ -202,6 +214,12 @@ export async function updateService(id: string, input: UpdateServiceInput) {
   if (input.price !== undefined) service.price = input.price;
   if (input.durationMinutes !== undefined)
     service.durationMinutes = input.durationMinutes;
+  if (input.includedSquareMeters !== undefined)
+    service.includedSquareMeters = input.includedSquareMeters;
+  if (input.pricePerAdditionalSquareMeter !== undefined)
+    service.pricePerAdditionalSquareMeter = input.pricePerAdditionalSquareMeter;
+  if (input.minutesPerAdditionalSquareMeter !== undefined)
+    service.minutesPerAdditionalSquareMeter = input.minutesPerAdditionalSquareMeter;
   if (input.features !== undefined)
     service.features = input.features.map((feature) => feature.trim()).filter(Boolean);
   if (input.imageUrl !== undefined) service.imageUrl = input.imageUrl.trim();

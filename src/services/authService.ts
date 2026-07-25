@@ -37,6 +37,10 @@ function toPublicUser(userDoc: IUser): PublicUser {
     role: userDoc.role,
     status: userDoc.status,
     avatarUrl: userDoc.avatarUrl ?? null,
+    dateOfBirth: userDoc.dateOfBirth?.toISOString() ?? null,
+    gender: userDoc.gender ?? null,
+    preferredLanguage: userDoc.preferredLanguage,
+    bio: userDoc.bio ?? null,
     createdAt: userDoc.createdAt.toISOString(),
     updatedAt: userDoc.updatedAt.toISOString(),
   };

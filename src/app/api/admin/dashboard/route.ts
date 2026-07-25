@@ -15,6 +15,7 @@ import {
   getDashboardStats,
   getRevenueStats,
   getBookingReports,
+  getDashboardOverview,
   type RevenueRange,
 } from "@/services/dashboardService";
 
@@ -32,6 +33,27 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const section = searchParams.get("section") ?? "stats";
+
+    if (section === "overview") {
+      const range = (searchParams.get("range") as RevenueRange) || "week";
+      if (!["week", "month", "year"].includes(range)) {
+        throw new AppError("Invalid range. Use week, month, or year.", 422);
+      }
+
+      const overview = await getDashboardOverview({
+        range,
+        reportFilters: {
+          from: searchParams.get("from") ?? undefined,
+          to: searchParams.get("to") ?? undefined,
+          status: searchParams.get("status") ?? undefined,
+          serviceId: searchParams.get("serviceId") ?? undefined,
+          page: Number(searchParams.get("page") ?? "1"),
+          limit: Number(searchParams.get("limit") ?? "20"),
+        },
+      });
+
+      return successResponse(overview);
+    }
 
     if (section === "stats") {
       const stats = await getDashboardStats();
@@ -67,7 +89,7 @@ export async function GET(request: NextRequest) {
     }
 
     throw new AppError(
-      "Invalid section. Use stats, revenue, or reports.",
+      "Invalid section. Use overview, stats, revenue, or reports.",
       422
     );
   } catch (error) {

@@ -1,7 +1,14 @@
 // src/app/(admin)/admin-promo-codes/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Search,
   Ticket,
@@ -13,6 +20,10 @@ import {
   Pencil,
   Trash2,
   ChevronDown,
+  BarChart3,
+  Clock3,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import PromoCodeFormModal, {
   type PromoCodeFormData,
@@ -23,11 +34,20 @@ interface PromoCodeRow {
   code: string;
   discountType: "percentage" | "fixed_amount";
   discountValue: number;
+  description?: string;
+  startDate?: string;
   expiryDate: string;
+  minimumBookingAmount?: number;
+  maximumDiscountAmount?: number | null;
   maximumUses: number;
+  perCustomerLimit?: number;
+  applicableServiceIds?: Array<
+    string | { _id?: string; name?: string }
+  >;
   usedCount: number;
   usesRemaining: number;
   isExpired: boolean;
+  isScheduled?: boolean;
   isActive: boolean;
 }
 
@@ -68,6 +88,8 @@ export default function AdminPromoCodesPage() {
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] =
+    useState<"all" | "active" | "inactive">("all");
 
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [editingCode, setEditingCode] = useState<PromoCodeFormData | undefined>();
@@ -76,12 +98,19 @@ export default function AdminPromoCodesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [usageByCode, setUsageByCode] = useState<Record<string, UsageRow[]>>({});
   const [usageLoading, setUsageLoading] = useState(false);
+  const lastListRequestKey = useRef("");
 
   const fetchCodes = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
+      if (statusFilter !== "all") {
+        params.set(
+          "isActive",
+          String(statusFilter === "active"),
+        );
+      }
 
       const res = await fetch(`/api/admin/promo-codes?${params.toString()}`);
       const json: ApiEnvelope<{ promoCodes: PromoCodeRow[]; total: number }> =
@@ -99,16 +128,43 @@ export default function AdminPromoCodesPage() {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, statusFilter]);
 
   useEffect(() => {
-    fetchCodes();
-  }, [fetchCodes]);
+    const key = `${search}:${statusFilter}`;
+    if (lastListRequestKey.current === key) return;
+    lastListRequestKey.current = key;
+    void fetchCodes();
+  }, [fetchCodes, search, statusFilter]);
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearch(searchInput), 400);
     return () => clearTimeout(timeout);
   }, [searchInput]);
+
+  const campaignStats = useMemo(() => {
+    const now = Date.now();
+    return {
+      active: codes.filter(
+        (code) =>
+          code.isActive &&
+          !code.isExpired &&
+          !code.isScheduled,
+      ).length,
+      scheduled: codes.filter(
+        (code) =>
+          code.isActive &&
+          (code.isScheduled ||
+            (code.startDate
+              ? new Date(code.startDate).getTime() > now
+              : false)),
+      ).length,
+      redemptions: codes.reduce(
+        (total, code) => total + code.usedCount,
+        0,
+      ),
+    };
+  }, [codes]);
 
   const toggleExpand = async (code: PromoCodeRow) => {
     if (expandedId === code._id) {
@@ -137,7 +193,9 @@ export default function AdminPromoCodesPage() {
 
   const handleDelete = async (code: PromoCodeRow) => {
     const confirmed = window.confirm(
-      `Delete promo code "${code.code}"? This cannot be undone.`
+      code.usedCount > 0
+        ? `Archive "${code.code}"? It will stop accepting new redemptions while its history remains available.`
+        : `Delete "${code.code}"? This unused campaign will be removed permanently.`
     );
     if (!confirmed) return;
 
@@ -161,34 +219,45 @@ export default function AdminPromoCodesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface p-6 sm:p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="min-h-screen bg-[#f3f7fc] p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-[1450px] space-y-6">
         {/* Header */}
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-[0_6px_16px_rgba(30,111,217,0.35)]">
-            <Ticket size={21} strokeWidth={2.25} />
-          </span>
-          <div className="min-w-0">
-            <h1 className="font-heading text-2xl font-semibold tracking-tight text-navy">
-              Promo Codes
-            </h1>
-            <p className="mt-0.5 text-sm text-navy/55">
-              Create and manage discount codes customers can apply at checkout.
-            </p>
+        <section className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(125deg,#071d38_0%,#0b315d_58%,#1675cf_100%)] p-6 text-white shadow-[0_28px_75px_rgba(11,37,69,0.22)] sm:p-8">
+          <div className="absolute -right-24 -top-28 h-72 w-72 rounded-full border border-cyan-200/20 bg-cyan-300/10" />
+          <div className="relative flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">
+                <Sparkles size={13} />
+                Revenue campaign studio
+              </div>
+              <h1 className="mt-5 font-heading text-4xl font-black tracking-[-0.04em] sm:text-5xl">
+                Offers that feel intentional.
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-blue-100/65">
+                Launch targeted discounts, protect margins with smart limits,
+                and follow every redemption from one operational workspace.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setModalMode("create");
+                setEditingCode(undefined);
+              }}
+              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-6 text-sm font-black text-navy shadow-xl transition hover:bg-white"
+            >
+              <Plus size={17} />
+              Create campaign
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setModalMode("create");
-              setEditingCode(undefined);
-            }}
-            className="ml-auto flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(30,111,217,0.25)] transition-all hover:brightness-105"
-          >
-            <Plus size={16} />
-            Create Promo Code
-          </button>
-        </div>
+          <div className="relative mt-7 grid gap-3 sm:grid-cols-3">
+            <Metric icon={ShieldCheck} label="Live campaigns" value={campaignStats.active} />
+            <Metric icon={Clock3} label="Scheduled" value={campaignStats.scheduled} />
+            <Metric icon={BarChart3} label="Total redemptions" value={campaignStats.redemptions} />
+          </div>
+        </section>
 
         {errorMessage && (
           <div className="rounded-card border border-status-cancelled/20 bg-status-cancelled/5 px-4 py-3 text-sm font-medium text-status-cancelled">
@@ -197,8 +266,8 @@ export default function AdminPromoCodesPage() {
         )}
 
         {/* Search */}
-        <div className="rounded-card border border-navy/[0.06] bg-surface p-3.5 shadow-card">
-          <div className="relative">
+        <div className="flex flex-col gap-3 rounded-[1.4rem] border border-navy/[0.06] bg-white p-3.5 shadow-card sm:flex-row">
+          <div className="relative flex-1">
             <Search
               className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/35"
               strokeWidth={2.25}
@@ -211,6 +280,19 @@ export default function AdminPromoCodesPage() {
               className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 py-2.5 pl-10 pr-3 font-mono text-sm tracking-wide text-navy placeholder:font-sans placeholder:text-navy/35 transition-all focus:border-primary/40 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-primary/10"
             />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(
+                event.target.value as typeof statusFilter,
+              )
+            }
+            className="min-h-11 rounded-xl border border-navy/10 bg-surface-soft/60 px-4 text-sm font-bold text-navy outline-none focus:border-primary/40"
+          >
+            <option value="all">All campaigns</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+          </select>
         </div>
 
         {/* Table */}
@@ -262,19 +344,22 @@ export default function AdminPromoCodesPage() {
                     const isExpanded = expandedId === code._id;
                     const statusLabel = code.isExpired
                       ? "Expired"
-                      : code.isActive
-                      ? "Active"
-                      : "Inactive";
+                      : code.isScheduled
+                        ? "Scheduled"
+                        : code.isActive
+                          ? "Active"
+                          : "Inactive";
                     const statusStyle = code.isExpired
                       ? "bg-navy/5 text-navy/50 ring-navy/10"
-                      : code.isActive
-                      ? "bg-status-confirmed/10 text-status-confirmed ring-status-confirmed/15"
-                      : "bg-status-pending/10 text-status-pending ring-status-pending/15";
+                      : code.isScheduled
+                        ? "bg-blue-50 text-blue-600 ring-blue-100"
+                        : code.isActive
+                          ? "bg-status-confirmed/10 text-status-confirmed ring-status-confirmed/15"
+                          : "bg-status-pending/10 text-status-pending ring-status-pending/15";
 
                     return (
-                      <>
+                      <Fragment key={code._id}>
                         <tr
-                          key={code._id}
                           onClick={() => toggleExpand(code)}
                           className="cursor-pointer border-b border-navy/[0.05] transition-colors last:border-0 hover:bg-surface-soft/60"
                         >
@@ -384,7 +469,7 @@ export default function AdminPromoCodesPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })
                 )}
@@ -405,6 +490,30 @@ export default function AdminPromoCodesPage() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+function Metric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Ticket;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-100/55">
+          {label}
+        </p>
+        <Icon className="h-4 w-4 text-cyan-300" />
+      </div>
+      <p className="mt-3 font-heading text-2xl font-black text-white">
+        {value.toLocaleString()}
+      </p>
     </div>
   );
 }

@@ -88,6 +88,8 @@ export interface IBooking
    * Trusted server-side pricing snapshot.
    */
   baseAmount: number;
+  serviceBaseAmount?: number;
+  propertyAdjustmentAmount?: number;
   addOnsAmount: number;
   serviceAreaFee: number;
   discountAmount: number;
@@ -331,6 +333,18 @@ const bookingSchema =
           0,
           "Base amount cannot be negative.",
         ],
+        default: 0,
+      },
+
+      serviceBaseAmount: {
+        type: Number,
+        min: [0, "Service base amount cannot be negative."],
+        default: 0,
+      },
+
+      propertyAdjustmentAmount: {
+        type: Number,
+        min: [0, "Property adjustment cannot be negative."],
         default: 0,
       },
 
@@ -596,6 +610,19 @@ bookingSchema.pre(
     this.baseAmount =
       roundMoney(baseAmount);
 
+    this.serviceBaseAmount =
+      roundMoney(
+        Number(this.serviceBaseAmount) ||
+          baseAmount,
+      );
+
+    this.propertyAdjustmentAmount =
+      roundMoney(
+        Number(
+          this.propertyAdjustmentAmount,
+        ) || 0,
+      );
+
     this.addOnsAmount =
       roundMoney(addOnsAmount);
 
@@ -661,6 +688,20 @@ bookingSchema.pre(
 bookingSchema.index({
   customerId: 1,
   bookingDate: -1,
+});
+
+/*
+ * Customer dashboard status/date filters.
+ */
+bookingSchema.index({
+  customerId: 1,
+  status: 1,
+  bookingDate: -1,
+});
+
+bookingSchema.index({
+  promoCodeId: 1,
+  customerId: 1,
 });
 
 /*

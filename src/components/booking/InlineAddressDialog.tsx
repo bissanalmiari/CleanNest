@@ -8,12 +8,15 @@ import type { z } from "zod";
 
 import { createAddressSchema, type CreateAddressValues } from "@/validators/addressValidator";
 
+import type { SpaceScanValue } from "./SpaceScanStep";
+
 type AddressFormInput = z.input<typeof createAddressSchema>;
 
 interface InlineAddressDialogProps {
   open: boolean;
   onClose: () => void;
   onCreated: (addressId: string) => Promise<void>;
+  homeProfile: SpaceScanValue;
 }
 
 interface CreateAddressResponse {
@@ -42,6 +45,7 @@ export default function InlineAddressDialog({
   open,
   onClose,
   onCreated,
+  homeProfile,
 }: InlineAddressDialogProps) {
   const labelInputRef = useRef<HTMLInputElement | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -96,7 +100,10 @@ export default function InlineAddressDialog({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          ...homeProfile,
+        }),
       });
 
       const responseText = await response.text();
@@ -156,7 +163,7 @@ export default function InlineAddressDialog({
                 id="inline-address-title"
                 className="mt-2 font-heading text-2xl font-black sm:text-3xl"
               >
-                Add a new address
+                Add a new home
               </h2>
               <p className="mt-2 text-sm font-medium text-blue-100/70">
                 Your current booking choices will remain exactly as they are.
@@ -310,7 +317,7 @@ export default function InlineAddressDialog({
               ) : (
                 <>
                   <Plus className="h-5 w-5" />
-                  Save and select
+                  Save and select home
                 </>
               )}
             </button>

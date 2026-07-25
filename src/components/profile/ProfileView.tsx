@@ -370,7 +370,7 @@ export function ProfileView() {
         />
 
         <div className="relative mx-auto flex min-h-[55vh] max-w-xl items-center justify-center">
-          <div className="w-full rounded-[2rem] border border-white bg-white/90 p-7 text-center shadow-[0_25px_70px_rgba(11,37,69,0.12)] backdrop-blur-xl sm:p-10">
+          <div className="w-full rounded-[2rem] border border-white bg-white/90 p-7 text-center shadow-[0_25px_70px_rgba(11,37,69,0.12)] backdrop-blur-md sm:p-10">
             <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-red-50 text-red-500">
               <CircleUserRound className="h-9 w-9" />
             </span>
@@ -588,7 +588,7 @@ export function ProfileView() {
             </div>
 
             {/* Completion panel */}
-            <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.08] p-5 backdrop-blur-xl sm:p-6">
+            <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.08] p-5 backdrop-blur-md sm:p-6">
               <div className="flex items-center gap-5">
                 <div
                   className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full"
@@ -651,7 +651,7 @@ export function ProfileView() {
         </section>
 
         {/* Profile navigation */}
-        <section className="mt-7 overflow-x-auto rounded-[1.7rem] border border-white bg-white/85 p-2 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-xl">
+        <section className="mt-7 overflow-x-auto rounded-[1.7rem] border border-white bg-white/85 p-2 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-md">
           <div className="flex min-w-[650px] gap-2">
             {PROFILE_TABS.map(
               (tab) => {
@@ -717,7 +717,7 @@ export function ProfileView() {
           <div className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_370px]">
             <div className="space-y-7">
               {/* Personal information */}
-              <section className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-xl sm:p-7">
+              <section className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-md sm:p-7">
                 <SectionHeading
                   icon={UserRound}
                   eyebrow="Personal identity"
@@ -819,7 +819,7 @@ export function ProfileView() {
               </section>
 
               {/* Bio */}
-              <section className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-xl sm:p-7">
+              <section className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-md sm:p-7">
                 <SectionHeading
                   icon={FileText}
                   eyebrow="Personal introduction"
@@ -878,7 +878,7 @@ export function ProfileView() {
             {/* Right column */}
             <aside className="space-y-7 xl:sticky xl:top-6">
               {/* Profile completion */}
-              <section className="overflow-hidden rounded-[2rem] border border-white bg-white/90 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-xl">
+              <section className="overflow-hidden rounded-[2rem] border border-white bg-white/90 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-md">
                 <div className="bg-navy p-6 text-white">
                   <div className="flex items-center justify-between gap-4">
                     <div>
@@ -974,7 +974,7 @@ export function ProfileView() {
               </section>
 
               {/* Account information */}
-              <section className="rounded-[2rem] border border-white bg-white/90 p-6 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-xl">
+              <section className="rounded-[2rem] border border-white bg-white/90 p-6 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-md">
                 <SectionHeading
                   icon={Clock3}
                   eyebrow="Account record"
@@ -1056,7 +1056,7 @@ export function ProfileView() {
         {/* Edit details */}
         {activeTab === "edit" && (
           <section className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_350px]">
-            <div className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_25px_75px_rgba(11,37,69,0.1)] backdrop-blur-xl sm:p-8">
+            <div className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_25px_75px_rgba(11,37,69,0.1)] backdrop-blur-md sm:p-8">
               <SectionHeading
                 icon={Edit3}
                 eyebrow="Profile editor"
@@ -1126,7 +1126,7 @@ export function ProfileView() {
         {activeTab ===
           "security" && (
           <section className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_25px_75px_rgba(11,37,69,0.1)] backdrop-blur-xl sm:p-8">
+            <div className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_25px_75px_rgba(11,37,69,0.1)] backdrop-blur-md sm:p-8">
               <SectionHeading
                 icon={LockKeyhole}
                 eyebrow="Password security"
@@ -1361,7 +1361,7 @@ function ProfileLoadingState() {
       />
 
       <div className="relative mx-auto flex min-h-[75vh] max-w-2xl items-center justify-center">
-        <div className="w-full rounded-[2rem] border border-white bg-white/90 p-8 text-center shadow-[0_25px_75px_rgba(11,37,69,0.12)] backdrop-blur-xl">
+        <div className="w-full rounded-[2rem] border border-white bg-white/90 p-8 text-center shadow-[0_25px_75px_rgba(11,37,69,0.12)] backdrop-blur-md">
           <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-navy text-cyan-300">
             <LoaderCircle className="h-9 w-9 animate-spin" />
           </span>

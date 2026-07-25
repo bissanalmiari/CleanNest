@@ -51,6 +51,8 @@ interface CleaningPlanStepProps {
     | "other";
 
   propertySize: number;
+  bedrooms: number;
+  bathrooms: number;
 
   onSelect: (
     service: CleaningPlanService,
@@ -68,6 +70,20 @@ interface ServicesApiResponse {
 
   error?: string;
   message?: string;
+}
+
+interface PersonalizedServiceQuote {
+  serviceBaseAmount: number;
+  propertyAdjustmentAmount: number;
+  baseAmount: number;
+  estimatedDurationMinutes: number;
+}
+
+interface PricePreviewApiResponse {
+  success?: boolean;
+  data?: {
+    quote?: PersonalizedServiceQuote;
+  };
 }
 
 interface ServiceVisual {
@@ -226,6 +242,8 @@ export default function CleaningPlanStep({
   selectedServiceId,
   propertyType,
   propertySize,
+  bedrooms,
+  bathrooms,
   onSelect,
 }: CleaningPlanStepProps) {
   const prefersReducedMotion =
@@ -249,6 +267,11 @@ export default function CleaningPlanStep({
   ] = useState<string | null>(
     null,
   );
+
+  const [personalizedQuotes, setPersonalizedQuotes] = useState<
+    Record<string, PersonalizedServiceQuote>
+  >({});
+  const [quotesLoading, setQuotesLoading] = useState(false);
 
   async function loadServices() {
     setIsLoading(true);
@@ -313,6 +336,102 @@ export default function CleaningPlanStep({
     void loadServices();
   }, []);
 
+  useEffect(() => {
+    if (services.length === 0) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadPersonalizedQuotes() {
+      setQuotesLoading(true);
+
+      const results = await Promise.all(
+        services.map(async (service) => {
+          try {
+            const response = await fetch(
+              "/api/customer/bookings/price-preview",
+              {
+                method: "POST",
+                credentials: "include",
+                cache: "no-store",
+                signal: controller.signal,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  serviceId: service.id,
+                  frequency: "one_time",
+                  property: {
+                    propertyType,
+                    bedrooms,
+                    bathrooms,
+                    propertySize,
+                  },
+                  addOns: [],
+                }),
+              },
+            );
+            const payload =
+              (await response.json()) as PricePreviewApiResponse;
+            const quote =
+              payload.data?.quote;
+
+            if (
+              !response.ok ||
+              !payload.success ||
+              !quote
+            ) {
+              return null;
+            }
+
+            return [
+              service.id,
+              quote,
+            ] as const;
+          } catch (error) {
+            if (
+              error instanceof DOMException &&
+              error.name === "AbortError"
+            ) {
+              return null;
+            }
+
+            return null;
+          }
+        }),
+      );
+
+      if (!controller.signal.aborted) {
+        setPersonalizedQuotes(
+          Object.fromEntries(
+            results.filter(
+              (
+                result,
+              ): result is readonly [
+                string,
+                PersonalizedServiceQuote,
+              ] => result !== null,
+            ),
+          ),
+        );
+        setQuotesLoading(false);
+      }
+    }
+
+    void loadPersonalizedQuotes();
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    bathrooms,
+    bedrooms,
+    propertySize,
+    propertyType,
+    services,
+  ]);
+
   const selectedService =
     useMemo(
       () =>
@@ -326,6 +445,12 @@ export default function CleaningPlanStep({
         services,
       ],
     );
+  const selectedQuote =
+    selectedService
+      ? personalizedQuotes[
+          selectedService.id
+        ]
+      : undefined;
 
   if (isLoading) {
     return (
@@ -429,12 +554,12 @@ export default function CleaningPlanStep({
             </h3>
 
             <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
-              Choose the main cleaning
-              plan for this property.
-              Duration and pricing will
-              be verified by the server
-              before the booking is
-              confirmed.
+              The prices below are
+              personalized for this
+              property size and room
+              profile, then verified
+              again by the server before
+              booking.
             </p>
           </div>
         </div>
@@ -487,12 +612,33 @@ export default function CleaningPlanStep({
                   ? service.features
                   : DEFAULT_FEATURES;
 
+              const personalizedQuote =
+                personalizedQuotes[
+                  service.id
+                ];
+
+              const displayedPrice =
+                personalizedQuote
+                  ?.baseAmount ??
+                service.basePrice;
+
+              const displayedDuration =
+                personalizedQuote
+                  ?.estimatedDurationMinutes ??
+                service.estimatedDurationMinutes;
+
               return (
                 <motion.button
                   key={service.id}
                   type="button"
                   onClick={() => {
-                    onSelect(service);
+                    onSelect({
+                      ...service,
+                      basePrice:
+                        displayedPrice,
+                      estimatedDurationMinutes:
+                        displayedDuration,
+                    });
                   }}
                   initial={
                     prefersReducedMotion
@@ -621,15 +767,37 @@ export default function CleaningPlanStep({
                           <BadgeDollarSign className="h-4 w-4 shrink-0 text-primary" />
 
                           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
-                            Starting price
+                            {personalizedQuote
+                              ? "Your price"
+                              : "Starting price"}
                           </p>
                         </div>
 
                         <p className="mt-3 font-heading text-2xl font-black text-navy">
                           {formatCurrency(
-                            service.basePrice,
+                            displayedPrice,
                           )}
                         </p>
+
+                        {personalizedQuote &&
+                          personalizedQuote.propertyAdjustmentAmount >
+                            0 && (
+                            <p className="mt-1 text-[11px] font-semibold leading-4 text-primary">
+                              {formatCurrency(
+                                personalizedQuote.serviceBaseAmount,
+                              )}{" "}
+                              base +{" "}
+                              {formatCurrency(
+                                personalizedQuote.propertyAdjustmentAmount,
+                              )}{" "}
+                              space
+                            </p>
+                          )}
+
+                        {quotesLoading &&
+                          !personalizedQuote && (
+                            <span className="mt-2 block h-2 w-20 animate-pulse rounded-full bg-primary/10" />
+                          )}
                       </div>
 
                       <div className="rounded-2xl bg-surface-soft p-4">
@@ -643,7 +811,7 @@ export default function CleaningPlanStep({
 
                         <p className="mt-3 text-base font-extrabold leading-6 text-navy">
                           {formatDuration(
-                            service.estimatedDurationMinutes,
+                            displayedDuration,
                           )}
                         </p>
                       </div>
@@ -686,11 +854,15 @@ export default function CleaningPlanStep({
               <p className="mt-2 text-base font-semibold leading-7 text-emerald-700">
                 {selectedService.name} ·{" "}
                 {formatCurrency(
-                  selectedService.basePrice,
+                  selectedQuote
+                    ?.baseAmount ??
+                    selectedService.basePrice,
                 )}{" "}
-                starting price ·{" "}
+                personalized price ·{" "}
                 {formatDuration(
-                  selectedService.estimatedDurationMinutes,
+                  selectedQuote
+                    ?.estimatedDurationMinutes ??
+                    selectedService.estimatedDurationMinutes,
                 )}
               </p>
             </div>

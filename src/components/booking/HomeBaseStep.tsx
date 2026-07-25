@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import Link from "next/link";
-
 import {
   AlertCircle,
+  Bath,
+  BedDouble,
   Building2,
   Check,
   CheckCircle2,
@@ -15,8 +15,8 @@ import {
   MapPin,
   Navigation,
   Phone,
-  Plus,
   RefreshCw,
+  Ruler,
   ShieldAlert,
   ShieldCheck,
   Star,
@@ -24,7 +24,7 @@ import {
 
 import { motion, useReducedMotion } from "motion/react";
 
-import InlineAddressDialog from "./InlineAddressDialog";
+import type { SpaceScanPropertyType, SpaceScanValue } from "./SpaceScanStep";
 
 export interface HomeBaseAddress {
   id: string;
@@ -53,10 +53,17 @@ export interface HomeBaseAddress {
   serviceFee: number;
 
   maximumConcurrentBookings: number;
+
+  propertyType: SpaceScanPropertyType;
+  bedrooms: number;
+  bathrooms: number;
+  propertySize: number;
 }
 
 interface HomeBaseStepProps {
   selectedAddressId: string;
+  homeProfile: SpaceScanValue;
+  profileSaveState: "idle" | "saving" | "saved" | "error";
 
   onSelect: (address: HomeBaseAddress) => void;
 }
@@ -82,6 +89,12 @@ function readNumber(value: unknown, fallback = 0): number {
   const parsedValue = Number(value);
 
   return Number.isFinite(parsedValue) ? parsedValue : fallback;
+}
+
+function readPropertyType(value: unknown): SpaceScanPropertyType {
+  return value === "house" || value === "office" || value === "other"
+    ? value
+    : "apartment";
 }
 
 function normalizeAddress(value: unknown): HomeBaseAddress | null {
@@ -135,6 +148,14 @@ function normalizeAddress(value: unknown): HomeBaseAddress | null {
     serviceFee: Math.max(0, readNumber(record.serviceFee)),
 
     maximumConcurrentBookings: Math.max(0, readNumber(record.maximumConcurrentBookings)),
+
+    propertyType: readPropertyType(record.propertyType),
+
+    bedrooms: Math.min(30, Math.max(0, readNumber(record.bedrooms, 1))),
+
+    bathrooms: Math.min(30, Math.max(0, readNumber(record.bathrooms, 1))),
+
+    propertySize: Math.min(2000, Math.max(20, readNumber(record.propertySize, 80))),
   };
 }
 
@@ -158,6 +179,35 @@ function extractAddresses(payload: AddressApiResponse): HomeBaseAddress[] {
   return normalizeAddressArray(payload.addresses);
 }
 
+export async function fetchBookingAddresses(): Promise<HomeBaseAddress[]> {
+  const response = await fetch("/api/customer/booking-addresses", {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  const responseText = await response.text();
+  let payload: AddressApiResponse = {};
+
+  if (responseText.trim()) {
+    try {
+      payload = JSON.parse(responseText) as AddressApiResponse;
+    } catch {
+      throw new Error(
+        response.status === 404
+          ? "The booking-addresses API route was not found."
+          : "The address server returned an invalid response."
+      );
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? payload.message ?? "Unable to load your saved homes.");
+  }
+
+  return extractAddresses(payload);
+}
+
 function formatCurrency(value: number): string {
   if (value <= 0) {
     return "No area fee";
@@ -169,7 +219,12 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseStepProps) {
+export default function HomeBaseStep({
+  selectedAddressId,
+  homeProfile,
+  profileSaveState,
+  onSelect,
+}: HomeBaseStepProps) {
   const prefersReducedMotion = useReducedMotion();
 
   const [addresses, setAddresses] = useState<HomeBaseAddress[]>([]);
@@ -180,8 +235,6 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
 
   const [unavailableAddressId, setUnavailableAddressId] = useState<string | null>(null);
 
-  const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
-
   const loadAddresses = useCallback(async (showLoading = true): Promise<HomeBaseAddress[]> => {
     if (showLoading) {
       setIsLoading(true);
@@ -189,33 +242,7 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
     setErrorMessage(null);
 
     try {
-      const response = await fetch("/api/customer/booking-addresses", {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-      });
-
-      const responseText = await response.text();
-
-      let payload: AddressApiResponse = {};
-
-      if (responseText.trim()) {
-        try {
-          payload = JSON.parse(responseText) as AddressApiResponse;
-        } catch {
-          throw new Error(
-            response.status === 404
-              ? "The booking-addresses API route was not found."
-              : "The address server returned an invalid response."
-          );
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? payload.message ?? "Unable to load your saved addresses.");
-      }
-
-      const nextAddresses = extractAddresses(payload);
+      const nextAddresses = await fetchBookingAddresses();
       setAddresses(nextAddresses);
       return nextAddresses;
     } catch (error) {
@@ -236,6 +263,23 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
     void loadAddresses();
   }, [loadAddresses]);
 
+  useEffect(() => {
+    if (!selectedAddressId) {
+      return;
+    }
+
+    setAddresses((currentAddresses) =>
+      currentAddresses.map((address) =>
+        address.id === selectedAddressId
+          ? {
+              ...address,
+              ...homeProfile,
+            }
+          : address
+      )
+    );
+  }, [homeProfile, selectedAddressId]);
+
   const selectedAddress = useMemo(
     () =>
       addresses.find((address) => address.id === selectedAddressId && address.isServiceable) ??
@@ -246,26 +290,6 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
   const serviceableCount = useMemo(
     () => addresses.filter((address) => address.isServiceable).length,
     [addresses]
-  );
-
-  const handleAddressCreated = useCallback(
-    async (addressId: string) => {
-      const refreshedAddresses = await loadAddresses(false);
-      const createdAddress = refreshedAddresses.find((address) => address.id === addressId) ?? null;
-
-      if (!createdAddress) {
-        throw new Error("The new address was saved but could not be reloaded.");
-      }
-
-      if (!createdAddress.isServiceable) {
-        throw new Error("The new address was saved but its service area is not available.");
-      }
-
-      onSelect(createdAddress);
-      setUnavailableAddressId(null);
-      setIsAddressDialogOpen(false);
-    },
-    [loadAddresses, onSelect]
   );
 
   if (isLoading) {
@@ -315,38 +339,17 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
 
   if (addresses.length === 0) {
     return (
-      <>
-        <div className="mt-8 rounded-[1.8rem] border border-amber-200 bg-amber-50 p-7 text-center">
-          <MapPin className="mx-auto h-10 w-10 text-amber-600" />
+      <div className="mt-8 rounded-[1.8rem] border border-amber-200 bg-amber-50 p-7 text-center">
+        <MapPin className="mx-auto h-10 w-10 text-amber-600" />
 
-          <h3 className="mt-5 font-heading text-2xl font-black text-amber-900">
-            No saved addresses yet
-          </h3>
+        <h3 className="mt-5 font-heading text-2xl font-black text-amber-900">
+          No saved homes yet
+        </h3>
 
-          <p className="mx-auto mt-3 max-w-xl text-base font-medium leading-7 text-amber-700">
-            Add an address here and keep every booking choice you already made.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsAddressDialogOpen(true);
-            }}
-            className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-3 rounded-xl bg-navy px-6 text-sm font-extrabold text-white transition hover:bg-primary"
-          >
-            <Plus className="h-4 w-4" />
-            Create address here
-          </button>
-        </div>
-
-        <InlineAddressDialog
-          open={isAddressDialogOpen}
-          onClose={() => {
-            setIsAddressDialogOpen(false);
-          }}
-          onCreated={handleAddressCreated}
-        />
-      </>
+        <p className="mx-auto mt-3 max-w-xl text-base font-medium leading-7 text-amber-700">
+          Scroll down and complete the property and address fields to save your first home.
+        </p>
+      </div>
     );
   }
 
@@ -360,11 +363,11 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
 
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.17em] text-primary">
-              Saved destinations
+              Your saved homes
             </p>
 
             <h3 className="mt-2 font-heading text-2xl font-black text-navy">
-              Choose where CleanNest should arrive
+              Choose a suitable saved home
             </h3>
 
             <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
@@ -377,25 +380,6 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
           <span className="rounded-full border border-primary/15 bg-white px-4 py-2 text-xs font-extrabold text-primary">
             {serviceableCount} serviceable
           </span>
-
-          <Link
-            href="/addresses"
-            className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white px-4 py-2 text-xs font-extrabold text-slate-600 transition hover:border-primary hover:text-primary"
-          >
-            <Plus className="h-4 w-4" />
-            Manage addresses
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsAddressDialogOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white shadow-[0_10px_24px_rgba(30,111,217,0.2)] transition hover:bg-navy"
-          >
-            <Plus className="h-4 w-4" />
-            Add address here
-          </button>
         </div>
       </section>
 
@@ -407,7 +391,7 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
             </p>
 
             <h3 className="mt-2 font-heading text-3xl font-black tracking-[-0.03em] text-navy">
-              Select one saved address
+              Select one saved home
             </h3>
           </div>
 
@@ -549,6 +533,24 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
                     <p className="mt-3 text-base font-semibold leading-7 text-slate-600">
                       {address.fullAddress}
                     </p>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-bold capitalize text-slate-600">
+                        {isSelected ? homeProfile.propertyType : address.propertyType}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-bold text-slate-600">
+                        <BedDouble className="h-3.5 w-3.5 text-primary" />
+                        {isSelected ? homeProfile.bedrooms : address.bedrooms}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-bold text-slate-600">
+                        <Bath className="h-3.5 w-3.5 text-primary" />
+                        {isSelected ? homeProfile.bathrooms : address.bathrooms}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-bold text-slate-600">
+                        <Ruler className="h-3.5 w-3.5 text-primary" />
+                        {isSelected ? homeProfile.propertySize : address.propertySize} m²
+                      </span>
+                    </div>
                   </div>
 
                   {address.landmark && (
@@ -640,6 +642,14 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
                 {selectedAddress.label} · {selectedAddress.serviceAreaLabel} ·{" "}
                 {formatCurrency(selectedAddress.serviceFee)}
               </p>
+
+              <p className="mt-1 text-sm font-semibold text-emerald-700/75">
+                {profileSaveState === "saving"
+                  ? "Saving this home's latest details…"
+                  : profileSaveState === "error"
+                    ? "The home is selected, but its latest details could not be saved."
+                    : "Property details are saved with this home for future bookings."}
+              </p>
             </div>
           </div>
 
@@ -653,13 +663,6 @@ export default function HomeBaseStep({ selectedAddressId, onSelect }: HomeBaseSt
         </motion.section>
       )}
 
-      <InlineAddressDialog
-        open={isAddressDialogOpen}
-        onClose={() => {
-          setIsAddressDialogOpen(false);
-        }}
-        onCreated={handleAddressCreated}
-      />
     </div>
   );
 }

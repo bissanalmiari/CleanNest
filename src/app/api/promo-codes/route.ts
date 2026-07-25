@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  return NextResponse.json({ message: "OK" });
-}
+// Promo codes are deliberately not enumerable from a public endpoint.
+// Customers apply a code through the authenticated /validate route.
+export {};

@@ -394,7 +394,7 @@ export default function HeroSection() {
         }
         transition={{
           duration: 24,
-          repeat: Infinity,
+          repeat: 0,
           ease: "linear",
         }}
       />
@@ -432,7 +432,7 @@ export default function HeroSection() {
         }
         transition={{
           duration: 13,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -481,7 +481,7 @@ export default function HeroSection() {
                 duration:
                   coordinate.duration,
                 delay: coordinate.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -547,7 +547,7 @@ export default function HeroSection() {
                 }
                 transition={{
                   duration: 2.2,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeOut",
                 }}
               />
@@ -782,7 +782,7 @@ export default function HeroSection() {
                   }
                   transition={{
                     duration: 2.3,
-                    repeat: Infinity,
+                    repeat: 0,
                     repeatDelay: 1.8,
                     ease: "easeInOut",
                   }}
@@ -812,7 +812,7 @@ export default function HeroSection() {
             >
               <Link
                 href="#services"
-                className="group flex min-h-14 items-center justify-center gap-3 rounded-2xl border border-primary/15 bg-white/75 px-7 py-4 font-bold text-navy shadow-card backdrop-blur-xl transition-all hover:border-primary/35 hover:bg-white"
+                className="group flex min-h-14 items-center justify-center gap-3 rounded-2xl border border-primary/15 bg-white/75 px-7 py-4 font-bold text-navy shadow-card backdrop-blur-md transition-all hover:border-primary/35 hover:bg-white"
               >
                 Explore Services
 
@@ -914,7 +914,7 @@ export default function HeroSection() {
             }
             transition={{
               duration: 45,
-              repeat: Infinity,
+              repeat: 0,
               ease: "linear",
             }}
           />
@@ -925,7 +925,7 @@ export default function HeroSection() {
               rotateY: plannerRotateY,
               transformPerspective: 1400,
             }}
-            className="relative overflow-hidden rounded-[2.4rem] border border-white/80 bg-white/75 p-3 shadow-[0_35px_100px_rgba(11,37,69,0.18)] backdrop-blur-2xl sm:p-4"
+            className="relative overflow-hidden rounded-[2.4rem] border border-white/80 bg-white/75 p-3 shadow-[0_35px_100px_rgba(11,37,69,0.18)] backdrop-blur-md sm:p-4"
           >
             {/* Planner header */}
             <div className="flex flex-col gap-4 rounded-[1.8rem] border border-primary/10 bg-navy px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
@@ -945,7 +945,7 @@ export default function HeroSection() {
                   }
                   transition={{
                     duration: 3,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-300"
@@ -1007,7 +1007,7 @@ export default function HeroSection() {
                     }
                     transition={{
                       duration: 2,
-                      repeat: Infinity,
+                      repeat: 0,
                     }}
                   />
 
@@ -1088,7 +1088,7 @@ export default function HeroSection() {
                     repeat:
                       prefersReducedMotion
                         ? 0
-                        : Infinity,
+                        : 0,
                     ease: "easeInOut",
                   }}
                 />
@@ -1184,7 +1184,7 @@ export default function HeroSection() {
                             repeat:
                               isActive &&
                               !prefersReducedMotion
-                                ? Infinity
+                                ? 0
                                 : 0,
                           }}
                         />
@@ -1249,7 +1249,7 @@ export default function HeroSection() {
                                       particleIndex *
                                       0.18,
                                     repeat:
-                                      Infinity,
+                                      0,
                                     ease: "easeInOut",
                                   }}
                                 />
@@ -1282,7 +1282,7 @@ export default function HeroSection() {
                               transition={{
                                 duration: 2.5,
                                 repeat:
-                                  Infinity,
+                                  0,
                                 ease: "easeInOut",
                               }}
                               className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors sm:h-11 sm:w-11 ${state.icon}`}
@@ -1359,7 +1359,7 @@ export default function HeroSection() {
                   }
                   transition={{
                     duration: 1.8,
-                    repeat: Infinity,
+                    repeat: 0,
                   }}
                 />
               </motion.div>
@@ -1476,7 +1476,7 @@ export default function HeroSection() {
                   }
                   transition={{
                     duration: 2.2,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                 />
@@ -1551,7 +1551,7 @@ export default function HeroSection() {
               rotate: 0,
               y: -5,
             }}
-            className="absolute -bottom-7 -left-3 z-30 hidden rounded-2xl border border-white/80 bg-white/90 p-4 shadow-[0_20px_55px_rgba(11,37,69,0.18)] backdrop-blur-xl sm:block xl:-left-10"
+            className="absolute -bottom-7 -left-3 z-30 hidden rounded-2xl border border-white/80 bg-white/90 p-4 shadow-[0_20px_55px_rgba(11,37,69,0.18)] backdrop-blur-md sm:block xl:-left-10"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy text-cyan-300">
@@ -1596,10 +1596,10 @@ export default function HeroSection() {
               }
               transition={{
                 duration: 3,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
-              className="rounded-2xl border border-emerald-100 bg-emerald-50/95 p-3 shadow-[0_18px_45px_rgba(16,185,129,0.15)] backdrop-blur-xl"
+              className="rounded-2xl border border-emerald-100 bg-emerald-50/95 p-3 shadow-[0_18px_45px_rgba(16,185,129,0.15)] backdrop-blur-md"
             >
               <div className="flex items-center gap-2.5">
                 <Leaf className="h-5 w-5 text-emerald-600" />
@@ -1653,7 +1653,7 @@ export default function HeroSection() {
               }
               transition={{
                 duration: 1.6,
-                repeat: Infinity,
+                repeat: 0,
               }}
             >
               <ArrowDown className="h-4 w-4" />

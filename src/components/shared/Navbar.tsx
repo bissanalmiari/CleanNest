@@ -97,12 +97,12 @@ export default function Navbar() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <header
         className={`sticky top-0 z-[90] w-full transition-all duration-500 ${
           isScrolled
-            ? "border-b border-primary/10 bg-white/90 shadow-[0_12px_45px_rgba(11,37,69,0.10)] backdrop-blur-2xl"
-            : "border-b border-transparent bg-white/75 backdrop-blur-xl"
+            ? "border-b border-primary/10 bg-white/90 shadow-[0_12px_45px_rgba(11,37,69,0.10)] backdrop-blur-md"
+            : "border-b border-transparent bg-white/75 backdrop-blur-md"
         }`}
       >
         {/* Animated top line */}
@@ -115,7 +115,7 @@ export default function Navbar() {
           }}
           transition={{
             duration: 5,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -130,7 +130,7 @@ export default function Navbar() {
           }}
           transition={{
             duration: 8,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -163,7 +163,7 @@ export default function Navbar() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 2,
                   ease: "easeInOut",
                 }}
@@ -180,7 +180,7 @@ export default function Navbar() {
                 }}
                 transition={{
                   duration: 2,
-                  repeat: Infinity,
+                  repeat: 0,
                 }}
               />
             </motion.span>
@@ -297,7 +297,7 @@ export default function Navbar() {
                   }}
                   transition={{
                     duration: 2.4,
-                    repeat: Infinity,
+                    repeat: 0,
                     repeatDelay: 1.6,
                   }}
                 />
@@ -426,7 +426,7 @@ export default function Navbar() {
                   duration: 0.35,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-2xl xl:hidden"
+                className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md xl:hidden"
               >
                 <div className="mx-auto max-h-[calc(100vh-76px)] max-w-7xl overflow-y-auto px-5 py-6 sm:px-8 lg:px-10">
                   {/* Navigation links */}
@@ -541,7 +541,7 @@ export default function Navbar() {
                           }}
                           transition={{
                             duration: 2.4,
-                            repeat: Infinity,
+                            repeat: 0,
                             repeatDelay: 1.6,
                           }}
                         />

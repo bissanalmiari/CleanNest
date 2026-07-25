@@ -350,7 +350,7 @@ export default function ServicesExplorer() {
     appliedFilters.sort !== "newest";
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section className="relative isolate overflow-hidden bg-surface-soft py-20 sm:py-24">
         {/* Background */}
         <div
@@ -368,7 +368,7 @@ export default function ServicesExplorer() {
           }}
           transition={{
             duration: 14,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -383,7 +383,7 @@ export default function ServicesExplorer() {
           }}
           transition={{
             duration: 16,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -442,7 +442,7 @@ export default function ServicesExplorer() {
               duration: 0.8,
               delay: 0.15,
             }}
-            className="mt-12 rounded-[2rem] border border-primary/10 bg-white/90 p-5 shadow-[0_24px_70px_rgba(11,37,69,0.11)] backdrop-blur-xl sm:p-7"
+            className="mt-12 rounded-[2rem] border border-primary/10 bg-white/90 p-5 shadow-[0_24px_70px_rgba(11,37,69,0.11)] backdrop-blur-md sm:p-7"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-primary">

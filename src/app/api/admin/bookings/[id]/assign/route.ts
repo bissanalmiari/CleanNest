@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
-import { assignCleaner } from "@/services/bookingManagementService";
+import { assignCleaners } from "@/services/bookingManagementService";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -26,14 +26,22 @@ export async function POST(
     const { id } = await params;
 
     const body = await request.json().catch(() => ({}));
-    const { cleanerId } = body as { cleanerId?: string };
+    const { cleanerId, cleanerIds } = body as {
+      cleanerId?: string;
+      cleanerIds?: string[];
+    };
+    const selectedCleanerIds = Array.isArray(cleanerIds)
+      ? cleanerIds
+      : cleanerId
+        ? [cleanerId]
+        : [];
 
-    if (!cleanerId) {
-      throw new AppError("cleanerId is required", 422);
+    if (selectedCleanerIds.length === 0) {
+      throw new AppError("Select at least one cleaner", 422);
     }
 
-    const assignment = await assignCleaner(id, cleanerId, admin.id);
-    return successResponse(assignment, 201);
+    const assignments = await assignCleaners(id, selectedCleanerIds, admin.id);
+    return successResponse({ assignments }, 201);
   } catch (error) {
     return errorResponse(error);
   }

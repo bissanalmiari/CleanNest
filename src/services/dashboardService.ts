@@ -140,32 +140,26 @@ export async function getRevenueStats(
   const rangeStart = getRangeStart(range);
   const format = dateFormatForRange(range);
 
-  const [series, totals] = await Promise.all([
-    Payment.aggregate([
-      { $match: { status: "paid", paidAt: { $gte: rangeStart } } },
-      {
-        $group: {
-          _id: { $dateToString: { format, date: "$paidAt" } },
-          revenue: { $sum: "$amount" },
-          count: { $sum: 1 },
-        },
+  const series = await Payment.aggregate([
+    { $match: { status: "paid", paidAt: { $gte: rangeStart } } },
+    {
+      $group: {
+        _id: { $dateToString: { format, date: "$paidAt" } },
+        revenue: { $sum: "$amount" },
+        count: { $sum: 1 },
       },
-      { $sort: { _id: 1 } },
-    ]),
-    Payment.aggregate([
-      { $match: { status: "paid", paidAt: { $gte: rangeStart } } },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: "$amount" },
-          totalPayments: { $sum: 1 },
-        },
-      },
-    ]),
+    },
+    { $sort: { _id: 1 } },
   ]);
 
-  const totalRevenue = totals[0]?.totalRevenue ?? 0;
-  const totalPayments = totals[0]?.totalPayments ?? 0;
+  const totalRevenue = series.reduce(
+    (total, point) => total + Number(point.revenue ?? 0),
+    0,
+  );
+  const totalPayments = series.reduce(
+    (total, point) => total + Number(point.count ?? 0),
+    0,
+  );
   const averageBookingValue =
     totalPayments > 0 ? totalRevenue / totalPayments : 0;
 
@@ -273,5 +267,30 @@ export async function getBookingReports(filters: BookingReportFilters = {}) {
         revenue: s.revenue,
       })
     ),
+  };
+}
+
+/**
+ * Initial admin dashboard payload. Keeping this as one authenticated request
+ * avoids three separate session checks and lets MongoDB run the independent
+ * dashboard queries concurrently.
+ */
+export async function getDashboardOverview({
+  range = "week",
+  reportFilters = {},
+}: {
+  range?: RevenueRange;
+  reportFilters?: BookingReportFilters;
+} = {}) {
+  const [stats, revenue, reports] = await Promise.all([
+    getDashboardStats(),
+    getRevenueStats(range),
+    getBookingReports(reportFilters),
+  ]);
+
+  return {
+    stats,
+    revenue,
+    reports,
   };
 }

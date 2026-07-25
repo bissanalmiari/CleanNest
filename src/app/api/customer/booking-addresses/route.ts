@@ -29,6 +29,11 @@ interface AddressRecord {
   accessInstructions?: unknown;
   contactPhone?: unknown;
 
+  propertyType?: unknown;
+  bedrooms?: unknown;
+  bathrooms?: unknown;
+  propertySize?: unknown;
+
   isDefault?: unknown;
   isActive?: unknown;
 }
@@ -290,6 +295,21 @@ export async function GET() {
           maximumConcurrentBookings: serviceArea
             ? Math.max(1, readNumber(serviceArea.maximumConcurrentBookings, 1))
             : 0,
+
+          propertyType: ["apartment", "house", "office", "other"].includes(
+            readString(address.propertyType)
+          )
+            ? readString(address.propertyType)
+            : "apartment",
+
+          bedrooms: Math.min(30, Math.max(0, readNumber(address.bedrooms, 1))),
+
+          bathrooms: Math.min(30, Math.max(0, readNumber(address.bathrooms, 1))),
+
+          propertySize: Math.min(
+            2000,
+            Math.max(20, readNumber(address.propertySize, 80))
+          ),
         };
       })
     );

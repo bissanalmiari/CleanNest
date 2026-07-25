@@ -309,7 +309,7 @@ export default function ContactSection() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section
         id="contact"
         className="relative isolate overflow-hidden bg-white py-24 font-body sm:py-28 lg:py-32"
@@ -337,7 +337,7 @@ export default function ContactSection() {
           }}
           transition={{
             duration: 22,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -353,7 +353,7 @@ export default function ContactSection() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -368,7 +368,7 @@ export default function ContactSection() {
           }}
           transition={{
             duration: 17,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -382,7 +382,7 @@ export default function ContactSection() {
           }}
           transition={{
             duration: 9,
-            repeat: Infinity,
+            repeat: 0,
             repeatDelay: 2,
             ease: "easeInOut",
           }}
@@ -416,7 +416,7 @@ export default function ContactSection() {
               transition={{
                 duration: particle.duration,
                 delay: particle.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -432,7 +432,7 @@ export default function ContactSection() {
           }}
           transition={{
             duration: 34,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -445,7 +445,7 @@ export default function ContactSection() {
           }}
           transition={{
             duration: 40,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -477,7 +477,7 @@ export default function ContactSection() {
               whileHover={{
                 scale: 1.05,
               }}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-xl"
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-md"
             >
               <motion.span
                 animate={{
@@ -491,7 +491,7 @@ export default function ContactSection() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -536,7 +536,7 @@ export default function ContactSection() {
                     }}
                     transition={{
                       duration: 5 + index,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   />
@@ -597,7 +597,7 @@ export default function ContactSection() {
                   whileHover={{
                     y: -7,
                   }}
-                  className="relative overflow-hidden rounded-[1.6rem] border border-primary/10 bg-white/85 p-6 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-xl"
+                  className="relative overflow-hidden rounded-[1.6rem] border border-primary/10 bg-white/85 p-6 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-md"
                 >
                   {item.href ? (
                     <a
@@ -636,7 +636,7 @@ export default function ContactSection() {
                 duration: 0.9,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="relative overflow-hidden rounded-[2rem] border border-primary/10 bg-white/90 p-6 shadow-[0_28px_85px_rgba(11,37,69,0.12)] backdrop-blur-xl sm:p-8 lg:p-10"
+              className="relative overflow-hidden rounded-[2rem] border border-primary/10 bg-white/90 p-6 shadow-[0_28px_85px_rgba(11,37,69,0.12)] backdrop-blur-md sm:p-8 lg:p-10"
             >
               <motion.div
                 aria-hidden="true"
@@ -647,7 +647,7 @@ export default function ContactSection() {
                 }}
                 transition={{
                   duration: 8,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -661,7 +661,7 @@ export default function ContactSection() {
                 }}
                 transition={{
                   duration: 9,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -680,7 +680,7 @@ export default function ContactSection() {
                     }}
                     transition={{
                       duration: 3,
-                      repeat: Infinity,
+                      repeat: 0,
                     }}
                     className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary"
                   >
@@ -1031,7 +1031,7 @@ export default function ContactSection() {
                           }}
                           transition={{
                             duration: 2.4,
-                            repeat: Infinity,
+                            repeat: 0,
                             repeatDelay: 1.5,
                           }}
                         />
@@ -1092,7 +1092,7 @@ export default function ContactSection() {
                 }}
                 transition={{
                   duration: 7,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -1106,7 +1106,7 @@ export default function ContactSection() {
                 }}
                 transition={{
                   duration: 8,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -1119,7 +1119,7 @@ export default function ContactSection() {
                 }}
                 transition={{
                   duration: 5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 2,
                   ease: "easeInOut",
                 }}
@@ -1135,7 +1135,7 @@ export default function ContactSection() {
                     }}
                     transition={{
                       duration: 24,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "linear",
                     }}
                   />
@@ -1148,7 +1148,7 @@ export default function ContactSection() {
                     }}
                     transition={{
                       duration: 18,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "linear",
                     }}
                   />
@@ -1170,7 +1170,7 @@ export default function ContactSection() {
                     }}
                     transition={{
                       duration: 4,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   />
@@ -1187,7 +1187,7 @@ export default function ContactSection() {
                     }}
                     transition={{
                       duration: 4,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                     className="relative flex h-32 w-32 items-center justify-center rounded-[2.3rem] bg-white text-primary shadow-[0_28px_70px_rgba(0,0,0,0.28)]"
@@ -1201,7 +1201,7 @@ export default function ContactSection() {
                       }}
                       transition={{
                         duration: 2,
-                        repeat: Infinity,
+                        repeat: 0,
                       }}
                     >
                       <CheckCircle2 className="h-5 w-5" />
@@ -1209,13 +1209,13 @@ export default function ContactSection() {
                   </motion.div>
 
                   <motion.div
-                    className="absolute left-0 top-10 rounded-2xl border border-white/10 bg-white/10 px-3 py-3 shadow-xl backdrop-blur-xl"
+                    className="absolute left-0 top-10 rounded-2xl border border-white/10 bg-white/10 px-3 py-3 shadow-xl backdrop-blur-md"
                     animate={{
                       y: [0, -10, 0],
                     }}
                     transition={{
                       duration: 3.6,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   >
@@ -1223,13 +1223,13 @@ export default function ContactSection() {
                   </motion.div>
 
                   <motion.div
-                    className="absolute bottom-8 right-0 rounded-2xl border border-white/10 bg-white/10 px-3 py-3 shadow-xl backdrop-blur-xl"
+                    className="absolute bottom-8 right-0 rounded-2xl border border-white/10 bg-white/10 px-3 py-3 shadow-xl backdrop-blur-md"
                     animate={{
                       y: [0, 10, 0],
                     }}
                     transition={{
                       duration: 4.2,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   >
@@ -1249,7 +1249,7 @@ export default function ContactSection() {
                     }}
                     transition={{
                       duration: 4,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "linear",
                     }}
                   >
@@ -1296,7 +1296,7 @@ export default function ContactSection() {
                         whileHover={{
                           x: 6,
                         }}
-                        className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-xl"
+                        className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-md"
                       >
                         <motion.span
                           animate={
@@ -1312,7 +1312,7 @@ export default function ContactSection() {
                           }
                           transition={{
                             duration: 2,
-                            repeat: Infinity,
+                            repeat: 0,
                           }}
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xs font-extrabold text-primary"
                         >
@@ -1347,7 +1347,7 @@ export default function ContactSection() {
                       }}
                       transition={{
                         duration: 1.8,
-                        repeat: Infinity,
+                        repeat: 0,
                       }}
                     />
 

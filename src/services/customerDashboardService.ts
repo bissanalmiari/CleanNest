@@ -8,8 +8,23 @@ import "server-only";
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
-import Address from "@/models/Address"; // imported for populate() model registration
-import Service from "@/models/Service"; // imported for populate() model registration
+// These side-effect imports register the models required by populate().
+// Keep them explicit so the production bundler cannot tree-shake them away.
+import "@/models/Address";
+import "@/models/Service";
+import { reconcileElapsedBookings } from "@/services/bookingStatusAutomationService";
+
+interface DashboardQueryOptions {
+  skipReconciliation?: boolean;
+}
+
+async function prepareDashboardQuery(options: DashboardQueryOptions = {}) {
+  await connectDB();
+
+  if (!options.skipReconciliation) {
+    await reconcileElapsedBookings();
+  }
+}
 
 function startOfDay(date: Date): Date {
   const d = new Date(date);
@@ -30,39 +45,72 @@ export interface CustomerDashboardStats {
 }
 
 export async function getCustomerDashboardStats(
-  customerId: string
+  customerId: string,
+  options: DashboardQueryOptions = {},
 ): Promise<CustomerDashboardStats> {
-  await connectDB();
+  await prepareDashboardQuery(options);
 
   const todayStart = startOfDay(new Date());
-
-  const [
-    upcomingBookings,
-    completedBookings,
-    cancelledBookings,
-    totalBookings,
-    spentAgg,
-  ] = await Promise.all([
-    Booking.countDocuments({
-      customerId,
-      status: { $in: ["pending", "confirmed", "in_progress"] },
-      bookingDate: { $gte: todayStart },
-    }),
-    Booking.countDocuments({ customerId, status: "completed" }),
-    Booking.countDocuments({ customerId, status: "cancelled" }),
-    Booking.countDocuments({ customerId }),
-    Booking.aggregate([
-      { $match: { customerId: new mongoose.Types.ObjectId(customerId), paymentStatus: "paid" } },
-      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
-    ]),
-  ]);
+  const customerObjectId = new mongoose.Types.ObjectId(customerId);
+  const [summary] = await Booking.aggregate<{
+    upcomingBookings: number;
+    completedBookings: number;
+    cancelledBookings: number;
+    totalBookings: number;
+    totalSpent: number;
+  }>([
+    {
+      $match: {
+        customerId: customerObjectId,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        upcomingBookings: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $in: ["$status", ["pending", "confirmed", "in_progress"]] },
+                  { $gte: ["$bookingDate", todayStart] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+        completedBookings: {
+          $sum: {
+            $cond: [{ $eq: ["$status", "completed"] }, 1, 0],
+          },
+        },
+        cancelledBookings: {
+          $sum: {
+            $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0],
+          },
+        },
+        totalBookings: { $sum: 1 },
+        totalSpent: {
+          $sum: {
+            $cond: [
+              { $eq: ["$paymentStatus", "paid"] },
+              { $ifNull: ["$totalAmount", 0] },
+              0,
+            ],
+          },
+        },
+      },
+    },
+  ]).exec();
 
   return {
-    upcomingBookings,
-    completedBookings,
-    cancelledBookings,
-    totalBookings,
-    totalSpent: spentAgg[0]?.total ?? 0,
+    upcomingBookings: summary?.upcomingBookings ?? 0,
+    completedBookings: summary?.completedBookings ?? 0,
+    cancelledBookings: summary?.cancelledBookings ?? 0,
+    totalBookings: summary?.totalBookings ?? 0,
+    totalSpent: summary?.totalSpent ?? 0,
   };
 }
 
@@ -70,8 +118,12 @@ export async function getCustomerDashboardStats(
 /* 2) Upcoming bookings                                                 */
 /* ------------------------------------------------------------------ */
 
-export async function getUpcomingBookings(customerId: string, limit = 5) {
-  await connectDB();
+export async function getUpcomingBookings(
+  customerId: string,
+  limit = 5,
+  options: DashboardQueryOptions = {},
+) {
+  await prepareDashboardQuery(options);
 
   const todayStart = startOfDay(new Date());
 
@@ -104,9 +156,10 @@ export interface BookingHistoryFilters {
 
 export async function getBookingHistory(
   customerId: string,
-  filters: BookingHistoryFilters = {}
+  filters: BookingHistoryFilters = {},
+  options: DashboardQueryOptions = {},
 ) {
-  await connectDB();
+  await prepareDashboardQuery(options);
 
   const { status, page = 1, limit = 10 } = filters;
 
@@ -135,5 +188,46 @@ export async function getBookingHistory(
     total,
     page: safePage,
     limit: safeLimit,
+  };
+}
+
+export async function getCustomerDashboardOverview(
+  customerId: string,
+  {
+    upcomingLimit = 5,
+    historyPage = 1,
+    historyLimit = 10,
+    historyStatus,
+  }: {
+    upcomingLimit?: number;
+    historyPage?: number;
+    historyLimit?: number;
+    historyStatus?: string;
+  } = {},
+) {
+  await prepareDashboardQuery();
+
+  const sharedOptions: DashboardQueryOptions = {
+    skipReconciliation: true,
+  };
+
+  const [stats, upcoming, history] = await Promise.all([
+    getCustomerDashboardStats(customerId, sharedOptions),
+    getUpcomingBookings(customerId, upcomingLimit, sharedOptions),
+    getBookingHistory(
+      customerId,
+      {
+        status: historyStatus,
+        page: historyPage,
+        limit: historyLimit,
+      },
+      sharedOptions,
+    ),
+  ]);
+
+  return {
+    stats,
+    upcoming,
+    history,
   };
 }

@@ -11,6 +11,7 @@ import {
   getAllPromoCodes,
   createPromoCode,
 } from "@/services/promoCodeManagementService";
+import { createPromoCodeSchema } from "@/validators/promoCodeValidator";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -44,7 +45,8 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json().catch(() => ({}));
-    const promoCode = await createPromoCode(body);
+    const input = createPromoCodeSchema.parse(body);
+    const promoCode = await createPromoCode(input);
 
     return successResponse(promoCode, 201);
   } catch (error) {

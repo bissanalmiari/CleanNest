@@ -9,6 +9,7 @@ import {
 
 import {
   AlertCircle,
+  CalendarX2,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -20,6 +21,12 @@ import {
   TimerReset,
   UsersRound,
 } from "lucide-react";
+
+import {
+  getFullDayScheduleBlock,
+  getRecurringScheduleBlock,
+  isFridaySchedule,
+} from "@/lib/bookingScheduleRules";
 
 import {
   motion,
@@ -125,6 +132,9 @@ interface DateOption {
   day: string;
   month: string;
   fullLabel: string;
+  isClosed: boolean;
+  closureReason: string | null;
+  isFriday: boolean;
 }
 
 function asRecord(
@@ -426,9 +436,18 @@ function createDateOption(
       12,
     ),
   );
+  const closure =
+    getFullDayScheduleBlock(
+      value,
+    );
 
   return {
     value,
+    isClosed: Boolean(closure),
+    closureReason:
+      closure?.reason ?? null,
+    isFriday:
+      isFridaySchedule(value),
 
     weekday:
       new Intl.DateTimeFormat(
@@ -811,6 +830,31 @@ export default function TimeRouteStep({
     startTime,
   ]);
 
+  useEffect(() => {
+    if (
+      !bookingDate ||
+      !getFullDayScheduleBlock(
+        bookingDate,
+      )
+    ) {
+      return;
+    }
+
+    selectedDateRef.current = "";
+    selectedStartTimeRef.current = "";
+    selectedEndTimeRef.current = "";
+    setSelectedDate("");
+    setSlots([]);
+    setAvailabilityError(
+      "CleanNest is closed every Sunday. Please choose another day.",
+    );
+    onChangeRef.current({
+      bookingDate: "",
+      startTime: "",
+      endTime: "",
+    });
+  }, [bookingDate]);
+
   /*
    * First load the trusted quote.
    *
@@ -1103,6 +1147,27 @@ export default function TimeRouteStep({
 
               message:
                 "This time has already passed.",
+            };
+          }
+
+          const recurringBlock =
+            getRecurringScheduleBlock({
+              bookingDate:
+                selectedDate,
+              startTime:
+                slot.startTime,
+              endTime:
+                slot.endTime,
+            });
+
+          if (recurringBlock) {
+            return {
+              ...slot,
+              status:
+                "unavailable" as const,
+              message:
+                recurringBlock.reason,
+              blockedPeriod: true,
             };
           }
 
@@ -1447,6 +1512,18 @@ export default function TimeRouteStep({
       return;
     }
 
+    const fullDayBlock =
+      getFullDayScheduleBlock(
+        nextDate,
+      );
+
+    if (fullDayBlock) {
+      setAvailabilityError(
+        fullDayBlock.reason,
+      );
+      return;
+    }
+
     selectedDateRef.current =
       nextDate;
 
@@ -1661,6 +1738,8 @@ export default function TimeRouteStep({
                     const isSelected =
                       selectedDate ===
                       option.value;
+                    const isClosed =
+                      option.isClosed;
 
                     return (
                       <motion.button
@@ -1668,6 +1747,15 @@ export default function TimeRouteStep({
                           option.value
                         }
                         type="button"
+                        disabled={
+                          isClosed
+                        }
+                        title={
+                          option.closureReason ??
+                          (option.isFriday
+                            ? "Friday prayer break: 12:00 PM–2:00 PM"
+                            : undefined)
+                        }
                         onClick={() => {
                           handleDateSelection(
                             option.value,
@@ -1675,6 +1763,7 @@ export default function TimeRouteStep({
                         }}
                         initial={
                           prefersReducedMotion
+                          || isClosed
                             ? undefined
                             : {
                                 opacity: 0,
@@ -1700,15 +1789,25 @@ export default function TimeRouteStep({
                         whileTap={{
                           scale: 0.98,
                         }}
-                        className={`rounded-[1.4rem] border px-4 py-5 text-center transition ${
-                          isSelected
+                        className={`relative overflow-hidden rounded-[1.4rem] border px-4 py-5 text-center transition ${
+                          isClosed
+                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-80"
+                            : isSelected
                             ? "border-primary bg-primary text-white shadow-[0_16px_35px_rgba(30,111,217,0.25)]"
                             : "border-slate-200 bg-white text-navy hover:border-primary/35"
                         }`}
                       >
+                        {isClosed && (
+                          <span
+                            aria-hidden
+                            className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-400 to-orange-400"
+                          />
+                        )}
                         <p
                           className={`text-xs font-extrabold uppercase tracking-[0.12em] ${
-                            isSelected
+                            isClosed
+                              ? "text-slate-400"
+                              : isSelected
                               ? "text-cyan-100"
                               : "text-slate-400"
                           }`}
@@ -1726,7 +1825,9 @@ export default function TimeRouteStep({
 
                         <p
                           className={`mt-1 text-sm font-bold ${
-                            isSelected
+                            isClosed
+                              ? "text-slate-400"
+                              : isSelected
                               ? "text-blue-100"
                               : "text-slate-500"
                           }`}
@@ -1735,6 +1836,17 @@ export default function TimeRouteStep({
                             option.month
                           }
                         </p>
+
+                        {isClosed ? (
+                          <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-red-500">
+                            <CalendarX2 className="h-3 w-3" />
+                            Closed
+                          </span>
+                        ) : option.isFriday ? (
+                          <span className="mt-2 inline-flex rounded-full bg-amber-50 px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-amber-700">
+                            Prayer 12–2
+                          </span>
+                        ) : null}
                       </motion.button>
                     );
                   },
@@ -1925,6 +2037,12 @@ export default function TimeRouteStep({
                               slot.endTime,
                             )}
                           </p>
+
+                          {slot.blockedPeriod && (
+                            <p className="mt-3 inline-flex rounded-full bg-red-100 px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-red-600">
+                              Closed period
+                            </p>
+                          )}
 
                           {isAvailable &&
                             slot.remainingCapacity !==
