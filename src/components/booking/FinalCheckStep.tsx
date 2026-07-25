@@ -1397,14 +1397,19 @@ export default function FinalCheckStep({
         booking,
       );
 
-      redirectTimerRef.current =
-        setTimeout(() => {
-          router.push(
-            "/bookings",
-          );
+      if (
+        draft.paymentMethod !==
+        "card"
+      ) {
+        redirectTimerRef.current =
+          setTimeout(() => {
+            router.push(
+              "/bookings",
+            );
 
-          router.refresh();
-        }, 1600);
+            router.refresh();
+          }, 1600);
+      }
     } catch (error) {
       setSubmissionError(
         error instanceof Error
@@ -1509,13 +1514,47 @@ export default function FinalCheckStep({
             </div>
           </div>
 
-          <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-500">
-            Your booking is pending
-            confirmation. You are being
-            redirected to My Bookings.
-          </p>
+          {draft.paymentMethod ===
+          "card" ? (
+            <>
+              <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left">
+                <p className="text-sm font-extrabold text-amber-800">
+                  Payment required to confirm
+                </p>
+                <p className="mt-1.5 text-sm font-medium leading-6 text-amber-700">
+                  Your booking is on hold
+                  as pending. CleanNest
+                  cannot confirm it until
+                  the card payment is
+                  completed (test mode —
+                  no real charge).
+                </p>
+              </div>
 
-          <LoaderCircle className="mx-auto mt-7 h-7 w-7 animate-spin text-primary" />
+              <button
+                type="button"
+                onClick={() => {
+                  router.push(
+                    `/payments/pay/${createdBooking.id}`,
+                  );
+                }}
+                className="mx-auto mt-6 inline-flex min-h-[54px] min-w-[220px] items-center justify-center gap-3 rounded-2xl bg-primary px-7 text-base font-extrabold text-white shadow-[0_16px_35px_rgba(30,111,217,0.3)] transition hover:bg-navy"
+              >
+                <CreditCard className="h-5 w-5" />
+                Pay now
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-500">
+                Your booking is pending
+                confirmation. You are being
+                redirected to My Bookings.
+              </p>
+
+              <LoaderCircle className="mx-auto mt-7 h-7 w-7 animate-spin text-primary" />
+            </>
+          )}
         </div>
       </motion.div>
     );

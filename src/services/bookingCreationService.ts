@@ -16,6 +16,7 @@ import BookingAddonModel from "@/models/BookingAddOn";
 import BookingStatusHistoryModel from "@/models/BookingStatusHistory";
 import PromoCodeModel from "@/models/PromoCode";
 import ServiceAreaModel from "@/models/ServiceArea";
+import PaymentModel from "@/models/Payment";
 
 import {
     bookingDateTimeToUtc,
@@ -639,6 +640,38 @@ export async function createCustomerBooking({
 
                     const bookingId =
                         booking._id as Types.ObjectId;
+
+                    /*
+                     * One Payment record is created per booking up front
+                     * (instead of lazily on first "pay now" visit) so the
+                     * booking shows up immediately in the customer's and
+                     * admin's payment lists, whichever method was chosen.
+                     */
+                    await PaymentModel.create(
+                        [
+                            {
+                                bookingId,
+
+                                amount:
+                                    booking.totalAmount,
+
+                                method:
+                                    booking.paymentMethod,
+
+                                provider:
+                                    booking.paymentMethod ===
+                                    "cash"
+                                        ? "cash"
+                                        : "test_card",
+
+                                status:
+                                    booking.paymentStatus,
+                            },
+                        ],
+                        {
+                            session,
+                        },
+                    );
 
                     if (
                         priceQuote.addOns.length >

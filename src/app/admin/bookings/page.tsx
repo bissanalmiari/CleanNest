@@ -11,7 +11,7 @@ import {
   Wallet,
   ClipboardList,
 } from "lucide-react";
-import BookingStatusBadge from "@/components/bookings/BookingStatusBadge";
+import BookingStatusBadge from "@/components/booking/BookingStatusBadge";
 
 interface BookingRow {
   _id: string;

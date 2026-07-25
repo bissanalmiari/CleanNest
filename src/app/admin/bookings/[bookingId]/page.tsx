@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import BookingStatusBadge from "@/components/bookings/BookingStatusBadge";
+import BookingStatusBadge from "@/components/booking/BookingStatusBadge";
 
 /* ------------------------------------------------------------------ */
 /* Types (shapes match what bookingManagementService returns as JSON)   */
