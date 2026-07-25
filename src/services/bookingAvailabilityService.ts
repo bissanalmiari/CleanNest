@@ -4,6 +4,7 @@ import { Types } from "mongoose";
 
 import BookingModel from "@/models/Booking";
 import BlockedTimeModel from "@/models/BlockedTime";
+import { getRecurringScheduleBlock } from "@/lib/bookingScheduleRules";
 
 import {
   bookingDateTimeToUtc,
@@ -607,6 +608,36 @@ export async function checkBookingAvailability(
       conflicts: {
         bookings: [],
         blockedTimes: [],
+      },
+    };
+  }
+
+  const recurringScheduleBlock =
+    getRecurringScheduleBlock({
+      bookingDate: input.bookingDate,
+      startTime: input.startTime,
+      endTime: input.endTime,
+    });
+
+  if (recurringScheduleBlock) {
+    return {
+      available: false,
+      reason: "BLOCKED_TIME",
+      message: recurringScheduleBlock.reason,
+      requestedSlot,
+      capacity: emptyCapacity,
+      conflicts: {
+        bookings: [],
+        blockedTimes: [
+          {
+            blockedTimeId: `recurring:${recurringScheduleBlock.code}`,
+            scope: "company",
+            blockType: "holiday",
+            reason: recurringScheduleBlock.reason,
+            startDatetime: requestedStart.toISOString(),
+            endDatetime: requestedEnd.toISOString(),
+          },
+        ],
       },
     };
   }

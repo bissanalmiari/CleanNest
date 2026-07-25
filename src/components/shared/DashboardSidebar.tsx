@@ -157,7 +157,7 @@ export default function DashboardSidebar({
             }}
             transition={{
               duration: 9,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           />
@@ -170,7 +170,7 @@ export default function DashboardSidebar({
             }}
             transition={{
               duration: 11,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           />
@@ -190,7 +190,7 @@ export default function DashboardSidebar({
             }}
             transition={{
               duration: 20,
-              repeat: Infinity,
+              repeat: 0,
               ease: "linear",
             }}
           />
@@ -228,7 +228,7 @@ export default function DashboardSidebar({
                 }}
                 transition={{
                   duration: 2.7,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1.8,
                   ease: "easeInOut",
                 }}
@@ -300,7 +300,7 @@ export default function DashboardSidebar({
             }}
             transition={{
               duration: 5,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           />
@@ -318,7 +318,7 @@ export default function DashboardSidebar({
               }}
               transition={{
                 duration: 3,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-cyan-200"
@@ -443,7 +443,7 @@ export default function DashboardSidebar({
                         }}
                         transition={{
                           duration: 2.2,
-                          repeat: Infinity,
+                          repeat: 0,
                           repeatDelay: 2,
                           ease: "easeInOut",
                         }}
@@ -672,7 +672,7 @@ export default function DashboardSidebar({
           }}
           transition={{
             duration: 2,
-            repeat: Infinity,
+            repeat: 0,
           }}
         >
           <Sparkles className="h-3 w-3" />

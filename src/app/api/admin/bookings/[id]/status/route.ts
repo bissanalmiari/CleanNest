@@ -29,11 +29,11 @@ async function requireAdmin() {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ bookingId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const admin = await requireAdmin();
-    const { bookingId } = await params;
+    const { id } = await params;
 
     const body = await request.json().catch(() => ({}));
     const { status, note } = body as { status?: string; note?: string };
@@ -43,7 +43,7 @@ export async function PATCH(
     }
 
     const booking = await changeBookingStatus(
-      bookingId,
+      id,
       status as BookingStatus,
       admin.id,
       note

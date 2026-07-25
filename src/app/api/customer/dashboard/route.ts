@@ -15,6 +15,7 @@ import {
   getCustomerDashboardStats,
   getUpcomingBookings,
   getBookingHistory,
+  getCustomerDashboardOverview,
 } from "@/services/customerDashboardService";
 
 export async function GET(request: NextRequest) {
@@ -23,6 +24,17 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const section = searchParams.get("section") ?? "stats";
+
+    if (section === "overview") {
+      const overview = await getCustomerDashboardOverview(user.id, {
+        upcomingLimit: Number(searchParams.get("upcomingLimit") ?? "5"),
+        historyPage: Number(searchParams.get("historyPage") ?? "1"),
+        historyLimit: Number(searchParams.get("historyLimit") ?? "10"),
+        historyStatus: searchParams.get("historyStatus") ?? undefined,
+      });
+
+      return successResponse(overview);
+    }
 
     if (section === "stats") {
       const stats = await getCustomerDashboardStats(user.id);
@@ -44,7 +56,7 @@ export async function GET(request: NextRequest) {
       return successResponse(history);
     }
 
-    throw new AppError("Invalid section. Use stats, upcoming, or history.", 422);
+    throw new AppError("Invalid section. Use overview, stats, upcoming, or history.", 422);
   } catch (error) {
     return errorResponse(error);
   }

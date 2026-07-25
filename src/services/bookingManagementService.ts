@@ -10,7 +10,14 @@ import BookingAddon from "@/models/BookingAddOn";
 import CleanerAssignment from "@/models/CleanerAssignment";
 import BookingStatusHistory from "@/models/BookingStatusHistory";
 import User from "@/models/User";
+// Register every model referenced by populate(). Side-effect imports are
+// intentional so production tree-shaking cannot remove model registration.
+import "@/models/Address";
+import "@/models/Service";
+import "@/models/PromoCode";
+import "@/models/AddOn";
 import { AppError, NotFoundError } from "@/lib/apiError";
+import { reconcileElapsedBookings } from "@/services/bookingStatusAutomationService";
 import type { BookingStatus } from "@/types/enums";
 
 /* ------------------------------------------------------------------ */
@@ -49,6 +56,7 @@ export interface BookingListFilters {
 
 export async function getAllBookings(filters: BookingListFilters = {}) {
   await connectDB();
+  await reconcileElapsedBookings();
 
   const {
     status,
@@ -114,12 +122,13 @@ export async function getAllBookings(filters: BookingListFilters = {}) {
 
 export async function getBookingById(id: string) {
   await connectDB();
+  await reconcileElapsedBookings();
 
   const [booking, addons, assignments, statusHistory, availableCleaners] =
     await Promise.all([
       Booking.findById(id)
         .populate("customerId", "name email phone")
-        .populate("serviceId", "name category basePrice baseDurationMinutes")
+        .populate("serviceId", "name category price durationMinutes")
         .populate("addressId", "city area street building floor apartment")
         .populate("promoCodeId", "code discountType discountValue")
         .lean()
@@ -157,48 +166,68 @@ export async function getBookingById(id: string) {
 /* 3) Assign a cleaner                                                  */
 /* ------------------------------------------------------------------ */
 
-export async function assignCleaner(
+export async function assignCleaners(
   bookingId: string,
-  cleanerId: string,
+  cleanerIds: string[],
   assignedByUserId: string
 ) {
   await connectDB();
 
-  const [booking, cleaner] = await Promise.all([
+  const uniqueCleanerIds = [...new Set(cleanerIds.filter(Boolean))];
+  if (uniqueCleanerIds.length === 0) {
+    throw new AppError("Select at least one cleaner", 422);
+  }
+
+  const [booking, cleaners, existingAssignments] = await Promise.all([
     Booking.findById(bookingId),
-    User.findById(cleanerId),
+    User.find({
+      _id: { $in: uniqueCleanerIds },
+      role: "cleaner",
+      status: "active",
+    })
+      .select("_id")
+      .lean()
+      .exec(),
+    CleanerAssignment.find({
+      bookingId,
+      cleanerId: { $in: uniqueCleanerIds },
+    })
+      .select("cleanerId")
+      .lean()
+      .exec(),
   ]);
 
   if (!booking) {
     throw new NotFoundError("Booking not found");
   }
 
-  if (!cleaner || cleaner.role !== "cleaner") {
-    throw new AppError("Selected user is not a cleaner", 422);
+  if (["completed", "cancelled"].includes(booking.status)) {
+    throw new AppError("Cleaners cannot be assigned to a closed booking", 422);
   }
 
-  const assignment = await CleanerAssignment.create({
-    bookingId,
-    cleanerId,
-    assignedByUserId,
-    status: "assigned",
-  });
+  if (cleaners.length !== uniqueCleanerIds.length) {
+    throw new AppError("One or more selected cleaners are unavailable", 422);
+  }
 
-  // A fresh assignment on a still-pending booking implicitly confirms it.
-  if (booking.status === "pending") {
-    const previousStatus = booking.status;
-    booking.status = "confirmed";
-    await booking.save();
+  const existingIds = new Set(
+    existingAssignments.map((assignment) => String(assignment.cleanerId))
+  );
+  const newCleanerIds = uniqueCleanerIds.filter((id) => !existingIds.has(id));
 
-    await BookingStatusHistory.create({
+  if (newCleanerIds.length === 0) {
+    throw new AppError("The selected cleaners are already assigned", 409);
+  }
+
+  const assignments = await CleanerAssignment.insertMany(
+    newCleanerIds.map((cleanerId) => ({
       bookingId,
-      previousStatus,
-      newStatus: "confirmed",
-      changedByUserId: assignedByUserId,
-    });
-  }
+      cleanerId,
+      assignedByUserId,
+      status: "assigned",
+    }))
+  );
 
-  return assignment.toObject();
+  return assignments.map((assignment) => assignment.toObject());
 }
 
 /* ------------------------------------------------------------------ */
@@ -228,6 +257,19 @@ export async function changeBookingStatus(
     );
   }
 
+  if (currentStatus === "pending" && newStatus === "confirmed") {
+    const assignedCleanerCount = await CleanerAssignment.countDocuments({
+      bookingId,
+      status: { $in: ["assigned", "accepted"] },
+    });
+    if (assignedCleanerCount === 0) {
+      throw new AppError(
+        "Assign at least one cleaner before approving this booking",
+        422
+      );
+    }
+  }
+
   booking.status = newStatus;
   if (note) {
     booking.adminNotes = booking.adminNotes
@@ -241,6 +283,7 @@ export async function changeBookingStatus(
     previousStatus: currentStatus,
     newStatus,
     changedByUserId,
+    reason: note ?? "",
   });
 
   return booking.toObject();

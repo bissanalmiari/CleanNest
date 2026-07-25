@@ -221,7 +221,7 @@ export default function Footer() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <footer
         id="footer"
         className="relative isolate overflow-hidden bg-navy font-body text-white"
@@ -249,7 +249,7 @@ export default function Footer() {
           }}
           transition={{
             duration: 24,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -265,7 +265,7 @@ export default function Footer() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -280,7 +280,7 @@ export default function Footer() {
           }}
           transition={{
             duration: 17,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -294,7 +294,7 @@ export default function Footer() {
           }}
           transition={{
             duration: 9,
-            repeat: Infinity,
+            repeat: 0,
             repeatDelay: 2,
             ease: "easeInOut",
           }}
@@ -328,7 +328,7 @@ export default function Footer() {
               transition={{
                 duration: particle.duration,
                 delay: particle.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -344,7 +344,7 @@ export default function Footer() {
           }}
           transition={{
             duration: 34,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -357,7 +357,7 @@ export default function Footer() {
           }}
           transition={{
             duration: 40,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -383,7 +383,7 @@ export default function Footer() {
               duration: 0.9,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-white/[0.08] px-6 py-9 shadow-[0_30px_90px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:px-9 lg:px-12 lg:py-11"
+            className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-white/[0.08] px-6 py-9 shadow-[0_30px_90px_rgba(0,0,0,0.25)] backdrop-blur-md sm:px-9 lg:px-12 lg:py-11"
           >
             <motion.div
               aria-hidden="true"
@@ -394,7 +394,7 @@ export default function Footer() {
               }}
               transition={{
                 duration: 7,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -408,7 +408,7 @@ export default function Footer() {
               }}
               transition={{
                 duration: 8,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -439,7 +439,7 @@ export default function Footer() {
                   className="relative"
                 >
                   <div
-                    className={`flex flex-col gap-3 rounded-2xl border bg-[#071a33]/60 p-2 backdrop-blur-xl sm:flex-row ${
+                    className={`flex flex-col gap-3 rounded-2xl border bg-[#071a33]/60 p-2 backdrop-blur-md sm:flex-row ${
                       newsletterError
                         ? "border-red-300/50"
                         : "border-white/10"
@@ -494,7 +494,7 @@ export default function Footer() {
                           }}
                           transition={{
                             duration: 2.4,
-                            repeat: Infinity,
+                            repeat: 0,
                             repeatDelay: 1.5,
                           }}
                         />
@@ -607,7 +607,7 @@ export default function Footer() {
                     }}
                     transition={{
                       duration: 2.8,
-                      repeat: Infinity,
+                      repeat: 0,
                       repeatDelay: 1.8,
                     }}
                   />
@@ -649,7 +649,7 @@ export default function Footer() {
                       whileTap={{
                         scale: 0.94,
                       }}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-blue-100 shadow-lg backdrop-blur-xl transition-colors hover:bg-white/[0.14] hover:text-white"
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-blue-100 shadow-lg backdrop-blur-md transition-colors hover:bg-white/[0.14] hover:text-white"
                     >
                       <Icon className="h-5 w-5" />
                     </motion.a>
@@ -666,7 +666,7 @@ export default function Footer() {
                   }}
                   transition={{
                     duration: 1.8,
-                    repeat: Infinity,
+                    repeat: 0,
                   }}
                 />
 
@@ -876,7 +876,7 @@ export default function Footer() {
               duration: 0.8,
               delay: 0.25,
             }}
-            className="relative mt-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] py-4 backdrop-blur-xl"
+            className="relative mt-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] py-4 backdrop-blur-md"
           >
             <div
               aria-hidden="true"
@@ -895,7 +895,7 @@ export default function Footer() {
               }}
               transition={{
                 duration: 20,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "linear",
               }}
             >
@@ -913,7 +913,7 @@ export default function Footer() {
                       transition={{
                         duration: 3,
                         delay: index * 0.2,
-                        repeat: Infinity,
+                        repeat: 0,
                       }}
                       className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-cyan-300"
                     >
@@ -946,7 +946,7 @@ export default function Footer() {
             transition={{
               duration: 0.85,
             }}
-            className="relative mt-10 flex flex-col items-center justify-between gap-6 overflow-hidden rounded-2xl border border-blue-300/15 bg-primary/15 px-6 py-6 text-center backdrop-blur-xl md:flex-row md:text-left"
+            className="relative mt-10 flex flex-col items-center justify-between gap-6 overflow-hidden rounded-2xl border border-blue-300/15 bg-primary/15 px-6 py-6 text-center backdrop-blur-md md:flex-row md:text-left"
           >
             <motion.div
               aria-hidden="true"
@@ -956,7 +956,7 @@ export default function Footer() {
               }}
               transition={{
                 duration: 6,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -969,7 +969,7 @@ export default function Footer() {
                 }}
                 transition={{
                   duration: 3,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-primary shadow-lg"
@@ -1054,7 +1054,7 @@ export default function Footer() {
                 scale: 0.92,
               }}
               aria-label="Scroll back to the top"
-              className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-white shadow-lg backdrop-blur-xl transition-colors hover:bg-primary"
+              className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-white shadow-lg backdrop-blur-md transition-colors hover:bg-primary"
             >
               <ArrowUp className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-0.5" />
             </motion.button>

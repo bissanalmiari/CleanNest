@@ -65,3 +65,12 @@ export type ServiceFilters = {
   sort: ServiceSort;
   page: number;
 };
+
+export type ServiceArea = {
+  id: string;
+  city: string;
+  area: string;
+  serviceFee: number;
+  maximumConcurrentBookings: number;
+  isActive: boolean;
+};

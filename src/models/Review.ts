@@ -28,6 +28,8 @@ const reviewSchema = new Schema<IReview>(
   { timestamps: true }
 );
 
+reviewSchema.index({ isVisible: 1, createdAt: -1 });
+
 const Review: Model<IReview> =
   mongoose.models.Review || mongoose.model<IReview>("Review", reviewSchema);
 

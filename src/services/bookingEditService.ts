@@ -12,6 +12,7 @@ import AddressModel from "@/models/Address";
 import BookingModel from "@/models/Booking";
 import BookingAddonModel from "@/models/BookingAddOn";
 import PromoCodeModel from "@/models/PromoCode";
+import PromoCodeUsageModel from "@/models/PromoCodeUsage";
 import ServiceAreaModel from "@/models/ServiceArea";
 
 import {
@@ -340,16 +341,47 @@ async function validateAddressAndServiceArea({
 async function updatePromoUsage({
   previousPromoCodeId,
   nextPromoCodeId,
+  customerId,
+  bookingId,
+  discountAmount,
   session,
 }: {
   previousPromoCodeId?: string;
   nextPromoCodeId?: string;
+  customerId: Types.ObjectId;
+  bookingId: Types.ObjectId;
+  discountAmount: number;
   session: ClientSession;
 }) {
   if (
     previousPromoCodeId ===
     nextPromoCodeId
   ) {
+    if (nextPromoCodeId) {
+      await PromoCodeUsageModel.updateOne(
+        {
+          bookingId,
+        },
+        {
+          $set: {
+            promoCodeId:
+              new Types.ObjectId(
+                nextPromoCodeId,
+              ),
+            customerId,
+            discountAmount,
+          },
+          $setOnInsert: {
+            usedAt: new Date(),
+          },
+        },
+        {
+          upsert: true,
+          session,
+        },
+      );
+    }
+
     return;
   }
 
@@ -376,18 +408,82 @@ async function updatePromoUsage({
         session,
       },
     );
+
+    await PromoCodeUsageModel.deleteOne({
+      bookingId,
+      promoCodeId:
+        new Types.ObjectId(
+          previousPromoCodeId,
+        ),
+    }).session(session);
   }
 
   /*
    * Consume the newly selected promo code atomically.
    */
   if (nextPromoCodeId) {
+    const nextPromoObjectId =
+      new Types.ObjectId(
+        nextPromoCodeId,
+      );
+
+    const promoCode =
+      await PromoCodeModel.findById(
+        nextPromoObjectId,
+      )
+        .select("perCustomerLimit")
+        .session(session)
+        .lean()
+        .exec();
+
+    if (!promoCode) {
+      throw new AppError(
+        "The selected promo code could not be found.",
+        404,
+      );
+    }
+
+    const [
+      trackedUsageCount,
+      bookingUsageCount,
+    ] = await Promise.all([
+      PromoCodeUsageModel.countDocuments({
+        promoCodeId:
+          nextPromoObjectId,
+        customerId,
+        bookingId: {
+          $ne: bookingId,
+        },
+      }).session(session),
+      BookingModel.countDocuments({
+        promoCodeId:
+          nextPromoObjectId,
+        customerId,
+        _id: {
+          $ne: bookingId,
+        },
+      }).session(session),
+    ]);
+    const customerUsageCount =
+      Math.max(
+        trackedUsageCount,
+        bookingUsageCount,
+      );
+
+    if (
+      customerUsageCount >=
+      promoCode.perCustomerLimit
+    ) {
+      throw new AppError(
+        "You have already used this promo code the maximum number of times.",
+        409,
+      );
+    }
+
     const updateResult =
       await PromoCodeModel.updateOne(
         {
-          _id: new Types.ObjectId(
-            nextPromoCodeId,
-          ),
+          _id: nextPromoObjectId,
 
           isActive: true,
 
@@ -419,8 +515,24 @@ async function updatePromoUsage({
       throw new AppError(
         "The selected promo code is no longer available.",
         409,
-      );
-    }
+        );
+      }
+
+    await PromoCodeUsageModel.create(
+      [
+        {
+          promoCodeId:
+            nextPromoObjectId,
+          customerId,
+          bookingId,
+          discountAmount,
+          usedAt: new Date(),
+        },
+      ],
+      {
+        session,
+      },
+    );
   }
 }
 
@@ -573,22 +685,29 @@ export async function editCustomerBooking({
 
   try {
     priceQuote =
-      await calculateBookingPrice({
-        serviceId:
-          booking.serviceId.toString(),
+      await calculateBookingPrice(
+        {
+          serviceId:
+            booking.serviceId.toString(),
 
-        promoCodeId:
-          nextPromoCodeId,
+          promoCodeId:
+            nextPromoCodeId,
 
-        property:
-          nextProperty,
+          property:
+            nextProperty,
 
-        addOns:
-          nextAddOns,
+          addOns:
+            nextAddOns,
 
-        frequency:
-          booking.frequency,
-      });
+          frequency:
+            booking.frequency,
+        },
+        {
+          customerId,
+          excludeBookingId:
+            bookingId,
+        },
+      );
   } catch (error) {
     mapPricingError(error);
   }
@@ -685,9 +804,6 @@ export async function editCustomerBooking({
     input.paymentMethod ??
     booking.paymentMethod;
 
-  const previousPromoCodeId =
-    booking.promoCodeId?.toString();
-
   const appliedPromoCodeId =
     priceQuote.promoCode?.id;
 
@@ -752,6 +868,15 @@ export async function editCustomerBooking({
             nextPromoCodeId:
               appliedPromoCodeId,
 
+            customerId:
+              customerObjectId,
+
+            bookingId:
+              bookingObjectId,
+
+            discountAmount:
+              priceQuote.discountAmount,
+
             session,
           });
 
@@ -788,6 +913,10 @@ export async function editCustomerBooking({
 
           transactionalBooking.baseAmount =
             priceQuote.baseAmount;
+          transactionalBooking.serviceBaseAmount =
+            priceQuote.serviceBaseAmount;
+          transactionalBooking.propertyAdjustmentAmount =
+            priceQuote.propertyAdjustmentAmount;
 
           transactionalBooking.addOnsAmount =
             priceQuote.addOnsAmount;

@@ -63,10 +63,7 @@ const bookingStatusHistorySchema =
       changedByUserId: {
         type: Schema.Types.ObjectId,
         ref: "User",
-        required: [
-          true,
-          "The user who changed the booking status is required.",
-        ],
+        default: undefined,
       },
 
       /*

@@ -29,7 +29,9 @@ import {
   ShieldCheck,
   Sparkles,
   SprayCan,
+  Tag,
   Timer,
+  X,
 } from "lucide-react";
 
 import {
@@ -995,6 +997,15 @@ export default function FinalCheckStep({
     setRefreshNumber,
   ] = useState(0);
 
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromoCodeId, setAppliedPromoCodeId] =
+    useState<string | null>(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [promoMessage, setPromoMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
   const pricingPayload =
     useMemo(
       () => ({
@@ -1028,8 +1039,13 @@ export default function FinalCheckStep({
                 addOn.quantity,
             }),
           ),
+
+        promoCodeId:
+          appliedPromoCodeId ??
+          undefined,
       }),
       [
+        appliedPromoCodeId,
         draft.addOns,
         draft.bathrooms,
         draft.bedrooms,
@@ -1154,6 +1170,19 @@ export default function FinalCheckStep({
         }
 
         setQuote(nextQuote);
+
+        if (
+          nextQuote.promoCode &&
+          appliedPromoCodeId ===
+            nextQuote.promoCode.id
+        ) {
+          setPromoMessage({
+            type: "success",
+            text: `${nextQuote.promoCode.code} applied — you save ${formatCurrency(
+              nextQuote.promoCode.discountAmount,
+            )}.`,
+          });
+        }
       } catch (error) {
         if (
           controller.signal.aborted
@@ -1168,13 +1197,21 @@ export default function FinalCheckStep({
           return;
         }
 
-        setQuote(null);
-
-        setQuoteError(
+        const message =
           error instanceof Error
             ? error.message
-            : "The trusted price could not be calculated.",
-        );
+            : "The trusted price could not be calculated.";
+
+        if (appliedPromoCodeId) {
+          setPromoMessage({
+            type: "error",
+            text: message,
+          });
+          setAppliedPromoCodeId(null);
+        } else {
+          setQuote(null);
+          setQuoteError(message);
+        }
       } finally {
         if (
           requestVersion ===
@@ -1194,10 +1231,88 @@ export default function FinalCheckStep({
       controller.abort();
     };
   }, [
+    appliedPromoCodeId,
     pricingPayload,
     refreshNumber,
     draft.serviceId,
   ]);
+
+  async function handleApplyPromoCode() {
+    const code = promoInput.trim().toUpperCase();
+    if (!code || isApplyingPromo) {
+      if (!code) {
+        setPromoMessage({
+          type: "error",
+          text: "Enter a promo code first.",
+        });
+      }
+      return;
+    }
+
+    setIsApplyingPromo(true);
+    setPromoMessage(null);
+
+    try {
+      const response = await fetch(
+        "/api/promo-codes/validate",
+        {
+          method: "POST",
+          credentials: "include",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code,
+            serviceId: draft.serviceId,
+            bookingAmount:
+              quote?.subtotalAmount,
+          }),
+        },
+      );
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: {
+          promoCode?: {
+            id?: string;
+            code?: string;
+          };
+        };
+        error?: string;
+      };
+      const promoCode = payload.data?.promoCode;
+
+      if (
+        !response.ok ||
+        !payload.success ||
+        !promoCode?.id
+      ) {
+        throw new Error(
+          payload.error ??
+            "This promo code could not be applied.",
+        );
+      }
+
+      setPromoInput(promoCode.code ?? code);
+      setAppliedPromoCodeId(promoCode.id);
+    } catch (error) {
+      setPromoMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "This promo code could not be applied.",
+      });
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  }
+
+  function handleRemovePromoCode() {
+    setAppliedPromoCodeId(null);
+    setPromoInput("");
+    setPromoMessage(null);
+  }
 
   const trustedEndTime =
     useMemo(() => {
@@ -1300,6 +1415,10 @@ export default function FinalCheckStep({
 
                 serviceAreaId:
                   draft.serviceAreaId,
+
+                promoCodeId:
+                  appliedPromoCodeId ??
+                  undefined,
 
                 frequency:
                   "one_time",
@@ -1988,6 +2107,105 @@ export default function FinalCheckStep({
                   >
                     {notesLength}/1000
                   </p>
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-dashed border-primary/25 bg-primary-light/30 p-4 sm:p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
+                      <Tag className="h-4 w-4" />
+                    </span>
+
+                    <div>
+                      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary">
+                        Have a promo code?
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-slate-500">
+                        Apply it here and your trusted total will update automatically.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      value={promoInput}
+                      disabled={
+                        isApplyingPromo ||
+                        Boolean(
+                          appliedPromoCodeId,
+                        )
+                      }
+                      onChange={(event) => {
+                        setPromoInput(
+                          event.target.value
+                            .toUpperCase()
+                            .replace(
+                              /[^A-Z0-9_-]/g,
+                              "",
+                            ),
+                        );
+                        setPromoMessage(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter"
+                        ) {
+                          event.preventDefault();
+                          void handleApplyPromoCode();
+                        }
+                      }}
+                      placeholder="e.g. WELCOME20"
+                      maxLength={30}
+                      className="min-h-12 flex-1 rounded-xl border border-primary/15 bg-white px-4 font-mono text-sm font-black tracking-[0.1em] text-navy outline-none transition placeholder:font-sans placeholder:font-medium placeholder:tracking-normal placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:bg-slate-50"
+                    />
+
+                    {appliedPromoCodeId ? (
+                      <button
+                        type="button"
+                        onClick={
+                          handleRemovePromoCode
+                        }
+                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-extrabold text-red-500 transition hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4" />
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={
+                          isApplyingPromo ||
+                          !promoInput.trim()
+                        }
+                        onClick={() =>
+                          void handleApplyPromoCode()
+                        }
+                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-navy px-5 text-sm font-extrabold text-white shadow-lg transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isApplyingPromo ? (
+                          <LoaderCircle className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Tag className="h-4 w-4" />
+                        )}
+                        {isApplyingPromo
+                          ? "Checking"
+                          : "Apply code"}
+                      </button>
+                    )}
+                  </div>
+
+                  {promoMessage && (
+                    <p
+                      aria-live="polite"
+                      className={`mt-3 text-sm font-bold ${
+                        promoMessage.type ===
+                        "success"
+                          ? "text-emerald-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {promoMessage.text}
+                    </p>
+                  )}
                 </div>
               </div>
 

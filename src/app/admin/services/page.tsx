@@ -25,6 +25,9 @@ interface ServiceRow {
   category: string;
   price: number;
   durationMinutes: number;
+  includedSquareMeters: number;
+  pricePerAdditionalSquareMeter: number;
+  minutesPerAdditionalSquareMeter: number;
   features: string[];
   imageUrl: string;
   isActive: boolean;
@@ -259,7 +262,12 @@ export default function AdminServicesPage() {
                         {service.category}
                       </td>
                       <td className="px-3 py-3.5 font-medium text-navy">
-                        ${(service.price ?? 0).toLocaleString()}
+                        <p>${(service.price ?? 0).toLocaleString()} base</p>
+                        <p className="mt-0.5 text-[11px] font-medium text-navy/40">
+                          +$
+                          {(service.pricePerAdditionalSquareMeter ?? 0.4).toFixed(2)}
+                          /m² after {service.includedSquareMeters ?? 60} m²
+                        </p>
                       </td>
                       <td className="px-3 py-3.5 text-navy/60">
                         {service.durationMinutes ?? 0} min
@@ -295,6 +303,12 @@ export default function AdminServicesPage() {
                                 category: service.category,
                                 price: service.price,
                                 durationMinutes: service.durationMinutes,
+                                includedSquareMeters:
+                                  service.includedSquareMeters ?? 60,
+                                pricePerAdditionalSquareMeter:
+                                  service.pricePerAdditionalSquareMeter ?? 0.4,
+                                minutesPerAdditionalSquareMeter:
+                                  service.minutesPerAdditionalSquareMeter ?? 0.75,
                                 isActive: service.isActive,
                               });
                             }}

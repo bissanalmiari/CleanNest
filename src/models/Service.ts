@@ -71,6 +71,32 @@ const serviceSchema = new Schema(
       min: [30, "Service duration must be at least 30 minutes."],
     },
 
+    /*
+     * The base price covers a property up to includedSquareMeters.
+     * Larger properties are priced per additional square meter so each
+     * service can scale differently (for example deep vs standard cleaning).
+     */
+    includedSquareMeters: {
+      type: Number,
+      min: [0, "Included property size cannot be negative."],
+      max: [10000, "Included property size is too large."],
+      default: 60,
+    },
+
+    pricePerAdditionalSquareMeter: {
+      type: Number,
+      min: [0, "The additional square-meter price cannot be negative."],
+      max: [100, "The additional square-meter price is too large."],
+      default: 0.4,
+    },
+
+    minutesPerAdditionalSquareMeter: {
+      type: Number,
+      min: [0, "The additional square-meter duration cannot be negative."],
+      max: [60, "The additional square-meter duration is too large."],
+      default: 0.75,
+    },
+
     features: {
       type: [
         {

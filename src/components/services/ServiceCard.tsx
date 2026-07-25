@@ -157,7 +157,7 @@ export default function ServiceCard({
         }}
         transition={{
           duration: 6 + index,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -171,7 +171,7 @@ export default function ServiceCard({
         }}
         transition={{
           duration: 3,
-          repeat: Infinity,
+          repeat: 0,
           repeatDelay: 4 + index * 0.4,
           ease: "easeInOut",
         }}

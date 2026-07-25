@@ -10,7 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 
 import AddonModel from "@/models/AddOn";
-import ServiceAddonModel from "@/models/ServiceAddOn";
+import ServiceAddonModel from "@/models/ServiceAddon";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -152,7 +152,7 @@ export default function FAQSection() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section
         id="faq"
         className="relative isolate overflow-hidden bg-surface-soft py-24 font-body sm:py-28 lg:py-32"
@@ -177,7 +177,7 @@ export default function FAQSection() {
           }}
           transition={{
             duration: 22,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -193,7 +193,7 @@ export default function FAQSection() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -208,7 +208,7 @@ export default function FAQSection() {
           }}
           transition={{
             duration: 17,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -222,7 +222,7 @@ export default function FAQSection() {
           }}
           transition={{
             duration: 9,
-            repeat: Infinity,
+            repeat: 0,
             repeatDelay: 2,
             ease: "easeInOut",
           }}
@@ -249,7 +249,7 @@ export default function FAQSection() {
               transition={{
                 duration: particle.duration,
                 delay: particle.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -265,7 +265,7 @@ export default function FAQSection() {
           }}
           transition={{
             duration: 34,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -278,7 +278,7 @@ export default function FAQSection() {
           }}
           transition={{
             duration: 40,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -310,7 +310,7 @@ export default function FAQSection() {
               whileHover={{
                 scale: 1.05,
               }}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-xl"
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-md"
             >
               <motion.span
                 animate={{
@@ -319,7 +319,7 @@ export default function FAQSection() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -391,7 +391,7 @@ export default function FAQSection() {
                     whileHover={{
                       y: -3,
                     }}
-                    className={`group relative overflow-hidden rounded-[1.6rem] border bg-white/85 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 ${
+                    className={`group relative overflow-hidden rounded-[1.6rem] border bg-white/85 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-md transition-[border-color,box-shadow] duration-300 ${
                       isOpen
                         ? "border-primary/25 shadow-[0_24px_65px_rgba(11,37,69,0.13)]"
                         : "border-primary/10 hover:border-primary/20"
@@ -562,7 +562,7 @@ export default function FAQSection() {
                   }}
                   transition={{
                     duration: 7,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                 />
@@ -576,7 +576,7 @@ export default function FAQSection() {
                   }}
                   transition={{
                     duration: 8,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                 />
@@ -589,7 +589,7 @@ export default function FAQSection() {
                   }}
                   transition={{
                     duration: 5,
-                    repeat: Infinity,
+                    repeat: 0,
                     repeatDelay: 2,
                     ease: "easeInOut",
                   }}
@@ -606,7 +606,7 @@ export default function FAQSection() {
                       }}
                       transition={{
                         duration: 22,
-                        repeat: Infinity,
+                        repeat: 0,
                         ease: "linear",
                       }}
                     />
@@ -619,7 +619,7 @@ export default function FAQSection() {
                       }}
                       transition={{
                         duration: 17,
-                        repeat: Infinity,
+                        repeat: 0,
                         ease: "linear",
                       }}
                     />
@@ -633,7 +633,7 @@ export default function FAQSection() {
                       }}
                       transition={{
                         duration: 4,
-                        repeat: Infinity,
+                        repeat: 0,
                         ease: "easeInOut",
                       }}
                     />
@@ -645,7 +645,7 @@ export default function FAQSection() {
                       }}
                       transition={{
                         duration: 3.8,
-                        repeat: Infinity,
+                        repeat: 0,
                         ease: "easeInOut",
                       }}
                       className="relative flex h-28 w-28 items-center justify-center rounded-[2rem] bg-white text-primary shadow-[0_25px_65px_rgba(0,0,0,0.25)]"
@@ -659,7 +659,7 @@ export default function FAQSection() {
                         }}
                         transition={{
                           duration: 2,
-                          repeat: Infinity,
+                          repeat: 0,
                         }}
                       >
                         <MessageCircle className="h-4 w-4" />
@@ -675,7 +675,7 @@ export default function FAQSection() {
                       }}
                       transition={{
                         duration: 3.5,
-                        repeat: Infinity,
+                        repeat: 0,
                         ease: "easeInOut",
                       }}
                     >
@@ -691,7 +691,7 @@ export default function FAQSection() {
                       }}
                       transition={{
                         duration: 2.4,
-                        repeat: Infinity,
+                        repeat: 0,
                       }}
                     />
                   </div>
@@ -730,7 +730,7 @@ export default function FAQSection() {
                         whileHover={{
                           x: 5,
                         }}
-                        className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.08] px-3 py-3 backdrop-blur-xl"
+                        className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.08] px-3 py-3 backdrop-blur-md"
                       >
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-400/15 text-emerald-300">
                           <CheckCircle2 className="h-4 w-4" />
@@ -799,7 +799,7 @@ export default function FAQSection() {
                 transition={{
                   delay: 0.5,
                 }}
-                className="mx-4 flex items-center gap-3 rounded-b-2xl border border-t-0 border-primary/10 bg-white/90 px-4 py-3 shadow-card backdrop-blur-xl"
+                className="mx-4 flex items-center gap-3 rounded-b-2xl border border-t-0 border-primary/10 bg-white/90 px-4 py-3 shadow-card backdrop-blur-md"
               >
                 <motion.span
                   className="h-2.5 w-2.5 rounded-full bg-emerald-500"
@@ -809,7 +809,7 @@ export default function FAQSection() {
                   }}
                   transition={{
                     duration: 1.8,
-                    repeat: Infinity,
+                    repeat: 0,
                   }}
                 />
 
@@ -837,7 +837,7 @@ export default function FAQSection() {
             transition={{
               duration: 0.85,
             }}
-            className="relative mt-16 overflow-hidden rounded-[2rem] border border-primary/10 bg-white/80 px-6 py-7 shadow-[0_18px_55px_rgba(11,37,69,0.09)] backdrop-blur-xl sm:px-9"
+            className="relative mt-16 overflow-hidden rounded-[2rem] border border-primary/10 bg-white/80 px-6 py-7 shadow-[0_18px_55px_rgba(11,37,69,0.09)] backdrop-blur-md sm:px-9"
           >
             <motion.div
               aria-hidden="true"
@@ -847,7 +847,7 @@ export default function FAQSection() {
               }}
               transition={{
                 duration: 6,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -861,7 +861,7 @@ export default function FAQSection() {
                   }}
                   transition={{
                     duration: 3,
-                    repeat: Infinity,
+                    repeat: 0,
                   }}
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary"
                 >

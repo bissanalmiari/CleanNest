@@ -4,8 +4,10 @@ import { Types } from "mongoose";
 
 import ServiceModel from "@/models/Service";
 import AddonModel from "@/models/AddOn";
-import ServiceAddonModel from "@/models/ServiceAddOn";
+import ServiceAddonModel from "@/models/ServiceAddon";
 import PromoCodeModel from "@/models/PromoCode";
+import PromoCodeUsageModel from "@/models/PromoCodeUsage";
+import BookingModel from "@/models/Booking";
 
 import type { BookingPricePreviewInput } from "@/validators/bookingValidator";
 
@@ -22,6 +24,7 @@ export type BookingPricingErrorCode =
   | "PROMO_NOT_STARTED"
   | "PROMO_EXPIRED"
   | "PROMO_USAGE_LIMIT_REACHED"
+  | "PROMO_CUSTOMER_LIMIT_REACHED"
   | "PROMO_SERVICE_NOT_ALLOWED"
   | "PROMO_MINIMUM_NOT_REACHED"
   | "INVALID_PROPERTY";
@@ -102,6 +105,9 @@ export interface BookingPriceQuote {
     bedrooms?: number;
     bathrooms?: number;
     size?: number;
+    includedSquareMeters: number;
+    additionalSquareMeters: number;
+    pricePerAdditionalSquareMeter: number;
     adjustmentAmount: number;
     extraDurationMinutes: number;
     lines: PropertyPriceLine[];
@@ -150,10 +156,6 @@ export const PROPERTY_PRICING_RULES = {
     extraBathroomAmount: 6,
     extraBathroomMinutes: 15,
 
-    includedSize: 100,
-    sizeStep: 50,
-    sizeStepAmount: 7,
-    sizeStepMinutes: 15,
   },
 
   house: {
@@ -168,10 +170,6 @@ export const PROPERTY_PRICING_RULES = {
     extraBathroomAmount: 7,
     extraBathroomMinutes: 20,
 
-    includedSize: 150,
-    sizeStep: 50,
-    sizeStepAmount: 9,
-    sizeStepMinutes: 20,
   },
 
   office: {
@@ -186,10 +184,6 @@ export const PROPERTY_PRICING_RULES = {
     extraBathroomAmount: 6,
     extraBathroomMinutes: 15,
 
-    includedSize: 80,
-    sizeStep: 40,
-    sizeStepAmount: 10,
-    sizeStepMinutes: 20,
   },
 
   other: {
@@ -204,10 +198,6 @@ export const PROPERTY_PRICING_RULES = {
     extraBathroomAmount: 6,
     extraBathroomMinutes: 15,
 
-    includedSize: 50,
-    sizeStep: 50,
-    sizeStepAmount: 8,
-    sizeStepMinutes: 15,
   },
 } as const;
 
@@ -247,25 +237,13 @@ function toObjectId(
   return new Types.ObjectId(value);
 }
 
-function calculateStepsAboveIncluded(
-  value: number,
-  includedValue: number,
-  step: number,
-) {
-  if (
-    value <= includedValue ||
-    step <= 0
-  ) {
-    return 0;
-  }
-
-  return Math.ceil(
-    (value - includedValue) / step,
-  );
-}
-
 function calculatePropertyPricing(
   property: BookingPricePreviewInput["property"],
+  sizePricing: {
+    includedSquareMeters: number;
+    pricePerAdditionalSquareMeter: number;
+    minutesPerAdditionalSquareMeter: number;
+  },
 ): PropertyPricingResult {
   const rules =
     PROPERTY_PRICING_RULES[
@@ -394,31 +372,35 @@ function calculatePropertyPricing(
       bathroomMinutes;
   }
 
-  const sizeSteps =
-    calculateStepsAboveIncluded(
-      propertySize,
-      rules.includedSize,
-      rules.sizeStep,
+  const additionalSquareMeters =
+    Math.max(
+      0,
+      propertySize -
+        sizePricing.includedSquareMeters,
     );
 
   if (
-    sizeSteps > 0 &&
-    rules.sizeStepAmount > 0
+    additionalSquareMeters > 0 &&
+    sizePricing.pricePerAdditionalSquareMeter >
+      0
   ) {
     const sizeAmount =
-      sizeSteps *
-      rules.sizeStepAmount;
+      additionalSquareMeters *
+      sizePricing.pricePerAdditionalSquareMeter;
 
     const sizeMinutes =
-      sizeSteps *
-      rules.sizeStepMinutes;
+      Math.ceil(
+        additionalSquareMeters *
+          sizePricing.minutesPerAdditionalSquareMeter,
+      );
 
     lines.push({
       code: "property_size",
-      label: `Additional property size blocks of ${rules.sizeStep} m²`,
-      quantity: sizeSteps,
+      label: `Floor area above the included ${sizePricing.includedSquareMeters} m²`,
+      quantity:
+        additionalSquareMeters,
       unitAmount:
-        rules.sizeStepAmount,
+        sizePricing.pricePerAdditionalSquareMeter,
       totalAmount: sizeAmount,
       extraDurationMinutes:
         sizeMinutes,
@@ -621,11 +603,15 @@ async function calculatePromoDiscount({
   serviceId,
   subtotalAmount,
   now,
+  customerId,
+  excludeBookingId,
 }: {
   promoCodeId?: string;
   serviceId: Types.ObjectId;
   subtotalAmount: number;
   now: Date;
+  customerId?: string;
+  excludeBookingId?: string;
 }): Promise<AppliedPromoCode | null> {
   if (!promoCodeId?.trim()) {
     return null;
@@ -696,6 +682,63 @@ async function calculatePromoDiscount({
       "PROMO_USAGE_LIMIT_REACHED",
       "This promo code has reached its maximum number of uses.",
     );
+  }
+
+  if (customerId) {
+    const customerObjectId = toObjectId(
+      customerId,
+      "Customer ID",
+    );
+    const usageMatch: Record<string, unknown> = {
+      promoCodeId: promoCode._id,
+      customerId: customerObjectId,
+    };
+
+    if (excludeBookingId) {
+      usageMatch.bookingId = {
+        $ne: toObjectId(
+          excludeBookingId,
+          "Booking ID",
+        ),
+      };
+    }
+
+    const bookingUsageMatch: Record<string, unknown> = {
+      promoCodeId: promoCode._id,
+      customerId: customerObjectId,
+    };
+    if (excludeBookingId) {
+      bookingUsageMatch._id = {
+        $ne: toObjectId(
+          excludeBookingId,
+          "Booking ID",
+        ),
+      };
+    }
+
+    const [trackedUsageCount, bookingUsageCount] =
+      await Promise.all([
+        PromoCodeUsageModel.countDocuments(
+          usageMatch,
+        ),
+        BookingModel.countDocuments(
+          bookingUsageMatch,
+        ),
+      ]);
+    const customerUsageCount = Math.max(
+      trackedUsageCount,
+      bookingUsageCount,
+    );
+
+    if (
+      customerUsageCount >=
+      promoCode.perCustomerLimit
+    ) {
+      throw new BookingPricingError(
+        "PROMO_CUSTOMER_LIMIT_REACHED",
+        "You have already used this promo code the maximum number of times.",
+      );
+    }
   }
 
   const applicableServiceIds =
@@ -802,6 +845,8 @@ export async function calculateBookingPrice(
   input: BookingPricePreviewInput,
   options?: {
     now?: Date;
+    customerId?: string;
+    excludeBookingId?: string;
   },
 ): Promise<BookingPriceQuote> {
   const now =
@@ -843,9 +888,39 @@ export async function calculateBookingPrice(
       ),
     );
 
+  const includedSquareMeters =
+    Math.max(
+      0,
+      safeNumber(
+        service.includedSquareMeters,
+        60,
+      ),
+    );
+  const pricePerAdditionalSquareMeter =
+    Math.max(
+      0,
+      safeNumber(
+        service.pricePerAdditionalSquareMeter,
+        0.4,
+      ),
+    );
+  const minutesPerAdditionalSquareMeter =
+    Math.max(
+      0,
+      safeNumber(
+        service.minutesPerAdditionalSquareMeter,
+        0.75,
+      ),
+    );
+
   const propertyPricing =
     calculatePropertyPricing(
       input.property,
+      {
+        includedSquareMeters,
+        pricePerAdditionalSquareMeter,
+        minutesPerAdditionalSquareMeter,
+      },
     );
 
   const addOnPricing =
@@ -876,6 +951,10 @@ export async function calculateBookingPrice(
       serviceId: serviceObjectId,
       subtotalAmount,
       now,
+      customerId:
+        options?.customerId,
+      excludeBookingId:
+        options?.excludeBookingId,
     });
 
   const discountAmount =
@@ -914,6 +993,16 @@ export async function calculateBookingPrice(
         input.property.bathrooms,
       size:
         input.property.propertySize,
+      includedSquareMeters,
+      additionalSquareMeters:
+        Math.max(
+          0,
+          safeNumber(
+            input.property.propertySize,
+          ) -
+            includedSquareMeters,
+        ),
+      pricePerAdditionalSquareMeter,
       adjustmentAmount:
         propertyAdjustmentAmount,
       extraDurationMinutes:

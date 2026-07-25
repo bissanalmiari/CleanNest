@@ -221,7 +221,6 @@ seedServices().catch((error: unknown) => {
 // Run:
 //   npm run seed
 import "dotenv/config";
-import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { User } from "../src/models/User";
 

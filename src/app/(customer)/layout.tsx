@@ -10,11 +10,8 @@ interface CustomerLayoutProps {
   children: ReactNode;
 }
 
-export default async function CustomerLayout({
-  children,
-}: CustomerLayoutProps) {
-  const currentUser =
-    await getCurrentUser();
+export default async function CustomerLayout({ children }: CustomerLayoutProps) {
+  const currentUser = await getCurrentUser();
 
   /*
    * No valid authenticated session.
@@ -27,12 +24,8 @@ export default async function CustomerLayout({
    * Prevent administrators or any other role from
    * opening customer pages.
    */
-  if (
-    currentUser.role !== "customer"
-  ) {
-    if (
-      currentUser.role === "admin"
-    ) {
+  if (currentUser.role !== "customer") {
+    if (currentUser.role === "admin") {
       redirect("/admin/dashboard");
     }
 
@@ -44,6 +37,7 @@ export default async function CustomerLayout({
       user={{
         name: currentUser.name,
         email: currentUser.email,
+        avatarUrl: currentUser.avatarUrl,
       }}
     >
       {children}

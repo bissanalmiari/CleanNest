@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  useCallback,
+  useEffect,
   useMemo,
   useState,
   type ComponentType,
@@ -36,6 +38,9 @@ import CleaningPlanStep, {
   type CleaningPlanService,
 } from "./CleaningPlanStep";
 
+import { AddressForm } from "@/components/addresses/AddressForm";
+import type { CreateAddressValues } from "@/validators/addressValidator";
+
 import ExtraTouchesStep, {
   type ExtraTouchSelection,
 } from "./ExtraTouchesStep";
@@ -45,6 +50,7 @@ import FinalCheckStep, {
 } from "./FinalCheckStep";
 
 import HomeBaseStep, {
+  fetchBookingAddresses,
   type HomeBaseAddress,
 } from "./HomeBaseStep";
 
@@ -59,7 +65,6 @@ type BookingStepId =
   | "space"
   | "plan"
   | "extras"
-  | "address"
   | "schedule"
   | "review";
 
@@ -126,16 +131,27 @@ interface BookingDraft {
   estimatedDurationMinutes: number;
 }
 
+interface CreateHomeResponse {
+  success?: boolean;
+  data?: {
+    address?: {
+      id?: string;
+    };
+  };
+  error?: string;
+  message?: string;
+}
+
 const DEFAULT_BOOKING_STEP: BookingStep = {
   id: "space",
   number: "01",
-  label: "Space Scan",
-  shortLabel: "Space",
-  eyebrow: "Map your property",
+  label: "Home Profile",
+  shortLabel: "Home",
+  eyebrow: "Choose or map your home",
   title:
-    "Tell us what kind of space we are cleaning.",
+    "Where are we cleaning, and what is the space like?",
   description:
-    "Build the foundation of your cleaning route by selecting the property type, room count, and approximate size.",
+    "Choose a saved home to reuse its address and property details, or add a new home once and save it for every future booking.",
   icon: Home,
 };
 
@@ -171,22 +187,8 @@ const BOOKING_STEPS: BookingStep[] = [
   },
 
   {
-    id: "address",
-    number: "04",
-    label: "Home Base",
-    shortLabel: "Address",
-    eyebrow:
-      "Choose the destination",
-    title:
-      "Connect this cleaning route to an address.",
-    description:
-      "Select a saved address and confirm that it belongs to an active CleanNest service area.",
-    icon: MapPin,
-  },
-
-  {
     id: "schedule",
-    number: "05",
+    number: "04",
     label: "Time Route",
     shortLabel: "Time",
     eyebrow:
@@ -200,7 +202,7 @@ const BOOKING_STEPS: BookingStep[] = [
 
   {
     id: "review",
-    number: "06",
+    number: "05",
     label: "Final Check",
     shortLabel: "Review",
     eyebrow:
@@ -435,6 +437,66 @@ export default function BookingRouteBuilder() {
     string | null
   >(null);
 
+  const [profileSaveState, setProfileSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+
+  const [newHomeSaving, setNewHomeSaving] = useState(false);
+  const [newHomeError, setNewHomeError] = useState<string | null>(null);
+  const [newHomeSuccess, setNewHomeSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!draft.addressId) {
+      setProfileSaveState("idle");
+      return;
+    }
+
+    const controller = new AbortController();
+    const saveTimer = window.setTimeout(async () => {
+      setProfileSaveState("saving");
+
+      try {
+        const response = await fetch(`/api/addresses/${draft.addressId}`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            propertyType: draft.propertyType,
+            bedrooms: draft.bedrooms,
+            bathrooms: draft.bathrooms,
+            propertySize: draft.propertySize,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("The home profile could not be saved.");
+        }
+
+        setProfileSaveState("saved");
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        setProfileSaveState("error");
+      }
+    }, 500);
+
+    return () => {
+      window.clearTimeout(saveTimer);
+      controller.abort();
+    };
+  }, [
+    draft.addressId,
+    draft.bathrooms,
+    draft.bedrooms,
+    draft.propertySize,
+    draft.propertyType,
+  ]);
+
   const currentStep: BookingStep =
     BOOKING_STEPS.at(
       currentStepIndex,
@@ -481,16 +543,14 @@ export default function BookingRouteBuilder() {
     draft.bedrooms >= 0 &&
     draft.bedrooms <= 30 &&
     draft.bathrooms >= 0 &&
-    draft.bathrooms <= 30;
-
-  const isPlanStepValid =
-    Boolean(draft.serviceId);
-
-  const isAddressStepValid =
+    draft.bathrooms <= 30 &&
     Boolean(
       draft.addressId &&
         draft.serviceAreaId,
     );
+
+  const isPlanStepValid =
+    Boolean(draft.serviceId);
 
   const isScheduleStepValid =
     Boolean(
@@ -505,9 +565,6 @@ export default function BookingRouteBuilder() {
       : currentStep.id === "plan"
         ? isPlanStepValid
         : currentStep.id ===
-            "address"
-          ? isAddressStepValid
-          : currentStep.id ===
               "schedule"
             ? isScheduleStepValid
             : true;
@@ -578,12 +635,9 @@ export default function BookingRouteBuilder() {
         setStepError(
           "Select a cleaning plan before continuing.",
         );
-      } else if (
-        currentStep.id ===
-        "address"
-      ) {
+      } else if (currentStep.id === "space") {
         setStepError(
-          "Select an address inside an active CleanNest service area before continuing.",
+          "Choose or add a serviceable home and complete its property details before continuing.",
         );
       } else if (
         currentStep.id ===
@@ -648,6 +702,9 @@ export default function BookingRouteBuilder() {
     });
 
     setStepError(null);
+    setProfileSaveState("idle");
+    setNewHomeError(null);
+    setNewHomeSuccess(null);
     setCurrentStepIndex(0);
     setFurthestStepIndex(0);
   }
@@ -758,6 +815,43 @@ export default function BookingRouteBuilder() {
     );
   }
 
+  const beginNewHome = useCallback(() => {
+    setStepError(null);
+    setNewHomeError(null);
+    setNewHomeSuccess(null);
+
+    setDraft((currentDraft) => {
+      if (
+        !currentDraft.addressId &&
+        !currentDraft.serviceAreaId &&
+        !currentDraft.serviceId &&
+        currentDraft.addOns.length === 0 &&
+        !currentDraft.bookingDate &&
+        !currentDraft.startTime
+      ) {
+        return currentDraft;
+      }
+
+      return {
+        ...currentDraft,
+        addressId: "",
+        addressLabel: "No address selected",
+        serviceAreaId: "",
+        serviceAreaLabel: "Not selected",
+        serviceAreaFee: 0,
+        serviceId: "",
+        serviceName: "Not selected",
+        addOns: [],
+        baseAmount: 0,
+        addOnsAmount: 0,
+        totalAmount: 0,
+        bookingDate: "",
+        startTime: "",
+        endTime: "",
+      };
+    });
+  }, []);
+
   function handleAddressSelection(
     address: HomeBaseAddress,
   ) {
@@ -768,17 +862,20 @@ export default function BookingRouteBuilder() {
         const nextServiceAreaFee =
           address.serviceFee;
 
-        const nextTotalAmount =
-          Math.max(
-            0,
-            currentDraft.baseAmount +
-              currentDraft.addOnsAmount +
-              nextServiceAreaFee -
-              currentDraft.discountAmount,
-          );
-
         return {
           ...currentDraft,
+
+          propertyType:
+            address.propertyType,
+
+          bedrooms:
+            address.bedrooms,
+
+          bathrooms:
+            address.bathrooms,
+
+          propertySize:
+            address.propertySize,
 
           addressId:
             address.id,
@@ -796,15 +893,83 @@ export default function BookingRouteBuilder() {
           serviceAreaFee:
             nextServiceAreaFee,
 
+          /*
+           * A different saved home can produce a different personalized
+           * service price and duration, so the plan must be confirmed again.
+           */
+          serviceId: "",
+          serviceName: "Not selected",
+          addOns: [],
+          baseAmount: 0,
+          addOnsAmount: 0,
+
           bookingDate: "",
           startTime: "",
           endTime: "",
 
           totalAmount:
-            nextTotalAmount,
+            nextServiceAreaFee,
         };
       },
     );
+  }
+
+  async function handleNewHomeSubmit(values: CreateAddressValues) {
+    setNewHomeSaving(true);
+    setNewHomeError(null);
+    setNewHomeSuccess(null);
+
+    try {
+      const response = await fetch("/api/addresses", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...values,
+          propertyType: draft.propertyType,
+          bedrooms: draft.bedrooms,
+          bathrooms: draft.bathrooms,
+          propertySize: draft.propertySize,
+        }),
+      });
+
+      const responseText = await response.text();
+      const payload = responseText
+        ? (JSON.parse(responseText) as CreateHomeResponse)
+        : {};
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error ?? payload.message ?? "The new home could not be saved.");
+      }
+
+      const addressId = payload.data?.address?.id;
+
+      if (!addressId) {
+        throw new Error("The saved home did not return a valid ID.");
+      }
+
+      const addresses = await fetchBookingAddresses();
+      const createdHome = addresses.find((address) => address.id === addressId);
+
+      if (!createdHome) {
+        throw new Error("The new home was saved but could not be reloaded.");
+      }
+
+      if (!createdHome.isServiceable) {
+        throw new Error("The new home was saved but its service area is not available.");
+      }
+
+      handleAddressSelection(createdHome);
+      setNewHomeSuccess(`${createdHome.label} was saved and selected for this booking.`);
+    } catch (error) {
+      setNewHomeError(
+        error instanceof Error ? error.message : "The new home could not be saved."
+      );
+    } finally {
+      setNewHomeSaving(false);
+    }
   }
 
   function handleTimeRouteChange(
@@ -925,7 +1090,7 @@ export default function BookingRouteBuilder() {
         }
         transition={{
           duration: 9,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -952,7 +1117,7 @@ export default function BookingRouteBuilder() {
         }
         transition={{
           duration: 10,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -1004,7 +1169,7 @@ export default function BookingRouteBuilder() {
         </header>
 
         <div className="grid items-start gap-8 2xl:grid-cols-[minmax(0,1fr)_340px]">
-          <section className="min-w-0 overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 shadow-[0_30px_90px_rgba(11,37,69,0.12)] backdrop-blur-xl">
+          <section className="min-w-0 overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 shadow-[0_30px_90px_rgba(11,37,69,0.12)] backdrop-blur-md">
             <div className="relative overflow-hidden bg-navy px-5 pb-6 pt-6 text-white sm:px-7 lg:px-9">
               <div
                 aria-hidden="true"
@@ -1031,14 +1196,14 @@ export default function BookingRouteBuilder() {
               </div>
 
               <div className="relative mt-7">
-                <div className="absolute left-[8.333%] right-[8.333%] top-5 h-0.5 bg-white/10" />
+                <div className="absolute left-[10%] right-[10%] top-5 h-0.5 bg-white/10" />
 
                 <motion.div
-                  className="absolute left-[8.333%] top-5 h-0.5 origin-left bg-gradient-to-r from-primary via-cyan-300 to-emerald-300"
+                  className="absolute left-[10%] top-5 h-0.5 origin-left bg-gradient-to-r from-primary via-cyan-300 to-emerald-300"
                   animate={{
                     width: `${
                       routeLineProgress *
-                      0.83334
+                      0.8
                     }%`,
                   }}
                   transition={{
@@ -1053,7 +1218,7 @@ export default function BookingRouteBuilder() {
                   }}
                 />
 
-                <div className="relative grid grid-cols-6 gap-2">
+                <div className="relative grid grid-cols-5 gap-2">
                   {BOOKING_STEPS.map(
                     (
                       step,
@@ -1110,7 +1275,7 @@ export default function BookingRouteBuilder() {
                             transition={{
                               duration: 2,
                               repeat:
-                                Infinity,
+                                0,
                               ease:
                                 "easeInOut",
                             }}
@@ -1217,50 +1382,116 @@ export default function BookingRouteBuilder() {
 
                       {currentStep.id ===
                       "space" ? (
-                        <SpaceScanStep
-                          value={{
-                            propertyType:
-                              draft.propertyType,
+                        <div className="space-y-10">
+                          <HomeBaseStep
+                            selectedAddressId={
+                              draft.addressId
+                            }
+                            homeProfile={{
+                              propertyType: draft.propertyType,
+                              bedrooms: draft.bedrooms,
+                              bathrooms: draft.bathrooms,
+                              propertySize: draft.propertySize,
+                            }}
+                            profileSaveState={profileSaveState}
+                            onSelect={(address) => {
+                              setNewHomeError(null);
+                              setNewHomeSuccess(null);
+                              handleAddressSelection(address);
+                            }}
+                          />
 
-                            bedrooms:
-                              draft.bedrooms,
+                          <section className="border-t border-primary/10 pt-10">
+                            <div className="rounded-[1.7rem] bg-navy p-6 text-white sm:p-8">
+                              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-300">
+                                A different property
+                              </p>
+                              <h3 className="mt-3 font-heading text-3xl font-black">
+                                Or describe and save a new home
+                              </h3>
+                              <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-blue-100/70">
+                                Complete both sections below. The property details and address
+                                will be saved together and reused on your next booking.
+                              </p>
+                            </div>
 
-                            bathrooms:
-                              draft.bathrooms,
+                            <SpaceScanStep
+                              value={{
+                                propertyType:
+                                  draft.propertyType,
 
-                            propertySize:
-                              draft.propertySize,
-                          }}
-                          onChange={(
-                            update,
-                          ) => {
-                            setStepError(
-                              null,
-                            );
+                                bedrooms:
+                                  draft.bedrooms,
 
-                            setDraft(
-                              (
-                                currentDraft,
-                              ) => ({
-                                ...currentDraft,
-                                ...update,
+                                bathrooms:
+                                  draft.bathrooms,
 
-                                /*
-                                 * Property changes can change
-                                 * the trusted duration and price.
-                                 */
-                                bookingDate:
-                                  "",
+                                propertySize:
+                                  draft.propertySize,
+                              }}
+                              onChange={(
+                                update,
+                              ) => {
+                                beginNewHome();
 
-                                startTime:
-                                  "",
+                                setDraft(
+                                  (
+                                    currentDraft,
+                                  ) => ({
+                                    ...currentDraft,
+                                    ...update,
 
-                                endTime:
-                                  "",
-                              }),
-                            );
-                          }}
-                        />
+                                    /*
+                                     * Property changes invalidate an older
+                                     * personalized plan, duration, and slot.
+                                     */
+                                    serviceId: "",
+                                    serviceName: "Not selected",
+                                    addOns: [],
+                                    baseAmount: 0,
+                                    addOnsAmount: 0,
+                                    addressId: "",
+                                    addressLabel: "No address selected",
+                                    serviceAreaId: "",
+                                    serviceAreaLabel: "Not selected",
+                                    serviceAreaFee: 0,
+                                    totalAmount: 0,
+                                    bookingDate:
+                                      "",
+
+                                    startTime:
+                                      "",
+
+                                    endTime:
+                                      "",
+                                  }),
+                                );
+                              }}
+                            />
+
+                            <div className="mt-10 border-t border-primary/10 pt-10">
+                              {newHomeSuccess && (
+                                <div className="mb-7 flex items-start gap-4 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-5 text-emerald-800">
+                                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+                                  <div>
+                                    <p className="font-extrabold">New home ready</p>
+                                    <p className="mt-1 text-sm font-semibold text-emerald-700">
+                                      {newHomeSuccess}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
+                              <AddressForm
+                                loading={newHomeSaving}
+                                error={newHomeError}
+                                submitLabel="Save and use this home"
+                                onBeginEditing={beginNewHome}
+                                onSubmit={handleNewHomeSubmit}
+                              />
+                            </div>
+                          </section>
+                        </div>
                       ) : currentStep.id ===
                         "plan" ? (
                         <CleaningPlanStep
@@ -1272,6 +1503,12 @@ export default function BookingRouteBuilder() {
                           }
                           propertySize={
                             draft.propertySize
+                          }
+                          bedrooms={
+                            draft.bedrooms
+                          }
+                          bathrooms={
+                            draft.bathrooms
                           }
                           onSelect={
                             handleServiceSelection
@@ -1291,16 +1528,6 @@ export default function BookingRouteBuilder() {
                           }
                           onChange={
                             handleAddOnsChange
-                          }
-                        />
-                      ) : currentStep.id ===
-                        "address" ? (
-                        <HomeBaseStep
-                          selectedAddressId={
-                            draft.addressId
-                          }
-                          onSelect={
-                            handleAddressSelection
                           }
                         />
                       ) : currentStep.id ===
@@ -1568,7 +1795,7 @@ export default function BookingRouteBuilder() {
           </section>
 
           <aside className="2xl:sticky 2xl:top-6">
-            <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_25px_70px_rgba(11,37,69,0.11)] backdrop-blur-xl">
+            <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_25px_70px_rgba(11,37,69,0.11)] backdrop-blur-md">
               <div className="bg-navy px-6 py-6 text-white">
                 <div className="flex items-start justify-between gap-4">
                   <div>

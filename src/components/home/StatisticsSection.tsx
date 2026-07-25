@@ -318,7 +318,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
         rotateY,
         transformPerspective: 1200,
       }}
-      className="group relative min-h-[400px] overflow-hidden rounded-[2rem] border border-primary/10 bg-white/85 p-6 shadow-[0_20px_60px_rgba(11,37,69,0.10)] backdrop-blur-xl sm:p-7"
+      className="group relative min-h-[400px] overflow-hidden rounded-[2rem] border border-primary/10 bg-white/85 p-6 shadow-[0_20px_60px_rgba(11,37,69,0.10)] backdrop-blur-md sm:p-7"
     >
       {/* Cursor spotlight */}
       <motion.div
@@ -339,7 +339,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
         }}
         transition={{
           duration: 5 + index,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -354,7 +354,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
         transition={{
           duration: 3,
           delay: index * 0.5,
-          repeat: Infinity,
+          repeat: 0,
           repeatDelay: 3.5,
           ease: "easeInOut",
         }}
@@ -376,7 +376,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
             }}
             transition={{
               duration: 18 + index * 3,
-              repeat: Infinity,
+              repeat: 0,
               ease: "linear",
             }}
           />
@@ -389,7 +389,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
             }}
             transition={{
               duration: 15 + index * 2,
-              repeat: Infinity,
+              repeat: 0,
               ease: "linear",
             }}
           />
@@ -443,7 +443,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
             }}
             transition={{
               duration: 3 + index * 0.25,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
             whileHover={{
@@ -467,7 +467,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
             }}
             transition={{
               duration: 2.2,
-              repeat: Infinity,
+              repeat: 0,
               delay: index * 0.3,
             }}
           />
@@ -481,7 +481,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
             }}
             transition={{
               duration: 2.8,
-              repeat: Infinity,
+              repeat: 0,
               delay: index * 0.2,
             }}
           />
@@ -559,7 +559,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
 
 export default function StatisticsSection() {
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section
         id="statistics"
         className="relative isolate overflow-hidden bg-surface-soft py-24 font-body sm:py-28 lg:py-32"
@@ -584,7 +584,7 @@ export default function StatisticsSection() {
           }}
           transition={{
             duration: 18,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -600,7 +600,7 @@ export default function StatisticsSection() {
           }}
           transition={{
             duration: 14,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -615,7 +615,7 @@ export default function StatisticsSection() {
           }}
           transition={{
             duration: 16,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -629,7 +629,7 @@ export default function StatisticsSection() {
           }}
           transition={{
             duration: 8,
-            repeat: Infinity,
+            repeat: 0,
             repeatDelay: 2,
             ease: "easeInOut",
           }}
@@ -656,7 +656,7 @@ export default function StatisticsSection() {
               transition={{
                 duration: particle.duration,
                 delay: particle.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -672,7 +672,7 @@ export default function StatisticsSection() {
           }}
           transition={{
             duration: 32,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -685,7 +685,7 @@ export default function StatisticsSection() {
           }}
           transition={{
             duration: 38,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -717,7 +717,7 @@ export default function StatisticsSection() {
               whileHover={{
                 scale: 1.05,
               }}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-xl"
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-md"
             >
               <motion.span
                 animate={{
@@ -726,7 +726,7 @@ export default function StatisticsSection() {
                 }}
                 transition={{
                   duration: 2.4,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -777,7 +777,7 @@ export default function StatisticsSection() {
               duration: 0.8,
               delay: 0.3,
             }}
-            className="relative mt-12 overflow-hidden rounded-2xl border border-primary/10 bg-white/80 py-4 shadow-[0_18px_50px_rgba(11,37,69,0.09)] backdrop-blur-xl"
+            className="relative mt-12 overflow-hidden rounded-2xl border border-primary/10 bg-white/80 py-4 shadow-[0_18px_50px_rgba(11,37,69,0.09)] backdrop-blur-md"
           >
             <div
               aria-hidden="true"
@@ -796,7 +796,7 @@ export default function StatisticsSection() {
               }}
               transition={{
                 duration: 22,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "linear",
               }}
             >
@@ -814,7 +814,7 @@ export default function StatisticsSection() {
                       transition={{
                         duration: 3,
                         delay: index * 0.2,
-                        repeat: Infinity,
+                        repeat: 0,
                       }}
                       className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary"
                     >
@@ -858,7 +858,7 @@ export default function StatisticsSection() {
               }}
               transition={{
                 duration: 7,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -871,7 +871,7 @@ export default function StatisticsSection() {
               }}
               transition={{
                 duration: 8,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -884,7 +884,7 @@ export default function StatisticsSection() {
               }}
               transition={{
                 duration: 5,
-                repeat: Infinity,
+                repeat: 0,
                 repeatDelay: 2,
                 ease: "easeInOut",
               }}
@@ -914,7 +914,7 @@ export default function StatisticsSection() {
                 }}
                 transition={{
                   duration: 3,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
                 whileHover={{
@@ -937,7 +937,7 @@ export default function StatisticsSection() {
                     }}
                     transition={{
                       duration: 2.4,
-                      repeat: Infinity,
+                      repeat: 0,
                       repeatDelay: 1.4,
                     }}
                   />

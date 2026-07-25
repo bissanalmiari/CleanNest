@@ -30,6 +30,10 @@ export interface Address {
   building?: string;
   floor?: string;
   apartment?: string;
+  propertyType: "apartment" | "house" | "office" | "other";
+  bedrooms: number;
+  bathrooms: number;
+  propertySize: number;
   isDefault: boolean;
 }
 

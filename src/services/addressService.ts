@@ -19,6 +19,10 @@ function toDTO(doc: IAddress): AddressDTO {
     building: doc.building ?? undefined,
     floor: doc.floor ?? undefined,
     apartment: doc.apartment ?? undefined,
+    propertyType: doc.propertyType ?? "apartment",
+    bedrooms: doc.bedrooms ?? 1,
+    bathrooms: doc.bathrooms ?? 1,
+    propertySize: doc.propertySize ?? 80,
     isDefault: doc.isDefault,
   };
 }

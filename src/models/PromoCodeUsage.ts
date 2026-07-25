@@ -1,4 +1,11 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import "server-only";
+
+import mongoose, {
+  Schema,
+  type Document,
+  type Model,
+  type Types,
+} from "mongoose";
 
 export interface IPromoCodeUsage extends Document {
   promoCodeId: Types.ObjectId; // -> PROMO_CODES.id
@@ -19,5 +26,13 @@ const promoCodeUsageSchema = new Schema<IPromoCodeUsage>(
   { timestamps: false }
 );
 
-export default mongoose.models.PromoCodeUsage ||
+// A booking may consume a promo code only once.
+promoCodeUsageSchema.index({ bookingId: 1 }, { unique: true });
+promoCodeUsageSchema.index({ promoCodeId: 1, customerId: 1, usedAt: -1 });
+promoCodeUsageSchema.index({ promoCodeId: 1, usedAt: -1 });
+
+const PromoCodeUsageModel =
+  (mongoose.models.PromoCodeUsage as Model<IPromoCodeUsage> | undefined) ??
   mongoose.model<IPromoCodeUsage>("PromoCodeUsage", promoCodeUsageSchema);
+
+export default PromoCodeUsageModel;

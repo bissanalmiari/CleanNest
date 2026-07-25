@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentType,
 } from "react";
@@ -12,18 +13,23 @@ import Link from "next/link";
 import {
   AlertCircle,
   ArrowRight,
+  CalendarCheck2,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  CircleDollarSign,
   Clock3,
   CreditCard,
-  History,
   LoaderCircle,
   MapPin,
   ReceiptText,
   RefreshCw,
   Search,
+  ShieldCheck,
   Sparkles,
+  TimerReset,
   UserRound,
+  WandSparkles,
   XCircle,
 } from "lucide-react";
 
@@ -417,6 +423,54 @@ function matchesFilter(
   return booking.status === filter;
 }
 
+function getStatusProgress(status: BookingStatus): number {
+  switch (status) {
+    case "pending":
+      return 25;
+    case "confirmed":
+      return 55;
+    case "in_progress":
+      return 82;
+    case "completed":
+      return 100;
+    case "cancelled":
+      return 100;
+  }
+}
+
+function getVisitCountdown(value: string): string {
+  const visitDate = new Date(value);
+
+  if (Number.isNaN(visitDate.getTime())) {
+    return "Date pending";
+  }
+
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startOfVisit = new Date(
+    visitDate.getFullYear(),
+    visitDate.getMonth(),
+    visitDate.getDate(),
+  );
+  const days = Math.round(
+    (startOfVisit.getTime() - startOfToday.getTime()) / (24 * 60 * 60 * 1000),
+  );
+
+  if (days === 0) {
+    return "Today";
+  }
+
+  if (days === 1) {
+    return "Tomorrow";
+  }
+
+  if (days > 1) {
+    return `In ${days} days`;
+  }
+
+  return "Visit passed";
+}
+
 export default function MyBookingsPage() {
   const prefersReducedMotion =
     useReducedMotion();
@@ -440,6 +494,7 @@ export default function MyBookingsPage() {
 
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
+  const initialLoadStarted = useRef(false);
 
   async function loadBookings() {
     setIsLoading(true);
@@ -509,6 +564,11 @@ export default function MyBookingsPage() {
   }
 
   useEffect(() => {
+    if (initialLoadStarted.current) {
+      return;
+    }
+
+    initialLoadStarted.current = true;
     void loadBookings();
   }, []);
 
@@ -543,6 +603,34 @@ export default function MyBookingsPage() {
           ).length,
       };
     }, [bookings]);
+
+  const nextBooking = useMemo(() => {
+    const activeBookings = bookings
+      .filter((booking) =>
+        ["pending", "confirmed", "in_progress"].includes(booking.status),
+      )
+      .sort(
+        (first, second) =>
+          new Date(first.bookingDate).getTime() -
+          new Date(second.bookingDate).getTime(),
+      );
+
+    return (
+      activeBookings.find(
+        (booking) => new Date(booking.bookingDate).getTime() >= Date.now() - 86400000,
+      ) ??
+      activeBookings[0] ??
+      null
+    );
+  }, [bookings]);
+
+  const completedSpend = useMemo(
+    () =>
+      bookings
+        .filter((booking) => booking.status === "completed")
+        .reduce((total, booking) => total + booking.totalAmount, 0),
+    [bookings],
+  );
 
   const filteredBookings =
     useMemo(() => {
@@ -621,61 +709,153 @@ export default function MyBookingsPage() {
         }
         transition={{
           duration: 9,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
 
       <div className="relative mx-auto max-w-[1450px]">
-        {/* Header */}
-        <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy text-cyan-300 shadow-[0_14px_35px_rgba(11,37,69,0.2)]">
-                <History className="h-5 w-5" />
-              </span>
+        {/* Booking command hero */}
+        <motion.header
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.45 }}
+          className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(125deg,#071d38_0%,#0b315d_52%,#1675cf_100%)] p-6 text-white shadow-[0_30px_90px_rgba(11,37,69,0.24)] sm:p-8 lg:p-10"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute -right-24 -top-36 h-80 w-80 rounded-full border border-cyan-200/20 bg-cyan-300/10"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute bottom-[-11rem] left-[34%] h-80 w-80 rounded-full bg-primary/25 blur-3xl"
+          />
 
+          <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_430px] xl:items-stretch">
+            <div className="flex flex-col justify-between">
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-primary">
-                  CleanNest route archive
-                </p>
+                <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-4 py-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-40" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300" />
+                  </span>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-100">
+                    Personal cleaning command center
+                  </p>
+                </div>
 
-                <p className="mt-1 text-xs font-semibold text-slate-400">
-                  Your active and previous cleaning journeys
+                <h1 className="mt-6 max-w-3xl font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] sm:text-5xl lg:text-6xl">
+                  Every clean.
+                  <span className="block text-cyan-300">One clear timeline.</span>
+                </h1>
+
+                <p className="mt-5 max-w-2xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
+                  Follow upcoming visits, cleaner assignments, payments, and finished
+                  services without losing track of a single detail.
                 </p>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/book-service"
+                  className="group inline-flex min-h-[52px] items-center justify-center gap-3 rounded-2xl bg-white px-6 text-sm font-extrabold text-navy shadow-[0_16px_35px_rgba(0,0,0,0.18)] transition hover:bg-cyan-50"
+                >
+                  <WandSparkles className="h-4 w-4 text-primary" />
+                  Book another clean
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+
+                <span className="inline-flex min-h-[52px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-5 text-xs font-bold text-blue-100">
+                  <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                  All routes secured
+                </span>
               </div>
             </div>
 
-            <h1 className="mt-5 font-heading text-3xl font-black tracking-[-0.04em] text-navy sm:text-4xl lg:text-5xl">
-              My cleaning routes
-            </h1>
+            <div className="relative rounded-[1.8rem] border border-white/15 bg-white/[0.09] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-6">
+              {nextBooking ? (
+                <>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-300">
+                        Next visit
+                      </p>
+                      <p className="mt-2 text-sm font-bold text-white">
+                        {getVisitCountdown(nextBooking.bookingDate)}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full border px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.12em] ${STATUS_DESIGNS[nextBooking.status].badgeClassName}`}
+                    >
+                      {STATUS_DESIGNS[nextBooking.status].label}
+                    </span>
+                  </div>
 
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
-              Track upcoming visits, cleaner assignments,
-              completed services, payments, and cancelled routes
-              from one timeline.
-            </p>
+                  <div className="mt-6 flex items-start gap-4">
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cyan-300 text-navy shadow-[0_12px_30px_rgba(34,211,238,0.24)]">
+                      <CalendarCheck2 className="h-6 w-6" />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="truncate font-heading text-2xl font-black">
+                        {nextBooking.serviceName}
+                      </h2>
+                      <p className="mt-2 text-sm font-semibold text-blue-100/65">
+                        {formatBookingDate(nextBooking.bookingDate)}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-cyan-200">
+                        {nextBooking.startTime || "Time pending"}
+                        {nextBooking.endTime ? ` – ${nextBooking.endTime}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-2xl border border-white/10 bg-navy/25 p-4">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.12em]">
+                      <span className="text-blue-100/55">Booking progress</span>
+                      <span className="text-cyan-300">
+                        {getStatusProgress(nextBooking.status)}%
+                      </span>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${getStatusProgress(nextBooking.status)}%` }}
+                        transition={{ duration: 0.7, ease: "easeOut" }}
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex items-start gap-3 text-sm font-medium leading-6 text-blue-100/65">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
+                    <span className="line-clamp-2">{nextBooking.addressLabel}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex min-h-[290px] flex-col items-center justify-center text-center">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/10 text-cyan-300">
+                    <CalendarDays className="h-7 w-7" />
+                  </span>
+                  <h2 className="mt-5 font-heading text-2xl font-black">
+                    Your calendar is clear
+                  </h2>
+                  <p className="mt-3 max-w-xs text-sm leading-6 text-blue-100/60">
+                    Book a cleaning and your next visit will appear here.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-
-          <Link
-            href="/book-service"
-            className="group flex min-h-12 w-fit items-center justify-center gap-3 rounded-2xl bg-navy px-6 text-sm font-bold text-white shadow-[0_16px_40px_rgba(11,37,69,0.22)] transition hover:-translate-y-0.5"
-          >
-            <Sparkles className="h-4 w-4 text-cyan-300" />
-
-            Build a new route
-
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </header>
+        </motion.header>
 
         {/* Summary cards */}
-        <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <RouteMetric
             label="All routes"
             value={bookingCounts.all}
             icon={ReceiptText}
             description="Complete booking archive"
+            tone="blue"
           />
 
           <RouteMetric
@@ -683,6 +863,7 @@ export default function MyBookingsPage() {
             value={bookingCounts.active}
             icon={CalendarDays}
             description="Pending or scheduled"
+            tone="cyan"
           />
 
           <RouteMetric
@@ -690,18 +871,20 @@ export default function MyBookingsPage() {
             value={bookingCounts.completed}
             icon={CheckCircle2}
             description="Successfully finished"
+            tone="emerald"
           />
 
           <RouteMetric
-            label="Cancelled"
-            value={bookingCounts.cancelled}
-            icon={XCircle}
-            description="Closed before service"
+            label="Completed spend"
+            value={formatCurrency(completedSpend)}
+            icon={CircleDollarSign}
+            description={`${bookingCounts.cancelled} cancelled route${bookingCounts.cancelled === 1 ? "" : "s"}`}
+            tone="amber"
           />
         </section>
 
         {/* Search and filters */}
-        <section className="mt-6 rounded-[1.7rem] border border-white/80 bg-white/80 p-4 shadow-[0_18px_55px_rgba(11,37,69,0.08)] backdrop-blur-xl sm:p-5">
+        <section className="mt-6 rounded-[1.7rem] border border-white/80 bg-white/80 p-4 shadow-[0_18px_55px_rgba(11,37,69,0.08)] backdrop-blur-md sm:p-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="relative w-full xl:max-w-md">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -883,7 +1066,7 @@ export default function MyBookingsPage() {
                         transition={{
                           duration:
                             3 + index,
-                          repeat: Infinity,
+                          repeat: 0,
                           ease: "easeInOut",
                         }}
                         className="flex flex-col justify-between rounded-2xl border border-white bg-white/80 p-4"
@@ -944,8 +1127,9 @@ export default function MyBookingsPage() {
 
 interface RouteMetricProps {
   label: string;
-  value: number;
+  value: number | string;
   description: string;
+  tone: "blue" | "cyan" | "emerald" | "amber";
   icon: ComponentType<{
     className?: string;
   }>;
@@ -955,17 +1139,50 @@ function RouteMetric({
   label,
   value,
   description,
+  tone,
   icon: Icon,
 }: RouteMetricProps) {
+  const toneClasses = {
+    blue: {
+      icon: "bg-blue-50 text-primary",
+      glow: "bg-primary/10",
+      line: "from-primary to-blue-400",
+    },
+    cyan: {
+      icon: "bg-cyan-50 text-cyan-700",
+      glow: "bg-cyan-300/15",
+      line: "from-cyan-400 to-primary",
+    },
+    emerald: {
+      icon: "bg-emerald-50 text-emerald-700",
+      glow: "bg-emerald-300/15",
+      line: "from-emerald-400 to-cyan-400",
+    },
+    amber: {
+      icon: "bg-amber-50 text-amber-700",
+      glow: "bg-amber-300/15",
+      line: "from-amber-400 to-orange-400",
+    },
+  }[tone];
+
   return (
-    <div className="rounded-[1.5rem] border border-white/80 bg-white/80 p-5 shadow-[0_15px_45px_rgba(11,37,69,0.07)] backdrop-blur-xl">
-      <div className="flex items-start justify-between gap-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+      className="group relative overflow-hidden rounded-[1.6rem] border border-white bg-white/90 p-5 shadow-[0_15px_45px_rgba(11,37,69,0.07)] transition hover:border-primary/15 hover:shadow-[0_22px_55px_rgba(11,37,69,0.11)]"
+    >
+      <div
+        aria-hidden="true"
+        className={`absolute -right-10 -top-12 h-32 w-32 rounded-full transition-transform duration-500 group-hover:scale-110 ${toneClasses.glow}`}
+      />
+      <div className="relative flex items-start justify-between gap-4">
         <div>
           <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary">
             {label}
           </p>
 
-          <p className="mt-2 font-heading text-3xl font-black text-navy">
+          <p className="mt-2 font-heading text-3xl font-black tracking-[-0.035em] text-navy">
             {value}
           </p>
 
@@ -974,11 +1191,13 @@ function RouteMetric({
           </p>
         </div>
 
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-light text-primary">
+        <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${toneClasses.icon}`}>
           <Icon className="h-5 w-5" />
         </span>
       </div>
-    </div>
+
+      <div className={`absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r ${toneClasses.line}`} />
+    </motion.div>
   );
 }
 
@@ -1006,15 +1225,12 @@ function BookingRouteCard({
       layout
       initial={{
         opacity: 0,
-        y: 18,
       }}
       animate={{
         opacity: 1,
-        y: 0,
       }}
       exit={{
         opacity: 0,
-        y: -12,
       }}
       transition={{
         duration: 0.35,
@@ -1023,8 +1239,10 @@ function BookingRouteCard({
           0.3,
         ),
       }}
-      className="overflow-hidden rounded-[1.8rem] border border-white/80 bg-white/85 shadow-[0_20px_60px_rgba(11,37,69,0.09)] backdrop-blur-xl"
+      className="group/card relative overflow-hidden rounded-[1.9rem] border border-white bg-white/95 shadow-[0_18px_55px_rgba(11,37,69,0.08)] transition hover:border-primary/15 hover:shadow-[0_26px_75px_rgba(11,37,69,0.13)]"
     >
+      <div className={`h-1.5 bg-gradient-to-r ${statusDesign.routeClassName}`} />
+
       <button
         type="button"
         onClick={onToggle}
@@ -1035,9 +1253,9 @@ function BookingRouteCard({
           {/* Route identity */}
           <div className="flex min-w-0 flex-1 items-start gap-4">
             <span
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${statusDesign.iconClassName}`}
+              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7)] ${statusDesign.iconClassName}`}
             >
-              <StatusIcon className="h-5 w-5" />
+              <StatusIcon className="h-6 w-6" />
             </span>
 
             <div className="min-w-0">
@@ -1061,6 +1279,18 @@ function BookingRouteCard({
                 <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                 {booking.addressLabel}
               </p>
+
+              <div className="mt-3 flex items-center gap-3">
+                <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${statusDesign.routeClassName}`}
+                    style={{ width: `${getStatusProgress(booking.status)}%` }}
+                  />
+                </div>
+                <span className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+                  {getStatusProgress(booking.status)}% route
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1107,13 +1337,13 @@ function BookingRouteCard({
           </div>
 
           <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary-light text-primary transition-transform ${
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary-light text-primary transition-transform duration-300 ${
               expanded
-                ? "rotate-90"
+                ? "rotate-180 bg-primary text-white"
                 : ""
             }`}
           >
-            <ArrowRight className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4" />
           </span>
         </div>
       </button>
@@ -1172,21 +1402,23 @@ function BookingRouteCard({
                 />
               </div>
 
+              <BookingJourney status={booking.status} />
+
               <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-primary/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-primary">
-                    Route controls
+                    Booking assurance
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Editing, cancellation, and rescheduling
-                    controls will appear here when connected
-                    to their booking actions.
+                    Your booking details and payment status are kept together in this
+                    protected route record.
                   </p>
                 </div>
 
-                <span className="rounded-xl bg-primary-light px-4 py-2.5 text-xs font-bold text-primary">
-                  {statusDesign.label}
+                <span className="inline-flex items-center gap-2 rounded-xl bg-primary-light px-4 py-2.5 text-xs font-bold text-primary">
+                  <ShieldCheck className="h-4 w-4" />
+                  CleanNest protected
                 </span>
               </div>
             </div>
@@ -1194,6 +1426,107 @@ function BookingRouteCard({
         )}
       </AnimatePresence>
     </motion.article>
+  );
+}
+
+function BookingJourney({
+  status,
+}: {
+  status: BookingStatus;
+}) {
+  const steps = [
+    {
+      label: "Requested",
+      icon: ReceiptText,
+    },
+    {
+      label: "Approved",
+      icon: ShieldCheck,
+    },
+    {
+      label: "Cleaning",
+      icon: Sparkles,
+    },
+    {
+      label: "Completed",
+      icon: CheckCircle2,
+    },
+  ];
+
+  const activeStep =
+    status === "pending"
+      ? 0
+      : status === "confirmed"
+        ? 1
+        : status === "in_progress"
+          ? 2
+          : status === "completed"
+            ? 3
+            : 0;
+
+  return (
+    <section className="mt-5 overflow-hidden rounded-2xl border border-primary/10 bg-white p-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-primary">
+            Cleaning journey
+          </p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            {status === "cancelled"
+              ? "This route was cancelled before completion."
+              : "Follow your booking from request to a finished clean."}
+          </p>
+        </div>
+
+        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-surface-soft px-3 py-2 text-[10px] font-extrabold text-slate-500">
+          <TimerReset className="h-3.5 w-3.5 text-primary" />
+          Live status
+        </span>
+      </div>
+
+      <div className="relative mt-6 grid grid-cols-4 gap-2">
+        <div className="absolute left-[12.5%] right-[12.5%] top-5 h-0.5 bg-slate-100" />
+        <div
+          className={`absolute left-[12.5%] top-5 h-0.5 bg-gradient-to-r ${
+            status === "cancelled" ? "from-red-300 to-red-500" : "from-primary to-emerald-400"
+          }`}
+          style={{
+            width:
+              status === "cancelled"
+                ? "0%"
+                : `${(activeStep / Math.max(steps.length - 1, 1)) * 75}%`,
+          }}
+        />
+
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          const isReached = status !== "cancelled" && index <= activeStep;
+
+          return (
+            <div key={step.label} className="relative flex min-w-0 flex-col items-center text-center">
+              <span
+                className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+                  isReached
+                    ? "border-primary bg-primary text-white shadow-[0_8px_20px_rgba(30,111,217,0.22)]"
+                    : status === "cancelled" && index === 0
+                      ? "border-red-200 bg-red-50 text-red-500"
+                      : "border-slate-200 bg-white text-slate-300"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
+              <span
+                className={`mt-3 truncate text-[9px] font-extrabold uppercase tracking-[0.08em] ${
+                  isReached ? "text-navy" : "text-slate-400"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

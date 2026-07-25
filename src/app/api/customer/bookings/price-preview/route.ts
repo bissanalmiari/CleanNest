@@ -92,6 +92,10 @@ export async function POST(
       const quote =
         await calculateBookingPrice(
           validationResult.data,
+          {
+            customerId:
+              currentUser.id,
+          },
         );
 
       return successResponse({

@@ -1,269 +1,306 @@
-// src/services/promoCodeManagementService.ts
-// Admin promo-code data-access layer: list, detail (with usage history),
-// create, update, delete. Usage counts are derived from PromoCodeUsage —
-// this service never writes to that collection, only reads it.
-
 import "server-only";
+
+import { Types } from "mongoose";
+
+import { AppError, NotFoundError } from "@/lib/apiError";
 import { connectDB } from "@/lib/db";
 import PromoCode from "@/models/PromoCode";
 import PromoCodeUsage from "@/models/PromoCodeUsage";
-import { AppError, NotFoundError } from "@/lib/apiError";
+import Service from "@/models/Service";
+import Booking from "@/models/Booking";
 import type { DiscountType } from "@/types/enums";
 
-const VALID_DISCOUNT_TYPES: DiscountType[] = ["percentage", "fixed_amount"];
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-/* ------------------------------------------------------------------ */
-/* Helpers                                                              */
-/* ------------------------------------------------------------------ */
-
-function validateDiscount(discountType: DiscountType, discountValue: number) {
-  if (!VALID_DISCOUNT_TYPES.includes(discountType)) {
-    throw new AppError(
-      'discountType must be "percentage" or "fixed_amount"',
-      422
-    );
+function validateDiscount(type: DiscountType, value: number) {
+  if (type === "percentage" && (value <= 0 || value > 100)) {
+    throw new AppError("Percentage discount must be between 0.01 and 100", 422);
   }
-
-  if (discountType === "percentage") {
-    if (!(discountValue >= 1 && discountValue <= 100)) {
-      throw new AppError(
-        "Percentage discount value must be between 1 and 100",
-        422
-      );
-    }
-  } else if (!(discountValue > 0)) {
-    throw new AppError("Fixed discount value must be greater than 0", 422);
+  if (type === "fixed_amount" && value <= 0) {
+    throw new AppError("Fixed discount must be greater than zero", 422);
   }
 }
 
-function validateExpiryDate(expiryDate: Date) {
-  if (Number.isNaN(expiryDate.getTime())) {
-    throw new AppError("expiryDate is not a valid date", 422);
+function parseDate(value: string, label: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new AppError(`${label} is not a valid date`, 422);
   }
-  if (expiryDate.getTime() <= Date.now()) {
-    throw new AppError("expiryDate must be in the future", 422);
-  }
+  return date;
 }
 
 async function assertCodeAvailable(code: string, excludeId?: string) {
-  const existing = await PromoCode.findOne({
+  const existing = await PromoCode.exists({
     code,
     ...(excludeId ? { _id: { $ne: excludeId } } : {}),
-  }).lean();
-
+  });
   if (existing) {
     throw new AppError(`Promo code "${code}" already exists`, 409);
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* 1) List promo codes (with derived usage stats)                       */
-/* ------------------------------------------------------------------ */
+async function validateApplicableServices(ids: string[] = []) {
+  const uniqueIds = [...new Set(ids)].map((id) => new Types.ObjectId(id));
+  if (uniqueIds.length === 0) return uniqueIds;
+
+  const count = await Service.countDocuments({ _id: { $in: uniqueIds } });
+  if (count !== uniqueIds.length) {
+    throw new AppError("One or more selected services do not exist", 422);
+  }
+  return uniqueIds;
+}
 
 export interface PromoCodeListFilters {
-  search?: string; // matches code
+  search?: string;
   isActive?: boolean;
 }
 
 export async function getAllPromoCodes(filters: PromoCodeListFilters = {}) {
   await connectDB();
 
-  const { search, isActive } = filters;
   const match: Record<string, unknown> = {};
-
-  if (typeof isActive === "boolean") match.isActive = isActive;
-  if (search) {
-    match.code = { $regex: search.toUpperCase().trim(), $options: "i" };
+  if (typeof filters.isActive === "boolean") match.isActive = filters.isActive;
+  if (filters.search?.trim()) {
+    match.code = {
+      $regex: escapeRegex(filters.search.trim().toUpperCase()),
+      $options: "i",
+    };
   }
 
-  const codes = await PromoCode.find(match).sort({ createdAt: -1 }).lean();
-
-  const usageCounts = await Promise.all(
-    codes.map((c: { _id: unknown }) =>
-      PromoCodeUsage.countDocuments({ promoCodeId: c._id })
-    )
-  );
-
+  const codes = await PromoCode.find(match)
+    .sort({ createdAt: -1 })
+    .populate("applicableServiceIds", "name")
+    .lean()
+    .exec();
   const now = Date.now();
 
-  return codes.map(
-    (
-      code: {
-        _id: unknown;
-        maximumUses: number;
-        expiryDate: Date;
-        [key: string]: unknown;
-      },
-      i: number
-    ) => {
-      const usedCount = usageCounts[i];
-      return {
-        ...code,
-        usedCount,
-        usesRemaining: Math.max(0, code.maximumUses - usedCount),
-        isExpired: new Date(code.expiryDate).getTime() < now,
-      };
-    }
-  );
+  return codes.map((code) => {
+    const usedCount = code.usageCount ?? 0;
+    return {
+      ...code,
+      usedCount,
+      usesRemaining: Math.max(0, code.maximumUses - usedCount),
+      isExpired: new Date(code.expiryDate).getTime() < now,
+      isScheduled: new Date(code.startDate).getTime() > now,
+    };
+  });
 }
-
-/* ------------------------------------------------------------------ */
-/* 2) Promo code detail (with recent usage history)                     */
-/* ------------------------------------------------------------------ */
 
 export async function getPromoCodeById(id: string) {
   await connectDB();
 
-  const code = await PromoCode.findById(id).lean();
-  if (!code) {
-    throw new NotFoundError("Promo code not found");
-  }
+  const code = await PromoCode.findById(id)
+    .populate("applicableServiceIds", "name")
+    .lean()
+    .exec();
+  if (!code) throw new NotFoundError("Promo code not found");
 
-  const [usedCount, recentUsage] = await Promise.all([
-    PromoCodeUsage.countDocuments({ promoCodeId: id }),
-    PromoCodeUsage.find({ promoCodeId: id })
-      .sort({ usedAt: -1 })
-      .limit(10)
+  const trackedUsage = await PromoCodeUsage.find({ promoCodeId: id })
+    .sort({ usedAt: -1 })
+    .limit(20)
+    .populate("customerId", "name email")
+    .populate("bookingId", "bookingNumber")
+    .lean()
+    .exec();
+  let recentUsage =
+    trackedUsage as unknown as Array<Record<string, unknown>>;
+  const usedCount = code.usageCount ?? 0;
+
+  // Older bookings predate PromoCodeUsage tracking. Keep their redemption
+  // history visible to administrators after upgrading this feature.
+  if (recentUsage.length === 0 && usedCount > 0) {
+    const historicalBookings = await Booking.find({ promoCodeId: id })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .select("_id bookingNumber customerId discountAmount createdAt")
       .populate("customerId", "name email")
-      .populate("bookingId", "bookingNumber")
-      .lean(),
-  ]);
+      .lean()
+      .exec();
+
+    recentUsage = historicalBookings.map((booking) => ({
+      _id: booking._id,
+      promoCodeId: code._id,
+      customerId: booking.customerId,
+      bookingId: {
+        _id: booking._id,
+        bookingNumber: booking.bookingNumber,
+      },
+      discountAmount: booking.discountAmount,
+      usedAt: booking.createdAt,
+    }));
+  }
 
   return {
     ...code,
     usedCount,
     usesRemaining: Math.max(0, code.maximumUses - usedCount),
     isExpired: new Date(code.expiryDate).getTime() < Date.now(),
+    isScheduled: new Date(code.startDate).getTime() > Date.now(),
     recentUsage,
   };
 }
 
-/* ------------------------------------------------------------------ */
-/* 3) Create                                                            */
-/* ------------------------------------------------------------------ */
-
 export interface CreatePromoCodeInput {
   code: string;
+  description?: string;
   discountType: DiscountType;
   discountValue: number;
-  expiryDate: string; // ISO date string from the client
+  startDate?: string;
+  expiryDate: string;
+  minimumBookingAmount?: number;
+  maximumDiscountAmount?: number | null;
   maximumUses: number;
+  perCustomerLimit?: number;
+  applicableServiceIds?: string[];
   isActive?: boolean;
 }
 
 export async function createPromoCode(input: CreatePromoCodeInput) {
   await connectDB();
 
-  const code = input.code?.trim().toUpperCase();
-  if (!code) {
-    throw new AppError("code is required", 422);
-  }
-
+  const code = input.code.trim().toUpperCase();
   validateDiscount(input.discountType, input.discountValue);
+  await assertCodeAvailable(code);
 
-  const expiryDate = new Date(input.expiryDate);
-  validateExpiryDate(expiryDate);
-
-  if (!Number.isInteger(input.maximumUses) || input.maximumUses <= 0) {
+  const startDate = input.startDate
+    ? parseDate(input.startDate, "startDate")
+    : new Date();
+  const expiryDate = parseDate(input.expiryDate, "expiryDate");
+  if (expiryDate <= startDate) {
+    throw new AppError("expiryDate must be later than startDate", 422);
+  }
+  if (expiryDate <= new Date()) {
+    throw new AppError("expiryDate must be in the future", 422);
+  }
+  if (!Number.isInteger(input.maximumUses) || input.maximumUses < 1) {
     throw new AppError("maximumUses must be a positive whole number", 422);
   }
 
-  await assertCodeAvailable(code);
+  const perCustomerLimit = input.perCustomerLimit ?? 1;
+  if (!Number.isInteger(perCustomerLimit) || perCustomerLimit < 1) {
+    throw new AppError("perCustomerLimit must be a positive whole number", 422);
+  }
+  if ((input.minimumBookingAmount ?? 0) < 0) {
+    throw new AppError("minimumBookingAmount cannot be negative", 422);
+  }
+  if (
+    input.discountType === "fixed_amount" &&
+    input.maximumDiscountAmount != null
+  ) {
+    throw new AppError(
+      "maximumDiscountAmount is only available for percentage codes",
+      422,
+    );
+  }
 
+  const applicableServiceIds = await validateApplicableServices(
+    input.applicableServiceIds,
+  );
   const promoCode = await PromoCode.create({
     code,
+    description: input.description?.trim() ?? "",
     discountType: input.discountType,
     discountValue: input.discountValue,
+    startDate,
     expiryDate,
+    minimumBookingAmount: input.minimumBookingAmount ?? 0,
+    maximumDiscountAmount: input.maximumDiscountAmount ?? undefined,
     maximumUses: input.maximumUses,
+    perCustomerLimit,
+    applicableServiceIds,
     isActive: input.isActive ?? true,
   });
 
   return promoCode.toObject();
 }
 
-/* ------------------------------------------------------------------ */
-/* 4) Update                                                            */
-/* ------------------------------------------------------------------ */
+export type UpdatePromoCodeInput = Partial<CreatePromoCodeInput>;
 
-export interface UpdatePromoCodeInput {
-  code?: string;
-  discountType?: DiscountType;
-  discountValue?: number;
-  expiryDate?: string;
-  maximumUses?: number;
-  isActive?: boolean;
-}
-
-export async function updatePromoCode(
-  id: string,
-  input: UpdatePromoCodeInput
-) {
+export async function updatePromoCode(id: string, input: UpdatePromoCodeInput) {
   await connectDB();
 
   const promoCode = await PromoCode.findById(id);
-  if (!promoCode) {
-    throw new NotFoundError("Promo code not found");
-  }
+  if (!promoCode) throw new NotFoundError("Promo code not found");
 
-  // Validate discount fields together if either is being changed, since
-  // the valid range for discountValue depends on discountType.
-  if (input.discountType !== undefined || input.discountValue !== undefined) {
-    const nextType = input.discountType ?? promoCode.discountType;
-    const nextValue = input.discountValue ?? promoCode.discountValue;
-    validateDiscount(nextType, nextValue);
-  }
+  const nextType = input.discountType ?? promoCode.discountType;
+  const nextValue = input.discountValue ?? promoCode.discountValue;
+  validateDiscount(nextType, nextValue);
 
+  if (input.code !== undefined) {
+    const code = input.code.trim().toUpperCase();
+    await assertCodeAvailable(code, id);
+    promoCode.code = code;
+  }
+  if (input.description !== undefined) {
+    promoCode.description = input.description.trim();
+  }
+  if (input.discountType !== undefined) promoCode.discountType = input.discountType;
+  if (input.discountValue !== undefined) promoCode.discountValue = input.discountValue;
+  if (input.startDate !== undefined) {
+    promoCode.startDate = parseDate(input.startDate, "startDate");
+  }
   if (input.expiryDate !== undefined) {
-    const nextExpiry = new Date(input.expiryDate);
-    validateExpiryDate(nextExpiry);
-    promoCode.expiryDate = nextExpiry;
+    promoCode.expiryDate = parseDate(input.expiryDate, "expiryDate");
   }
-
+  if (new Date(promoCode.expiryDate) <= new Date(promoCode.startDate)) {
+    throw new AppError("expiryDate must be later than startDate", 422);
+  }
+  if (input.minimumBookingAmount !== undefined) {
+    if (input.minimumBookingAmount < 0) {
+      throw new AppError("minimumBookingAmount cannot be negative", 422);
+    }
+    promoCode.minimumBookingAmount = input.minimumBookingAmount;
+  }
+  if (input.maximumDiscountAmount !== undefined) {
+    promoCode.maximumDiscountAmount =
+      input.maximumDiscountAmount ?? undefined;
+  }
+  if (nextType === "fixed_amount") {
+    promoCode.maximumDiscountAmount = undefined;
+  }
   if (input.maximumUses !== undefined) {
-    if (!Number.isInteger(input.maximumUses) || input.maximumUses <= 0) {
-      throw new AppError("maximumUses must be a positive whole number", 422);
+    if (
+      !Number.isInteger(input.maximumUses) ||
+      input.maximumUses < Math.max(1, promoCode.usageCount ?? 0)
+    ) {
+      throw new AppError(
+        "maximumUses cannot be lower than the number already used",
+        422,
+      );
     }
     promoCode.maximumUses = input.maximumUses;
   }
-
-  if (input.code !== undefined) {
-    const nextCode = input.code.trim().toUpperCase();
-    if (!nextCode) {
-      throw new AppError("code cannot be empty", 422);
+  if (input.perCustomerLimit !== undefined) {
+    if (!Number.isInteger(input.perCustomerLimit) || input.perCustomerLimit < 1) {
+      throw new AppError("perCustomerLimit must be a positive whole number", 422);
     }
-    await assertCodeAvailable(nextCode, id);
-    promoCode.code = nextCode;
+    promoCode.perCustomerLimit = input.perCustomerLimit;
   }
-
-  if (input.discountType !== undefined) promoCode.discountType = input.discountType;
-  if (input.discountValue !== undefined) promoCode.discountValue = input.discountValue;
+  if (input.applicableServiceIds !== undefined) {
+    promoCode.applicableServiceIds = await validateApplicableServices(
+      input.applicableServiceIds,
+    );
+  }
   if (input.isActive !== undefined) promoCode.isActive = input.isActive;
 
   await promoCode.save();
   return promoCode.toObject();
 }
 
-/* ------------------------------------------------------------------ */
-/* 5) Delete                                                            */
-/* ------------------------------------------------------------------ */
-
 export async function deletePromoCode(id: string) {
   await connectDB();
 
   const promoCode = await PromoCode.findById(id);
-  if (!promoCode) {
-    throw new NotFoundError("Promo code not found");
+  if (!promoCode) throw new NotFoundError("Promo code not found");
+
+  if ((promoCode.usageCount ?? 0) > 0) {
+    promoCode.isActive = false;
+    await promoCode.save();
+    return { deletedId: null, archivedId: id };
   }
 
-  // NOTE: this is a hard delete. Existing PromoCodeUsage records that
-  // reference this promoCodeId are intentionally left untouched — they
-  // document a discount that was actually applied to a real booking, so
-  // deleting them would corrupt historical order/revenue data. In practice,
-  // setting isActive to false is the safer choice for a code that already
-  // has usage history; hard delete is implemented here because it was
-  // explicitly requested.
   await promoCode.deleteOne();
-
-  return { deletedId: id };
+  return { deletedId: id, archivedId: null };
 }

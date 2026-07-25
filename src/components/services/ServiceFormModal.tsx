@@ -13,6 +13,9 @@ export interface ServiceFormData {
   category: string;
   price: number;
   durationMinutes: number;
+  includedSquareMeters: number;
+  pricePerAdditionalSquareMeter: number;
+  minutesPerAdditionalSquareMeter: number;
   isActive: boolean;
 }
 
@@ -31,6 +34,9 @@ interface FormState {
   category: string;
   price: string;
   durationMinutes: string;
+  includedSquareMeters: string;
+  pricePerAdditionalSquareMeter: string;
+  minutesPerAdditionalSquareMeter: string;
   isActive: boolean;
 }
 
@@ -44,6 +50,9 @@ const EMPTY_FORM: FormState = {
   category: "",
   price: "",
   durationMinutes: "",
+  includedSquareMeters: "60",
+  pricePerAdditionalSquareMeter: "0.40",
+  minutesPerAdditionalSquareMeter: "0.75",
   isActive: true,
 };
 
@@ -65,6 +74,13 @@ function toFormState(data?: ServiceFormData): FormState {
     category: data.category,
     price: String(data.price),
     durationMinutes: String(data.durationMinutes),
+    includedSquareMeters: String(data.includedSquareMeters ?? 60),
+    pricePerAdditionalSquareMeter: String(
+      data.pricePerAdditionalSquareMeter ?? 0.4
+    ),
+    minutesPerAdditionalSquareMeter: String(
+      data.minutesPerAdditionalSquareMeter ?? 0.75
+    ),
     isActive: data.isActive,
   };
 }
@@ -118,6 +134,22 @@ export default function ServiceFormModal({
       nextErrors.durationMinutes = "Duration must be at least 30 minutes";
     }
 
+    const includedSize = Number(form.includedSquareMeters);
+    if (Number.isNaN(includedSize) || includedSize < 0) {
+      nextErrors.includedSquareMeters = "Included size cannot be negative";
+    }
+
+    const sizeRate = Number(form.pricePerAdditionalSquareMeter);
+    if (Number.isNaN(sizeRate) || sizeRate < 0) {
+      nextErrors.pricePerAdditionalSquareMeter = "Size rate cannot be negative";
+    }
+
+    const sizeMinutes = Number(form.minutesPerAdditionalSquareMeter);
+    if (Number.isNaN(sizeMinutes) || sizeMinutes < 0) {
+      nextErrors.minutesPerAdditionalSquareMeter =
+        "Additional duration cannot be negative";
+    }
+
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -137,6 +169,11 @@ export default function ServiceFormModal({
       category: form.category.trim(),
       price: Number(form.price),
       durationMinutes: Number(form.durationMinutes),
+      includedSquareMeters: Number(form.includedSquareMeters),
+      pricePerAdditionalSquareMeter: Number(form.pricePerAdditionalSquareMeter),
+      minutesPerAdditionalSquareMeter: Number(
+        form.minutesPerAdditionalSquareMeter
+      ),
       isActive: form.isActive,
     };
 
@@ -319,6 +356,87 @@ export default function ServiceFormModal({
                   {errors.durationMinutes}
                 </p>
               )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-primary/10 bg-primary-light/35 p-4">
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-navy">Dynamic size pricing</p>
+              <p className="mt-1 text-xs leading-5 text-navy/50">
+                The base price covers the included area. Every additional square
+                meter increases both price and estimated cleaning time.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-navy/50">
+                  Included m²
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.includedSquareMeters}
+                  onChange={(e) =>
+                    setForm({ ...form, includedSquareMeters: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                />
+                {errors.includedSquareMeters && (
+                  <p className="mt-1 text-xs text-status-cancelled">
+                    {errors.includedSquareMeters}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-navy/50">
+                  $ per extra m²
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.pricePerAdditionalSquareMeter}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      pricePerAdditionalSquareMeter: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                />
+                {errors.pricePerAdditionalSquareMeter && (
+                  <p className="mt-1 text-xs text-status-cancelled">
+                    {errors.pricePerAdditionalSquareMeter}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-navy/50">
+                  Min per extra m²
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.05"
+                  value={form.minutesPerAdditionalSquareMeter}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      minutesPerAdditionalSquareMeter: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                />
+                {errors.minutesPerAdditionalSquareMeter && (
+                  <p className="mt-1 text-xs text-status-cancelled">
+                    {errors.minutesPerAdditionalSquareMeter}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

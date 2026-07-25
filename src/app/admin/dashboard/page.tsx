@@ -4,6 +4,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import {
@@ -44,11 +45,27 @@ interface ApiEnvelope<T> {
   error?: string;
 }
 
+interface BookingReportRow {
+  _id: string;
+  bookingNumber: string;
+  bookingDate: string;
+  status: string;
+  totalAmount: number;
+  customerId?: { name?: string; email?: string } | string;
+  serviceId?: { name?: string } | string;
+}
+
 interface BookingReportsData {
-  bookings: any[];
+  bookings: BookingReportRow[];
   total: number;
   page: number;
   limit: number;
+}
+
+interface AdminDashboardOverview {
+  stats: DashboardStats;
+  revenue: RevenueStats;
+  reports: BookingReportsData;
 }
 
 interface ReportFiltersState {
@@ -127,39 +144,58 @@ export default function AdminDashboardPage() {
 
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
+  const initialLoadStarted = useRef(false);
+  const initialLoadComplete = useRef(false);
 
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
+  const fetchOverview = useCallback(
+    async (
+      range: RevenueRange,
+      filters: ReportFiltersState,
+      page: number,
+    ) => {
+      setStatsLoading(true);
+      setRevenueLoading(true);
+      setReportsLoading(true);
 
-    try {
-      const response = await fetch(
-        "/api/admin/dashboard?section=stats",
-        {
-          cache: "no-store",
-        },
-      );
+      try {
+        const params = new URLSearchParams({
+          section: "overview",
+          range,
+          page: String(page),
+        });
 
-      const json: ApiEnvelope<DashboardStats> =
-        await response.json();
+        if (filters.from) params.set("from", filters.from);
+        if (filters.to) params.set("to", filters.to);
+        if (filters.status) params.set("status", filters.status);
 
-      if (!response.ok || !json.success) {
-        throw new Error(
-          json.error ??
-            "Failed to load dashboard statistics",
+        const response = await fetch(
+          `/api/admin/dashboard?${params.toString()}`,
+          { cache: "no-store" },
         );
-      }
+        const json: ApiEnvelope<AdminDashboardOverview> =
+          await response.json();
 
-      setStats(json.data ?? null);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to load dashboard statistics",
-      );
-    } finally {
-      setStatsLoading(false);
-    }
-  }, []);
+        if (!response.ok || !json.success || !json.data) {
+          throw new Error(json.error ?? "Failed to load the dashboard");
+        }
+
+        setStats(json.data.stats);
+        setRevenue(json.data.revenue);
+        setReports(json.data.reports);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Failed to load the dashboard",
+        );
+      } finally {
+        setStatsLoading(false);
+        setRevenueLoading(false);
+        setReportsLoading(false);
+      }
+    },
+    [],
+  );
 
   const fetchRevenue = useCallback(
     async (range: RevenueRange) => {
@@ -257,14 +293,29 @@ export default function AdminDashboardPage() {
   );
 
   useEffect(() => {
-    void fetchStats();
-  }, [fetchStats]);
+    if (initialLoadStarted.current) {
+      return;
+    }
+
+    initialLoadStarted.current = true;
+    void fetchOverview("week", EMPTY_FILTERS, 1).finally(() => {
+      initialLoadComplete.current = true;
+    });
+  }, [fetchOverview]);
 
   useEffect(() => {
+    if (!initialLoadComplete.current) {
+      return;
+    }
+
     void fetchRevenue(revenueRange);
   }, [revenueRange, fetchRevenue]);
 
   useEffect(() => {
+    if (!initialLoadComplete.current) {
+      return;
+    }
+
     void fetchReports(
       reportFilters,
       reportPage,
@@ -285,14 +336,11 @@ export default function AdminDashboardPage() {
   function handleRefreshDashboard() {
     setErrorMessage(null);
 
-    void Promise.all([
-      fetchStats(),
-      fetchRevenue(revenueRange),
-      fetchReports(
-        reportFilters,
-        reportPage,
-      ),
-    ]);
+    void fetchOverview(
+      revenueRange,
+      reportFilters,
+      reportPage,
+    );
   }
 
   const dashboardRefreshing =
@@ -318,7 +366,7 @@ export default function AdminDashboardPage() {
           }}
           transition={{
             duration: 14,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -332,7 +380,7 @@ export default function AdminDashboardPage() {
           }}
           transition={{
             duration: 17,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -352,7 +400,7 @@ export default function AdminDashboardPage() {
           }}
           transition={{
             duration: 25,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -378,7 +426,7 @@ export default function AdminDashboardPage() {
             }}
             transition={{
               duration: 8,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           />
@@ -392,7 +440,7 @@ export default function AdminDashboardPage() {
             }}
             transition={{
               duration: 10,
-              repeat: Infinity,
+              repeat: 0,
               ease: "easeInOut",
             }}
           />
@@ -405,7 +453,7 @@ export default function AdminDashboardPage() {
             }}
             transition={{
               duration: 6,
-              repeat: Infinity,
+              repeat: 0,
               repeatDelay: 3,
               ease: "easeInOut",
             }}
@@ -419,10 +467,10 @@ export default function AdminDashboardPage() {
                 }}
                 transition={{
                   duration: 3,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 backdrop-blur-xl"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 backdrop-blur-md"
               >
                 <Activity className="h-4 w-4" />
                 Live business overview
@@ -434,7 +482,7 @@ export default function AdminDashboardPage() {
                     scale: 1.08,
                     rotate: 5,
                   }}
-                  className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-200 shadow-lg backdrop-blur-xl sm:flex"
+                  className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-200 shadow-lg backdrop-blur-md sm:flex"
                 >
                   <ShieldCheck className="h-7 w-7" />
                 </motion.span>
@@ -454,7 +502,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.08] px-4 py-3 text-xs font-semibold text-blue-100 backdrop-blur-xl">
+              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.08] px-4 py-3 text-xs font-semibold text-blue-100 backdrop-blur-md">
                 <span className="relative flex h-2.5 w-2.5">
                   <motion.span
                     className="absolute inline-flex h-full w-full rounded-full bg-emerald-400"
@@ -464,7 +512,7 @@ export default function AdminDashboardPage() {
                     }}
                     transition={{
                       duration: 2,
-                      repeat: Infinity,
+                      repeat: 0,
                     }}
                   />
 
@@ -557,7 +605,7 @@ export default function AdminDashboardPage() {
                   whileHover={{
                     y: -4,
                   }}
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-4 py-3 backdrop-blur-xl"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-4 py-3 backdrop-blur-md"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-cyan-200">
                     <Icon className="h-5 w-5" />
@@ -811,7 +859,7 @@ export default function AdminDashboardPage() {
                 }}
                 transition={{
                   duration: 6,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -834,7 +882,7 @@ export default function AdminDashboardPage() {
                     }}
                     transition={{
                       duration: 3,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                     className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-light text-primary"

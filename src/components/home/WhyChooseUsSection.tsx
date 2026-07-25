@@ -124,7 +124,7 @@ function SpotlightCard({
         rotateY,
         transformPerspective: 1200,
       }}
-      className={`group relative overflow-hidden rounded-[2rem] border border-primary/10 bg-white/80 shadow-[0_18px_50px_rgba(11,37,69,0.09)] backdrop-blur-xl transition-shadow duration-500 hover:shadow-[0_35px_90px_rgba(11,37,69,0.17)] ${className}`}
+      className={`group relative overflow-hidden rounded-[2rem] border border-primary/10 bg-white/80 shadow-[0_18px_50px_rgba(11,37,69,0.09)] backdrop-blur-md transition-shadow duration-500 hover:shadow-[0_35px_90px_rgba(11,37,69,0.17)] ${className}`}
     >
       <motion.div
         aria-hidden="true"
@@ -167,7 +167,7 @@ const trustPoints = [
 
 export default function WhyChooseUsSection() {
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section
         id="why-choose-us"
         className="relative isolate overflow-hidden bg-surface-soft py-24 font-body sm:py-28 lg:py-32"
@@ -192,7 +192,7 @@ export default function WhyChooseUsSection() {
           }}
           transition={{
             duration: 22,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -208,7 +208,7 @@ export default function WhyChooseUsSection() {
           }}
           transition={{
             duration: 13,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -223,7 +223,7 @@ export default function WhyChooseUsSection() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -239,7 +239,7 @@ export default function WhyChooseUsSection() {
           }}
           transition={{
             duration: 5,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         >
@@ -255,7 +255,7 @@ export default function WhyChooseUsSection() {
           }}
           transition={{
             duration: 6,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         >
@@ -287,7 +287,7 @@ export default function WhyChooseUsSection() {
               whileHover={{
                 scale: 1.05,
               }}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-xl"
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-md"
             >
               <motion.span
                 animate={{
@@ -296,7 +296,7 @@ export default function WhyChooseUsSection() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -376,7 +376,7 @@ export default function WhyChooseUsSection() {
                     }}
                     transition={{
                       duration: 24,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "linear",
                     }}
                   />
@@ -389,7 +389,7 @@ export default function WhyChooseUsSection() {
                     }}
                     transition={{
                       duration: 3,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   />
@@ -410,7 +410,7 @@ export default function WhyChooseUsSection() {
                       }}
                       transition={{
                         duration: 2,
-                        repeat: Infinity,
+                        repeat: 0,
                       }}
                     >
                       <Check className="h-5 w-5" />
@@ -424,7 +424,7 @@ export default function WhyChooseUsSection() {
                     }}
                     transition={{
                       duration: 3.5,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   >
@@ -444,7 +444,7 @@ export default function WhyChooseUsSection() {
                     }}
                     transition={{
                       duration: 4,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   >
@@ -509,7 +509,7 @@ export default function WhyChooseUsSection() {
                       }}
                       transition={{
                         duration: 2.5,
-                        repeat: Infinity,
+                        repeat: 0,
                       }}
                     >
                       $35
@@ -563,7 +563,7 @@ export default function WhyChooseUsSection() {
                         }
                         transition={{
                           duration: 2,
-                          repeat: Infinity,
+                          repeat: 0,
                         }}
                         className={`rounded-xl px-2 py-3 text-center text-xs font-bold ${
                           index === 1
@@ -604,7 +604,7 @@ export default function WhyChooseUsSection() {
                     }}
                     transition={{
                       duration: 16,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "linear",
                     }}
                   />
@@ -617,7 +617,7 @@ export default function WhyChooseUsSection() {
                     }}
                     transition={{
                       duration: 3,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "easeInOut",
                     }}
                   >
@@ -768,7 +768,7 @@ export default function WhyChooseUsSection() {
                           }
                           transition={{
                             duration: 2,
-                            repeat: Infinity,
+                            repeat: 0,
                           }}
                           className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold sm:h-12 sm:w-12 ${
                             index === 0
@@ -807,7 +807,7 @@ export default function WhyChooseUsSection() {
             viewport={{
               once: true,
             }}
-            className="relative mt-12 overflow-hidden rounded-2xl border border-primary/10 bg-white/70 py-4 shadow-card backdrop-blur-xl"
+            className="relative mt-12 overflow-hidden rounded-2xl border border-primary/10 bg-white/70 py-4 shadow-card backdrop-blur-md"
           >
             <motion.div
               className="flex w-max items-center gap-10 px-6"
@@ -816,7 +816,7 @@ export default function WhyChooseUsSection() {
               }}
               transition={{
                 duration: 24,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "linear",
               }}
             >
@@ -869,7 +869,7 @@ export default function WhyChooseUsSection() {
               }}
               transition={{
                 duration: 7,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -882,7 +882,7 @@ export default function WhyChooseUsSection() {
               }}
               transition={{
                 duration: 8,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -895,7 +895,7 @@ export default function WhyChooseUsSection() {
               }}
               transition={{
                 duration: 5,
-                repeat: Infinity,
+                repeat: 0,
                 repeatDelay: 2,
                 ease: "easeInOut",
               }}
@@ -940,7 +940,7 @@ export default function WhyChooseUsSection() {
                     }}
                     transition={{
                       duration: 2.4,
-                      repeat: Infinity,
+                      repeat: 0,
                       repeatDelay: 1.5,
                     }}
                   />

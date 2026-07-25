@@ -55,7 +55,25 @@ export async function clearAuthCookie() {
   cookieStore.delete(AUTH_COOKIE);
 }
 
-function toPublicUser(userDoc: IUser): PublicUser {
+type AuthenticatedUserRecord = Pick<
+  IUser,
+  | "name"
+  | "email"
+  | "phone"
+  | "role"
+  | "status"
+  | "avatarUrl"
+  | "dateOfBirth"
+  | "gender"
+  | "preferredLanguage"
+  | "bio"
+  | "createdAt"
+  | "updatedAt"
+> & {
+  _id: { toString(): string };
+};
+
+function toPublicUser(userDoc: AuthenticatedUserRecord): PublicUser {
   return {
     id: userDoc._id.toString(),
     name: userDoc.name,
@@ -64,6 +82,10 @@ function toPublicUser(userDoc: IUser): PublicUser {
     role: userDoc.role,
     status: userDoc.status,
     avatarUrl: userDoc.avatarUrl ?? null,
+    dateOfBirth: userDoc.dateOfBirth?.toISOString() ?? null,
+    gender: userDoc.gender ?? null,
+    preferredLanguage: userDoc.preferredLanguage,
+    bio: userDoc.bio ?? null,
     createdAt: userDoc.createdAt.toISOString(),
     updatedAt: userDoc.updatedAt.toISOString(),
   };
@@ -79,10 +101,15 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
   if (!payload) return null;
 
   await connectDB();
-  const userDoc = await User.findById(payload.sub);
+  const userDoc = await User.findById(payload.sub)
+    .select(
+      "name email phone role status avatarUrl dateOfBirth gender preferredLanguage bio createdAt updatedAt",
+    )
+    .lean()
+    .exec();
   if (!userDoc || userDoc.status !== "active") return null;
 
-  return toPublicUser(userDoc);
+  return toPublicUser(userDoc as AuthenticatedUserRecord);
 }
 
 /** Same as getCurrentUser but throws a 401 AppError when unauthenticated. */

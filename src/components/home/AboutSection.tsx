@@ -60,7 +60,7 @@ const statistics = [
 
 export default function AboutSection() {
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section
         id="about"
         className="relative isolate overflow-hidden bg-white py-24 font-body sm:py-28 lg:py-32"
@@ -82,7 +82,7 @@ export default function AboutSection() {
           }}
           transition={{
             duration: 10,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -97,7 +97,7 @@ export default function AboutSection() {
           }}
           transition={{
             duration: 12,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -149,7 +149,7 @@ export default function AboutSection() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -206,7 +206,7 @@ export default function AboutSection() {
                 }}
                 transition={{
                   duration: 35,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "linear",
                 }}
               />
@@ -221,7 +221,7 @@ export default function AboutSection() {
                 }}
                 transition={{
                   duration: 6,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
               />
@@ -258,7 +258,7 @@ export default function AboutSection() {
                   }}
                   transition={{
                     duration: 3.8,
-                    repeat: Infinity,
+                    repeat: 0,
                     repeatDelay: 3,
                     ease: "easeInOut",
                   }}
@@ -281,7 +281,7 @@ export default function AboutSection() {
                     duration: 0.7,
                     delay: 0.4,
                   }}
-                  className="absolute bottom-6 left-6 right-6 rounded-2xl border border-white/20 bg-white/15 p-5 text-white shadow-xl backdrop-blur-xl"
+                  className="absolute bottom-6 left-6 right-6 rounded-2xl border border-white/20 bg-white/15 p-5 text-white shadow-xl backdrop-blur-md"
                 >
                   <div className="flex items-center gap-4">
                     <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-primary">
@@ -324,7 +324,7 @@ export default function AboutSection() {
                 animate={{
                   y: [0, -9, 0],
                 }}
-                className="absolute -right-2 top-[12%] rounded-2xl border border-white bg-white/95 p-4 shadow-[0_18px_45px_rgba(11,37,69,0.16)] backdrop-blur-xl sm:-right-10"
+                className="absolute -right-2 top-[12%] rounded-2xl border border-white bg-white/95 p-4 shadow-[0_18px_45px_rgba(11,37,69,0.16)] backdrop-blur-md sm:-right-10"
               >
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
@@ -363,7 +363,7 @@ export default function AboutSection() {
                 animate={{
                   y: [0, 9, 0],
                 }}
-                className="absolute -left-2 bottom-[17%] rounded-2xl border border-white bg-white/95 p-4 shadow-[0_18px_45px_rgba(11,37,69,0.16)] backdrop-blur-xl sm:-left-10"
+                className="absolute -left-2 bottom-[17%] rounded-2xl border border-white bg-white/95 p-4 shadow-[0_18px_45px_rgba(11,37,69,0.16)] backdrop-blur-md sm:-left-10"
               >
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-primary">
@@ -607,7 +607,7 @@ export default function AboutSection() {
               }}
               transition={{
                 duration: 6,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -620,7 +620,7 @@ export default function AboutSection() {
               }}
               transition={{
                 duration: 7,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />

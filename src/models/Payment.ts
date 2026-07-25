@@ -74,8 +74,6 @@ const paymentSchema =
           true,
           "Booking is required.",
         ],
-        unique: true,
-        index: true,
       },
 
       /*
@@ -386,6 +384,11 @@ paymentSchema.index(
 paymentSchema.index({
   status: 1,
   createdAt: -1,
+});
+
+paymentSchema.index({
+  status: 1,
+  paidAt: 1,
 });
 
 paymentSchema.index({

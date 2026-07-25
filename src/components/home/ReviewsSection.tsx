@@ -206,7 +206,7 @@ function RatingStars({ rating }: { rating: number }) {
 
 function MarqueeReviewCard({ review }: { review: Review }) {
   return (
-    <article className="group relative w-[310px] shrink-0 overflow-hidden rounded-[1.75rem] border border-primary/10 bg-white/90 p-6 shadow-[0_18px_50px_rgba(11,37,69,0.09)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-2 hover:border-primary/20 hover:shadow-[0_28px_70px_rgba(11,37,69,0.16)] sm:w-[355px]">
+    <article className="group relative w-[310px] shrink-0 overflow-hidden rounded-[1.75rem] border border-primary/10 bg-white/90 p-6 shadow-[0_18px_50px_rgba(11,37,69,0.09)] backdrop-blur-md transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-2 hover:border-primary/20 hover:shadow-[0_28px_70px_rgba(11,37,69,0.16)] sm:w-[355px]">
       <motion.div
         aria-hidden="true"
         className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
@@ -216,7 +216,7 @@ function MarqueeReviewCard({ review }: { review: Review }) {
         }}
         transition={{
           duration: 5,
-          repeat: Infinity,
+          repeat: 0,
           ease: "easeInOut",
         }}
       />
@@ -305,7 +305,7 @@ export default function ReviewsSection() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="always">
       <section
         id="reviews"
         className="relative isolate overflow-hidden bg-white py-24 font-body sm:py-28 lg:py-32"
@@ -330,7 +330,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 24,
-            repeat: Infinity,
+            repeat: 0,
             ease: "linear",
           }}
         />
@@ -346,7 +346,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -361,7 +361,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 17,
-            repeat: Infinity,
+            repeat: 0,
             ease: "easeInOut",
           }}
         />
@@ -375,7 +375,7 @@ export default function ReviewsSection() {
           }}
           transition={{
             duration: 9,
-            repeat: Infinity,
+            repeat: 0,
             repeatDelay: 2,
             ease: "easeInOut",
           }}
@@ -402,7 +402,7 @@ export default function ReviewsSection() {
               transition={{
                 duration: particle.duration,
                 delay: particle.delay,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -436,7 +436,7 @@ export default function ReviewsSection() {
               whileHover={{
                 scale: 1.05,
               }}
-              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-xl"
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-sm font-semibold text-primary shadow-card backdrop-blur-md"
             >
               <motion.span
                 animate={{
@@ -445,7 +445,7 @@ export default function ReviewsSection() {
                 }}
                 transition={{
                   duration: 2.5,
-                  repeat: Infinity,
+                  repeat: 0,
                   repeatDelay: 1,
                 }}
               >
@@ -495,7 +495,7 @@ export default function ReviewsSection() {
             onMouseLeave={() => {
               setIsFeaturedPaused(false);
             }}
-            className="relative mt-16 overflow-hidden rounded-[2.25rem] border border-primary/10 bg-white/85 p-6 shadow-[0_30px_90px_rgba(11,37,69,0.13)] backdrop-blur-xl sm:p-9 lg:p-12"
+            className="relative mt-16 overflow-hidden rounded-[2.25rem] border border-primary/10 bg-white/85 p-6 shadow-[0_30px_90px_rgba(11,37,69,0.13)] backdrop-blur-md sm:p-9 lg:p-12"
           >
             <motion.div
               aria-hidden="true"
@@ -506,7 +506,7 @@ export default function ReviewsSection() {
               }}
               transition={{
                 duration: 8,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -520,7 +520,7 @@ export default function ReviewsSection() {
               }}
               transition={{
                 duration: 9,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -673,7 +673,7 @@ export default function ReviewsSection() {
                   }}
                   transition={{
                     duration: 28,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "linear",
                   }}
                 />
@@ -686,7 +686,7 @@ export default function ReviewsSection() {
                   }}
                   transition={{
                     duration: 22,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "linear",
                   }}
                 />
@@ -700,7 +700,7 @@ export default function ReviewsSection() {
                   }}
                   transition={{
                     duration: 4,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                 />
@@ -712,7 +712,7 @@ export default function ReviewsSection() {
                   }}
                   transition={{
                     duration: 4,
-                    repeat: Infinity,
+                    repeat: 0,
                     ease: "easeInOut",
                   }}
                   className="relative flex h-52 w-52 flex-col items-center justify-center rounded-[3rem] bg-gradient-to-br from-navy via-[#123b6f] to-primary text-white shadow-[0_30px_80px_rgba(11,37,69,0.3)]"
@@ -724,7 +724,7 @@ export default function ReviewsSection() {
                     }}
                     transition={{
                       duration: 3,
-                      repeat: Infinity,
+                      repeat: 0,
                     }}
                   >
                     <Star className="h-14 w-14 fill-amber-400 text-amber-400" />
@@ -747,7 +747,7 @@ export default function ReviewsSection() {
                     }}
                     transition={{
                       duration: 4,
-                      repeat: Infinity,
+                      repeat: 0,
                       ease: "linear",
                     }}
                   >
@@ -766,7 +766,7 @@ export default function ReviewsSection() {
                   return (
                     <motion.div
                       key={label}
-                      className={`absolute rounded-2xl border border-primary/10 bg-white/95 px-3 py-2.5 shadow-card backdrop-blur-xl ${positions[index]}`}
+                      className={`absolute rounded-2xl border border-primary/10 bg-white/95 px-3 py-2.5 shadow-card backdrop-blur-md ${positions[index]}`}
                       animate={{
                         y:
                           index % 2 === 0
@@ -776,7 +776,7 @@ export default function ReviewsSection() {
                       transition={{
                         duration: 3.5 + index * 0.4,
                         delay: index * 0.25,
-                        repeat: Infinity,
+                        repeat: 0,
                         ease: "easeInOut",
                       }}
                     >
@@ -865,7 +865,7 @@ export default function ReviewsSection() {
               }}
               transition={{
                 duration: 7,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -878,7 +878,7 @@ export default function ReviewsSection() {
               }}
               transition={{
                 duration: 8,
-                repeat: Infinity,
+                repeat: 0,
                 ease: "easeInOut",
               }}
             />
@@ -891,7 +891,7 @@ export default function ReviewsSection() {
               }}
               transition={{
                 duration: 5,
-                repeat: Infinity,
+                repeat: 0,
                 repeatDelay: 2,
                 ease: "easeInOut",
               }}
@@ -920,7 +920,7 @@ export default function ReviewsSection() {
                 }}
                 transition={{
                   duration: 3,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
                 whileHover={{
@@ -943,7 +943,7 @@ export default function ReviewsSection() {
                     }}
                     transition={{
                       duration: 2.4,
-                      repeat: Infinity,
+                      repeat: 0,
                       repeatDelay: 1.4,
                     }}
                   />
