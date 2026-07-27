@@ -177,13 +177,13 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
 
         <nav
           aria-label={`${roleLabel} navigation`}
-          className="relative mx-auto flex min-h-[76px] max-w-[1500px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+          className="relative mx-auto flex min-h-[76px] max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-6 xl:px-5 2xl:gap-4 2xl:px-8"
         >
-          <Link href="/" className="group flex shrink-0 items-center gap-3">
+          <Link href="/" className="group flex shrink-0 items-center gap-2 2xl:gap-3">
             <motion.span
               whileHover={{ scale: 1.08, rotate: 4 }}
               whileTap={{ scale: 0.94 }}
-              className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-blue-600 to-cyan-500 text-white shadow-[0_14px_32px_rgba(30,111,217,0.30)]"
+              className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-blue-600 to-cyan-500 text-white shadow-[0_14px_32px_rgba(30,111,217,0.30)] 2xl:h-12 2xl:w-12"
             >
               <motion.span
                 aria-hidden="true"
@@ -196,20 +196,20 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                   ease: "easeInOut",
                 }}
               />
-              <Sparkles className="relative h-6 w-6" />
+              <Sparkles className="relative h-5 w-5 2xl:h-6 2xl:w-6" />
             </motion.span>
 
             <span>
-              <span className="block font-heading text-xl font-extrabold leading-none text-navy sm:text-2xl">
+              <span className="block font-heading text-xl font-extrabold leading-none text-navy 2xl:text-2xl">
                 CleanNest
               </span>
-              <span className="mt-1 hidden text-[10px] font-bold uppercase tracking-[0.19em] text-primary sm:block">
+              <span className="mt-1 hidden text-[10px] font-bold uppercase tracking-[0.19em] text-primary 2xl:block">
                 Cleaning made simple
               </span>
             </span>
           </Link>
 
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 2xl:flex">
+          <div className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
             {items.map((item) => {
               const active = isActiveLink(item.href);
 
@@ -217,7 +217,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`group relative whitespace-nowrap rounded-xl px-2.5 py-2.5 text-[13px] font-semibold transition-colors ${
+                  className={`group relative whitespace-nowrap rounded-lg px-1.5 py-2.5 text-[11px] font-semibold transition-colors min-[1400px]:px-2 min-[1400px]:text-xs 2xl:rounded-xl 2xl:px-2.5 2xl:text-[13px] ${
                     active ? "text-primary" : "text-slate-600 hover:text-primary"
                   }`}
                 >
@@ -239,7 +239,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
             })}
           </div>
 
-          <div className="hidden shrink-0 items-center gap-2 2xl:flex">
+          <div className="hidden shrink-0 items-center gap-1 xl:flex 2xl:gap-2">
             {role === "customer" && (
               <Link
                 href="/book-service"
@@ -264,7 +264,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                 className="flex min-h-[48px] items-center gap-2 rounded-xl border border-primary/15 bg-white p-1.5 pr-2.5 shadow-sm transition hover:border-primary/30 hover:bg-primary-light"
               >
                 {avatar}
-                <span className="hidden max-w-28 text-left 2xl:block">
+                <span className="hidden max-w-28 text-left min-[1480px]:block">
                   <span className="block truncate text-xs font-extrabold text-navy">
                     {user.name}
                   </span>
@@ -339,7 +339,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
             }}
             aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMobileMenuOpen}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-white text-navy shadow-sm transition hover:bg-primary-light hover:text-primary 2xl:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-white text-navy shadow-sm transition hover:bg-primary-light hover:text-primary xl:hidden"
           >
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -357,14 +357,14 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 top-[76px] z-[-1] bg-navy/25 backdrop-blur-sm 2xl:hidden"
+                className="fixed inset-0 top-[76px] z-[-1] bg-navy/25 backdrop-blur-sm xl:hidden"
               />
 
               <motion.div
                 initial={{ opacity: 0, y: -16, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: "auto" }}
                 exit={{ opacity: 0, y: -16, height: 0 }}
-                className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md 2xl:hidden"
+                className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md xl:hidden"
               >
                 <div className="mx-auto max-h-[calc(100vh-76px)] max-w-[1500px] overflow-y-auto px-4 py-5 sm:px-6">
                   <div className="mb-5 flex items-center gap-3 rounded-2xl bg-primary-light/60 p-3">

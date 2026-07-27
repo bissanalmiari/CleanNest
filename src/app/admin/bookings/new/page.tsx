@@ -375,8 +375,8 @@ export default function NewAdminBookingPage() {
         </section>
 
         <form onSubmit={submitBooking} className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
-          <div className="space-y-6">
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-6">
+            <section className="order-1 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="flex items-center gap-2 font-heading text-xl font-semibold text-slate-900">
                 <UserRound size={20} className="text-blue-600" /> Customer and location
               </h2>
@@ -447,7 +447,7 @@ export default function NewAdminBookingPage() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="order-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="flex items-center gap-2 font-heading text-xl font-semibold text-slate-900">
                 <Plus size={20} className="text-blue-600" /> Extra touches
               </h2>
@@ -526,20 +526,23 @@ export default function NewAdminBookingPage() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="order-2 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="flex items-center gap-2 font-heading text-xl font-semibold text-slate-900">
-                <Sparkles size={20} className="text-blue-600" /> Service and schedule
+                <Sparkles size={20} className="text-blue-600" /> Choose the cleaning plan
               </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Select the main plan before choosing optional extra touches.
+              </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
-                  Cleaning service
+                  Cleaning plan
                   <select
                     value={serviceId}
                     onChange={(event) => setServiceId(event.target.value)}
                     className={inputClass}
                     required
                   >
-                    <option value="">Select a service</option>
+                    <option value="">Select a cleaning plan</option>
                     {options.services.map((service) => (
                       <option key={service.id} value={service.id}>
                         {service.name} — ${service.price.toFixed(2)}
@@ -610,7 +613,7 @@ export default function NewAdminBookingPage() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="order-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="flex items-center gap-2 font-heading text-xl font-semibold text-slate-900">
                 <ReceiptText size={20} className="text-blue-600" /> Notes
               </h2>
