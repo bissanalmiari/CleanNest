@@ -51,7 +51,7 @@ const quickLinks = [
 const customerLinks = [
   {
     label: "Book a Cleaning",
-    href: "/book",
+    href: "/book-service",
   },
   {
     label: "View All Services",
@@ -936,7 +936,7 @@ export default function Footer() {
               }}
             >
               <Link
-                href="/book"
+                href="/book-service"
                 className="group inline-flex min-h-[50px] items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-bold text-primary shadow-[0_16px_38px_rgba(0,0,0,0.2)]"
               >
                 Book Now
