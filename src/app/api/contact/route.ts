@@ -32,7 +32,13 @@ export async function POST(request: Request) {
       email: false,
     }).catch((error) => console.error("[notification:contact-message]", error));
 
-    return successResponse({ submitted: true }, 201);
+    return successResponse(
+      {
+        submitted: true,
+        reference: contactMessage._id.toString().slice(-8).toUpperCase(),
+      },
+      201
+    );
   } catch (error) {
     return errorResponse(error);
   }
