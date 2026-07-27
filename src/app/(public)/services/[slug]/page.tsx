@@ -204,7 +204,7 @@ export default async function ServiceDetailsPage({ params }: ServiceDetailsPageP
                         </span>
                       </div>
 
-                      <div className="my-8 grid grid-cols-3 gap-3">
+                      <div className="my-8 grid gap-3 min-[380px]:grid-cols-3">
                         {[
                           { icon: Home, label: "Your space" },
                           { icon: Sparkles, label: "Deep care" },

@@ -72,8 +72,8 @@ function ReplyModal({
   const [text, setText] = useState(review.adminReply ?? "");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy/40 p-2 backdrop-blur-sm sm:p-4">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6">
         <h3 className="font-heading text-lg font-semibold text-navy">
           Reply to {review.customerName ?? "this customer"}
         </h3>
@@ -90,7 +90,7 @@ function ReplyModal({
           className="mt-4 w-full rounded-xl border border-navy/10 bg-surface-soft/60 p-3 text-sm text-navy focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10"
         />
 
-        <div className="mt-5 flex justify-end gap-3">
+        <div className="mt-5 flex flex-col-reverse gap-3 min-[380px]:flex-row min-[380px]:justify-end">
           <button
             type="button"
             onClick={onClose}
@@ -189,7 +189,7 @@ export default function AdminReviewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface p-6 sm:p-8">
+    <div className="min-h-screen bg-surface p-4 sm:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
         {/* Header */}
         <section className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(125deg,#071f3d,#0b4163)] p-6 text-white shadow-[0_28px_75px_rgba(11,37,69,0.2)] sm:p-8">

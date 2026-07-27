@@ -239,17 +239,17 @@ export default function PromoCodeFormModal({ mode, initialData, onClose, onSucce
 
   return (
     <div
-      className="fixed inset-0 z-[100] overflow-y-auto bg-navy/60 p-4"
+      className="fixed inset-0 z-[100] overflow-y-auto bg-navy/60 p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={mode === "create" ? "Create promo campaign" : "Edit promo campaign"}
     >
-      <div className="flex min-h-full items-center justify-center py-6">
-        <div className="w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/20 bg-white shadow-[0_35px_100px_rgba(3,22,45,0.35)]">
-          <div className="relative overflow-hidden bg-[linear-gradient(125deg,#071d38,#0c3b6d)] px-6 py-6 text-white sm:px-8">
+      <div className="flex min-h-full items-center justify-center py-2 sm:py-6">
+        <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[0_35px_100px_rgba(3,22,45,0.35)] sm:rounded-[2rem]">
+          <div className="relative overflow-hidden bg-[linear-gradient(125deg,#071d38,#0c3b6d)] px-4 py-5 text-white sm:px-8 sm:py-6">
             <div className="absolute -right-12 -top-20 h-48 w-48 rounded-full border border-cyan-300/20 bg-cyan-300/10" />
-            <div className="relative flex items-start justify-between gap-5">
-              <div className="flex items-start gap-4">
+            <div className="relative flex items-start justify-between gap-3 sm:gap-5">
+              <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-300 text-navy">
                   <Ticket className="h-5 w-5" />
                 </span>
@@ -257,7 +257,7 @@ export default function PromoCodeFormModal({ mode, initialData, onClose, onSucce
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
                     Campaign studio
                   </p>
-                  <h2 className="mt-2 font-heading text-2xl font-black">
+                  <h2 className="mt-2 font-heading text-xl font-black sm:text-2xl">
                     {mode === "create" ? "Create a promo campaign" : "Refine this campaign"}
                   </h2>
                   <p className="mt-2 text-sm font-medium text-blue-100/65">
@@ -277,7 +277,7 @@ export default function PromoCodeFormModal({ mode, initialData, onClose, onSucce
           </div>
 
           <form onSubmit={submit} className="grid lg:grid-cols-[1fr_280px]">
-            <div className="space-y-7 p-6 sm:p-8">
+            <div className="space-y-7 p-4 sm:p-8">
               {submitError && (
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
                   {submitError}

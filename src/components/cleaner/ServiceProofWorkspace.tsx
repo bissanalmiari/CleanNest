@@ -433,7 +433,7 @@ function PhotoStage({
       </div>
 
       {photos.length > 0 && (
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {photos.map((photo) => (
             <a
               key={photo.url}

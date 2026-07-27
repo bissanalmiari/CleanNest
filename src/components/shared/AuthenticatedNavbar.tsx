@@ -366,7 +366,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                 exit={{ opacity: 0, y: -16, height: 0 }}
                 className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md xl:hidden"
               >
-                <div className="mx-auto max-h-[calc(100vh-76px)] max-w-[1500px] overflow-y-auto px-4 py-5 sm:px-6">
+                <div className="mx-auto max-h-[calc(100dvh-76px)] max-w-[1500px] overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
                   <div className="mb-5 flex items-center gap-3 rounded-2xl bg-primary-light/60 p-3">
                     {avatar}
                     <div className="min-w-0">

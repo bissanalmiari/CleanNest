@@ -48,7 +48,7 @@ export default function CustomerLayoutClient({ children, user }: CustomerLayoutC
   return (
     <div className="min-h-screen overflow-x-hidden bg-surface-soft">
       <AuthenticatedNavbar role="customer" items={customerNavigation} user={user} />
-      <main className="min-h-[calc(100vh-76px)] min-w-0">{children}</main>
+      <main className="min-h-[calc(100dvh-76px)] min-w-0">{children}</main>
     </div>
   );
 }

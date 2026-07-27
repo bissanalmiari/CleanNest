@@ -138,7 +138,7 @@ export default function InlineAddressDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-navy/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-navy/70 p-2 backdrop-blur-sm sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="inline-address-title"
@@ -148,9 +148,9 @@ export default function InlineAddressDialog({
         }
       }}
     >
-      <div className="my-auto w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_35px_100px_rgba(11,37,69,0.35)]">
-        <header className="flex items-start justify-between gap-5 bg-navy p-6 text-white sm:p-7">
-          <div className="flex items-start gap-4">
+      <div className="my-auto flex max-h-[calc(100dvh-1rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white bg-white shadow-[0_35px_100px_rgba(11,37,69,0.35)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[2rem]">
+        <header className="flex shrink-0 items-start justify-between gap-3 bg-navy p-4 text-white sm:gap-5 sm:p-7">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-300">
               <MapPin className="h-6 w-6" />
             </span>
@@ -161,7 +161,7 @@ export default function InlineAddressDialog({
               </p>
               <h2
                 id="inline-address-title"
-                className="mt-2 font-heading text-2xl font-black sm:text-3xl"
+                className="mt-2 font-heading text-xl font-black sm:text-3xl"
               >
                 Add a new home
               </h2>
@@ -184,7 +184,7 @@ export default function InlineAddressDialog({
 
         <form
           onSubmit={handleSubmit(submitAddress)}
-          className="max-h-[calc(100vh-10rem)] overflow-y-auto p-6 sm:p-7"
+          className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-7"
           noValidate
         >
           {apiError && (

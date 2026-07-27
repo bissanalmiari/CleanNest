@@ -239,7 +239,7 @@ function EvidenceGallery({
         <Camera className="h-4 w-4 text-primary" /> {label} photos
       </p>
       {photos.length ? (
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {photos.map((photo) => (
             <a
               key={photo.url}

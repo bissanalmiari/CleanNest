@@ -90,7 +90,7 @@ export default function AdminLayoutClient({ children, user }: AdminLayoutClientP
   return (
     <div className="min-h-screen overflow-x-hidden bg-surface-soft">
       <AuthenticatedNavbar role="admin" items={adminNavigation} user={user} />
-      <main className="min-h-[calc(100vh-76px)] min-w-0">{children}</main>
+      <main className="min-h-[calc(100dvh-76px)] min-w-0">{children}</main>
     </div>
   );
 }

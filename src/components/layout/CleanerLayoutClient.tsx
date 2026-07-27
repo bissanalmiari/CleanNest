@@ -38,7 +38,7 @@ export default function CleanerLayoutClient({ children, user }: CleanerLayoutCli
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f3f7fb]">
       <AuthenticatedNavbar role="cleaner" items={cleanerNavigation} user={user} />
-      <main className="min-h-[calc(100vh-76px)] min-w-0">{children}</main>
+      <main className="min-h-[calc(100dvh-76px)] min-w-0">{children}</main>
     </div>
   );
 }

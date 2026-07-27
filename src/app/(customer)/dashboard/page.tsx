@@ -231,7 +231,7 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="mt-6 grid gap-3 min-[400px]:grid-cols-2">
                     <div className="rounded-2xl border border-white/10 bg-navy/25 p-4">
                       <Clock3 className="h-4 w-4 text-cyan-300" />
                       <p className="mt-3 text-[9px] font-extrabold uppercase tracking-[0.12em] text-blue-100/45">
