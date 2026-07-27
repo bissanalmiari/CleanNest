@@ -233,7 +233,7 @@ export default function PublicReviewsPage() {
                     experience.
                   </p>
                   <Link
-                    href="/book"
+                    href="/book-service"
                     className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-primary-dark"
                   >
                     Book a cleaning
