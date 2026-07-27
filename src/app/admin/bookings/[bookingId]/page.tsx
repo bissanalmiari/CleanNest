@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 
 import BookingStatusBadge from "@/components/booking/BookingStatusBadge";
+import ServiceProofReportPanel from "@/components/proof/ServiceProofReportPanel";
 
 interface PopulatedRef {
   _id: string;
@@ -725,6 +726,17 @@ export default function AdminBookingDetailPage() {
                 </div>
               </SectionCard>
             )}
+
+            <SectionCard
+              icon={BadgeCheck}
+              eyebrow="Quality assurance"
+              title="Proof of service"
+            >
+              <ServiceProofReportPanel
+                bookingId={booking._id}
+                audience="admin"
+              />
+            </SectionCard>
 
             <SectionCard
               icon={Zap}

@@ -1,3 +1,10 @@
-export default function JobDetailsPage() {
-  return <div>JobDetailsPage</div>;
+import { redirect } from "next/navigation";
+
+export default async function LegacyCleanerJobPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  redirect(`/cleaner/jobs/${id}`);
 }

@@ -1,19 +1,10 @@
-import {
-  AppError,
-  errorResponse,
-} from "@/lib/apiError";
+import { AppError, errorResponse } from "@/lib/apiError";
 
-import {
-  successResponse,
-} from "@/lib/apiResponse";
+import { successResponse } from "@/lib/apiResponse";
 
-import {
-  requireUser,
-} from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 
-import {
-  connectDB,
-} from "@/lib/db";
+import { connectDB } from "@/lib/db";
 
 import ServiceModel from "@/models/Service";
 
@@ -43,6 +34,7 @@ interface RawServiceDocument {
   badge?: unknown;
   category?: unknown;
   slug?: unknown;
+  imageUrl?: unknown;
 
   features?: unknown;
   includedTasks?: unknown;
@@ -55,73 +47,39 @@ interface RawServiceDocument {
   createdAt?: unknown;
 }
 
-function readString(
-  value: unknown,
-  fallback = "",
-): string {
-  if (
-    typeof value !== "string"
-  ) {
+function readString(value: unknown, fallback = ""): string {
+  if (typeof value !== "string") {
     return fallback;
   }
 
   return value.trim();
 }
 
-function readNumber(
-  value: unknown,
-  fallback = 0,
-): number {
-  const parsedValue =
-    Number(value);
+function readNumber(value: unknown, fallback = 0): number {
+  const parsedValue = Number(value);
 
-  return Number.isFinite(
-    parsedValue,
-  )
-    ? parsedValue
-    : fallback;
+  return Number.isFinite(parsedValue) ? parsedValue : fallback;
 }
 
-function readFeatures(
-  value: unknown,
-): string[] {
+function readFeatures(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value
     .map((feature) => {
-      if (
-        typeof feature ===
-        "string"
-      ) {
+      if (typeof feature === "string") {
         return feature.trim();
       }
 
-      if (
-        typeof feature ===
-          "object" &&
-        feature !== null
-      ) {
-        const featureRecord =
-          feature as Record<
-            string,
-            unknown
-          >;
+      if (typeof feature === "object" && feature !== null) {
+        const featureRecord = feature as Record<string, unknown>;
 
         return (
-          readString(
-            featureRecord.name,
-          ) ||
-          readString(
-            featureRecord.label,
-          ) ||
-          readString(
-            featureRecord.title,
-          ) ||
-          readString(
-            featureRecord.description,
-          )
+          readString(featureRecord.name) ||
+          readString(featureRecord.label) ||
+          readString(featureRecord.title) ||
+          readString(featureRecord.description)
         );
       }
 
@@ -131,43 +89,22 @@ function readFeatures(
     .slice(0, 5);
 }
 
-function createSlug(
-  value: string,
-): string {
+function createSlug(value: string): string {
   return value
     .toLowerCase()
     .trim()
-    .replace(
-      /[^a-z0-9]+/g,
-      "-",
-    )
-    .replace(
-      /^-+|-+$/g,
-      "",
-    );
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
-function isServiceActive(
-  service: RawServiceDocument,
-): boolean {
-  if (
-    service.isActive === false ||
-    service.active === false
-  ) {
+function isServiceActive(service: RawServiceDocument): boolean {
+  if (service.isActive === false || service.active === false) {
     return false;
   }
 
-  const status =
-    readString(
-      service.status,
-    ).toLowerCase();
+  const status = readString(service.status).toLowerCase();
 
-  return ![
-    "inactive",
-    "disabled",
-    "archived",
-    "deleted",
-  ].includes(status);
+  return !["inactive", "disabled", "archived", "deleted"].includes(status);
 }
 
 /*
@@ -178,113 +115,67 @@ function isServiceActive(
  */
 export async function GET() {
   try {
-    const currentUser =
-      await requireUser();
+    const currentUser = await requireUser();
 
-    if (
-      currentUser.role !==
-      "customer"
-    ) {
-      throw new AppError(
-        "Only customers can view cleaning services.",
-        403,
-      );
+    if (currentUser.role !== "customer") {
+      throw new AppError("Only customers can view cleaning services.", 403);
     }
 
     await connectDB();
 
-    const serviceDocuments =
-      (await ServiceModel.find({})
-        .sort({
-          sortOrder: 1,
-          createdAt: 1,
-        })
-        .lean()
-        .exec()) as unknown as RawServiceDocument[];
+    const serviceDocuments = (await ServiceModel.find({})
+      .sort({
+        sortOrder: 1,
+        createdAt: 1,
+      })
+      .lean()
+      .exec()) as unknown as RawServiceDocument[];
 
-    const services =
-      serviceDocuments
-        .filter(isServiceActive)
-        .map((service) => {
-          const name =
-            readString(
-              service.name,
-            ) ||
-            readString(
-              service.title,
-            ) ||
-            "Cleaning service";
+    const services = serviceDocuments.filter(isServiceActive).map((service) => {
+      const name = readString(service.name) || readString(service.title) || "Cleaning service";
 
-          const description =
-            readString(
-              service.description,
-            ) ||
-            readString(
-              service.shortDescription,
-            ) ||
-            "A professional CleanNest cleaning service designed for your property.";
+      const description =
+        readString(service.description) ||
+        readString(service.shortDescription) ||
+        "A professional CleanNest cleaning service designed for your property.";
 
-          const basePrice =
-            readNumber(
-              service.basePrice ??
-                service.price ??
-                service.startingPrice,
-            );
+      const basePrice = readNumber(service.basePrice ?? service.price ?? service.startingPrice);
 
-          const estimatedDurationMinutes =
-            readNumber(
-              service.estimatedDurationMinutes ??
-                service.durationMinutes ??
-                service.baseDurationMinutes ??
-                service.duration,
-            );
+      const estimatedDurationMinutes = readNumber(
+        service.estimatedDurationMinutes ??
+          service.durationMinutes ??
+          service.baseDurationMinutes ??
+          service.duration
+      );
 
-          const badge =
-            readString(
-              service.badge,
-            ) ||
-            readString(
-              service.category,
-            ) ||
-            null;
+      const badge = readString(service.badge) || readString(service.category) || null;
 
-          const storedSlug =
-            readString(
-              service.slug,
-            );
+      const category = readString(service.category) || "Other Services";
 
-          const features =
-            readFeatures(
-              service.features,
-            );
+      const storedSlug = readString(service.slug);
 
-          const includedTasks =
-            readFeatures(
-              service.includedTasks,
-            );
+      const features = readFeatures(service.features);
 
-          return {
-            id:
-              service._id.toString(),
+      const includedTasks = readFeatures(service.includedTasks);
 
-            name,
-            description,
+      return {
+        id: service._id.toString(),
 
-            basePrice,
-            estimatedDurationMinutes,
+        name,
+        description,
 
-            badge,
+        basePrice,
+        estimatedDurationMinutes,
 
-            slug:
-              storedSlug ||
-              createSlug(name),
+        badge,
+        category,
 
-            features:
-              features.length > 0
-                ? features
-                : includedTasks,
-          };
-        });
+        slug: storedSlug || createSlug(name),
+        imageUrl: readString(service.imageUrl),
+
+        features: features.length > 0 ? features : includedTasks,
+      };
+    });
 
     return successResponse({
       services,

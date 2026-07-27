@@ -15,6 +15,7 @@ import {
 import { motion } from "motion/react";
 
 import type { Service } from "@/types/service";
+import ServiceCoverImage from "@/components/services/ServiceCoverImage";
 
 type ServiceCardProps = {
   service: Service;
@@ -34,21 +35,16 @@ function getServiceVisual(service: Service): ServiceVisual {
   if (slug.includes("office")) {
     return {
       icon: Building2,
-      gradient:
-        "from-blue-50 via-white to-cyan-50",
+      gradient: "from-blue-50 via-white to-cyan-50",
       iconBackground: "bg-blue-100",
       iconColor: "text-blue-600",
     };
   }
 
-  if (
-    slug.includes("sofa") ||
-    slug.includes("upholstery")
-  ) {
+  if (slug.includes("sofa") || slug.includes("upholstery")) {
     return {
       icon: Sofa,
-      gradient:
-        "from-violet-50 via-white to-purple-50",
+      gradient: "from-violet-50 via-white to-purple-50",
       iconBackground: "bg-violet-100",
       iconColor: "text-violet-600",
     };
@@ -57,21 +53,16 @@ function getServiceVisual(service: Service): ServiceVisual {
   if (slug.includes("construction")) {
     return {
       icon: Paintbrush,
-      gradient:
-        "from-amber-50 via-white to-orange-50",
+      gradient: "from-amber-50 via-white to-orange-50",
       iconBackground: "bg-amber-100",
       iconColor: "text-amber-600",
     };
   }
 
-  if (
-    slug.includes("move-in") ||
-    slug.includes("move-out")
-  ) {
+  if (slug.includes("move-in") || slug.includes("move-out")) {
     return {
       icon: Home,
-      gradient:
-        "from-emerald-50 via-white to-teal-50",
+      gradient: "from-emerald-50 via-white to-teal-50",
       iconBackground: "bg-emerald-100",
       iconColor: "text-emerald-600",
     };
@@ -80,8 +71,7 @@ function getServiceVisual(service: Service): ServiceVisual {
   if (slug.includes("deep")) {
     return {
       icon: Sparkles,
-      gradient:
-        "from-cyan-50 via-white to-blue-50",
+      gradient: "from-cyan-50 via-white to-blue-50",
       iconBackground: "bg-cyan-100",
       iconColor: "text-cyan-600",
     };
@@ -89,8 +79,7 @@ function getServiceVisual(service: Service): ServiceVisual {
 
   return {
     icon: Home,
-    gradient:
-      "from-primary-light via-white to-blue-50",
+    gradient: "from-primary-light via-white to-blue-50",
     iconBackground: "bg-primary-light",
     iconColor: "text-primary",
   };
@@ -111,15 +100,11 @@ function formatDuration(durationMinutes: number) {
   return `${hours}h ${minutes}m`;
 }
 
-export default function ServiceCard({
-  service,
-  index = 0,
-}: ServiceCardProps) {
+export default function ServiceCard({ service, index = 0 }: ServiceCardProps) {
   const visual = getServiceVisual(service);
   const Icon = visual.icon;
 
-  const displayedFeatures =
-    service.features.slice(0, 3);
+  const displayedFeatures = service.features.slice(0, 3);
 
   return (
     <motion.article
@@ -145,8 +130,20 @@ export default function ServiceCard({
       whileHover={{
         y: -9,
       }}
-      className={`group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-primary/10 bg-gradient-to-br ${visual.gradient} p-6 shadow-[0_18px_50px_rgba(11,37,69,0.08)] transition-shadow duration-300 hover:shadow-[0_28px_70px_rgba(11,37,69,0.15)] sm:p-7`}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-primary/10 bg-gradient-to-br ${visual.gradient} shadow-[0_18px_50px_rgba(11,37,69,0.08)] transition-shadow duration-300 hover:shadow-[0_28px_70px_rgba(11,37,69,0.15)]`}
     >
+      {service.imageUrl && (
+        <div className="relative h-52 overflow-hidden bg-navy">
+          <ServiceCoverImage
+            src={service.imageUrl}
+            alt={`${service.name} professional cleaning service`}
+            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+            className="transition duration-700 group-hover:scale-105"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/45 via-transparent to-transparent" />
+        </div>
+      )}
+
       {/* Animated glow */}
       <motion.div
         aria-hidden="true"
@@ -177,7 +174,7 @@ export default function ServiceCard({
         }}
       />
 
-      <div className="relative flex h-full flex-col">
+      <div className="relative flex flex-1 flex-col p-6 sm:p-7">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <motion.span
@@ -200,20 +197,14 @@ export default function ServiceCard({
           {service.name}
         </h2>
 
-        <p className="mt-3 text-sm leading-7 text-slate-600">
-          {service.shortDescription}
-        </p>
+        <p className="mt-3 text-sm leading-7 text-slate-600">{service.shortDescription}</p>
 
         {/* Price and duration */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="rounded-xl bg-navy px-4 py-2.5 text-white shadow-lg">
-            <span className="text-xs font-semibold text-blue-200">
-              Starting from
-            </span>
+            <span className="text-xs font-semibold text-blue-200">Starting from</span>
 
-            <p className="mt-0.5 font-heading text-xl font-extrabold">
-              ${service.price}
-            </p>
+            <p className="mt-0.5 font-heading text-xl font-extrabold">${service.price}</p>
           </div>
 
           <div className="flex items-center gap-2 rounded-xl border border-primary/10 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-600">
@@ -225,10 +216,7 @@ export default function ServiceCard({
         {/* Features */}
         <div className="mt-6 space-y-3">
           {displayedFeatures.map((feature) => (
-            <div
-              key={feature}
-              className="flex items-start gap-3 text-sm text-slate-600"
-            >
+            <div key={feature} className="flex items-start gap-3 text-sm text-slate-600">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
 
               <span>{feature}</span>
@@ -243,7 +231,6 @@ export default function ServiceCard({
             className="group/link flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-[0_14px_32px_rgba(30,111,217,0.25)] transition-colors hover:bg-primary-dark"
           >
             View Service Details
-
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/link:translate-x-1" />
           </Link>
         </div>

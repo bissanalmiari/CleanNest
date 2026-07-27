@@ -23,6 +23,7 @@ const PROTECTED_PATHS = [
   // Customer (route group, no URL prefix)
   "/dashboard",
   "/book",
+  "/book-service",
   "/bookings",
   "/addresses",
   "/payments",
@@ -34,15 +35,8 @@ const PROTECTED_PATHS = [
   "/cleaner",
 ];
 
-// Logged-in users shouldn't see the auth screens again.
-const AUTH_ONLY_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password"];
-
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
-}
-
-function isAuthOnlyPath(pathname: string): boolean {
-  return AUTH_ONLY_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 export function middleware(request: NextRequest) {
@@ -51,12 +45,8 @@ export function middleware(request: NextRequest) {
 
   if (isProtectedPath(pathname) && !hasSession) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirectTo", pathname);
+    loginUrl.searchParams.set("redirectTo", `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
-  }
-
-  if (isAuthOnlyPath(pathname) && hasSession) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentType,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 
 import {
   ArrowLeft,
@@ -28,31 +22,18 @@ import {
   WandSparkles,
 } from "lucide-react";
 
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-} from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-import CleaningPlanStep, {
-  type CleaningPlanService,
-} from "./CleaningPlanStep";
+import CleaningPlanStep, { type CleaningPlanService } from "./CleaningPlanStep";
 
 import { AddressForm } from "@/components/addresses/AddressForm";
 import type { CreateAddressValues } from "@/validators/addressValidator";
 
-import ExtraTouchesStep, {
-  type ExtraTouchSelection,
-} from "./ExtraTouchesStep";
+import ExtraTouchesStep, { type ExtraTouchSelection } from "./ExtraTouchesStep";
 
-import FinalCheckStep, {
-  type FinalCheckPaymentMethod,
-} from "./FinalCheckStep";
+import FinalCheckStep, { type FinalCheckPaymentMethod } from "./FinalCheckStep";
 
-import HomeBaseStep, {
-  fetchBookingAddresses,
-  type HomeBaseAddress,
-} from "./HomeBaseStep";
+import HomeBaseStep, { fetchBookingAddresses, type HomeBaseAddress } from "./HomeBaseStep";
 
 import SpaceScanStep from "./SpaceScanStep";
 
@@ -61,18 +42,9 @@ import TimeRouteStep, {
   type TimeRouteSelection,
 } from "./TimeRouteStep";
 
-type BookingStepId =
-  | "space"
-  | "plan"
-  | "extras"
-  | "schedule"
-  | "review";
+type BookingStepId = "space" | "plan" | "extras" | "schedule" | "review";
 
-type PropertyType =
-  | "apartment"
-  | "house"
-  | "office"
-  | "other";
+type PropertyType = "apartment" | "house" | "office" | "other";
 
 interface BookingStep {
   id: BookingStepId;
@@ -116,9 +88,7 @@ interface BookingDraft {
   startTime: string;
   endTime: string;
 
-  paymentMethod:
-    | "cash"
-    | "card";
+  paymentMethod: "cash" | "card";
 
   customerNotes: string;
 
@@ -148,10 +118,9 @@ const DEFAULT_BOOKING_STEP: BookingStep = {
   label: "Home Profile",
   shortLabel: "Home",
   eyebrow: "Choose or map your home",
-  title:
-    "Where are we cleaning, and what is the space like?",
+  title: "Tell us where we are cleaning.",
   description:
-    "Choose a saved home to reuse its address and property details, or add a new home once and save it for every future booking.",
+    "Choose a saved home or add a new address. We will use its details to personalize your options.",
   icon: Home,
 };
 
@@ -163,12 +132,10 @@ const BOOKING_STEPS: BookingStep[] = [
     number: "02",
     label: "Cleaning Plan",
     shortLabel: "Plan",
-    eyebrow:
-      "Choose the main service",
-    title:
-      "Select the cleaning experience your space needs.",
+    eyebrow: "Choose the main service",
+    title: "Choose the right cleaning service.",
     description:
-      "Choose a CleanNest service and see how it affects the estimated route duration and starting price.",
+      "Start with our recommendation or quickly compare price, duration, and essential details.",
     icon: SprayCan,
   },
 
@@ -177,12 +144,9 @@ const BOOKING_STEPS: BookingStep[] = [
     number: "03",
     label: "Extra Touches",
     shortLabel: "Extras",
-    eyebrow:
-      "Personalize the result",
-    title:
-      "Add focused cleaning touches to specific areas.",
-    description:
-      "Personalize your route with optional services such as appliance cleaning and additional care.",
+    eyebrow: "Personalize the result",
+    title: "Add any extra touches.",
+    description: "These are optional. Choose only the additional care your home needs.",
     icon: Plus,
   },
 
@@ -191,12 +155,10 @@ const BOOKING_STEPS: BookingStep[] = [
     number: "04",
     label: "Time Route",
     shortLabel: "Time",
-    eyebrow:
-      "Reserve your visit",
-    title:
-      "Choose when your cleaning route should begin.",
+    eyebrow: "Reserve your visit",
+    title: "Choose your preferred time.",
     description:
-      "Select an available date and start time. CleanNest calculates the expected completion time using the trusted server duration.",
+      "Select an available date and arrival time. We will show the expected finish time.",
     icon: CalendarDays,
   },
 
@@ -205,12 +167,9 @@ const BOOKING_STEPS: BookingStep[] = [
     number: "05",
     label: "Final Check",
     shortLabel: "Review",
-    eyebrow:
-      "Inspect before booking",
-    title:
-      "Review the complete route before confirmation.",
-    description:
-      "Check your property, service, extras, address, schedule, payment method, and final calculated total.",
+    eyebrow: "Inspect before booking",
+    title: "Review and confirm your booking.",
+    description: "Check the important details and final price before confirming.",
     icon: ClipboardCheck,
   },
 ];
@@ -227,12 +186,10 @@ const INITIAL_BOOKING_DRAFT: BookingDraft = {
   addOns: [],
 
   addressId: "",
-  addressLabel:
-    "No address selected",
+  addressLabel: "No address selected",
 
   serviceAreaId: "",
-  serviceAreaLabel:
-    "Not selected",
+  serviceAreaLabel: "Not selected",
 
   bookingDate: "",
   startTime: "",
@@ -250,196 +207,117 @@ const INITIAL_BOOKING_DRAFT: BookingDraft = {
   estimatedDurationMinutes: 0,
 };
 
-function formatCurrency(
-  value: number,
-): string {
-  return new Intl.NumberFormat(
-    "en-US",
-    {
-      style: "currency",
-      currency: "USD",
-    },
-  ).format(value);
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
 }
 
-function formatDuration(
-  minutes: number,
-): string {
+function formatDuration(minutes: number): string {
   if (minutes <= 0) {
     return "Not calculated";
   }
 
-  const hours = Math.floor(
-    minutes / 60,
-  );
+  const hours = Math.floor(minutes / 60);
 
-  const remainingMinutes =
-    minutes % 60;
+  const remainingMinutes = minutes % 60;
 
   if (hours === 0) {
     return `${remainingMinutes} min`;
   }
 
-  if (
-    remainingMinutes === 0
-  ) {
+  if (remainingMinutes === 0) {
     return `${hours} hr`;
   }
 
   return `${hours} hr ${remainingMinutes} min`;
 }
 
-function formatBookingDate(
-  value: string,
-): string {
+function formatBookingDate(value: string): string {
   if (!value) {
     return "Not selected";
   }
 
-  const [year, month, day] =
-    value
-      .split("-")
-      .map(Number);
+  const [year, month, day] = value.split("-").map(Number);
 
-  if (
-    !year ||
-    !month ||
-    !day
-  ) {
+  if (!year || !month || !day) {
     return value;
   }
 
-  const date = new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-      12,
-    ),
-  );
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
-function formatClockTime(
-  value: string,
-): string {
+function formatClockTime(value: string): string {
   if (!value) {
     return "Not selected";
   }
 
-  const [hours, minutes] =
-    value
-      .split(":")
-      .map(Number);
+  const [hours, minutes] = value.split(":").map(Number);
 
-  const date = new Date(
-    Date.UTC(
-      2000,
-      0,
-      1,
-      hours ?? 0,
-      minutes ?? 0,
-    ),
-  );
+  const date = new Date(Date.UTC(2000, 0, 1, hours ?? 0, minutes ?? 0));
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "UTC",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  }).format(date);
 }
 
-function formatSelectedTime(
-  startTime: string,
-  endTime: string,
-): string {
-  if (
-    !startTime ||
-    !endTime
-  ) {
+function formatSelectedTime(startTime: string, endTime: string): string {
+  if (!startTime || !endTime) {
     return "Not selected";
   }
 
-  return `${formatClockTime(
-    startTime,
-  )} – ${formatClockTime(
-    endTime,
-  )}`;
+  return `${formatClockTime(startTime)} – ${formatClockTime(endTime)}`;
 }
 
-function propertyTypeLabel(
-  propertyType: PropertyType,
-): string {
-  return (
-    propertyType
-      .charAt(0)
-      .toUpperCase() +
-    propertyType.slice(1)
-  );
+function propertyTypeLabel(propertyType: PropertyType): string {
+  return propertyType.charAt(0).toUpperCase() + propertyType.slice(1);
 }
 
-function roomLabel(
-  propertyType: PropertyType,
-): string {
-  if (
-    propertyType === "office"
-  ) {
+function roomLabel(propertyType: PropertyType): string {
+  if (propertyType === "office") {
     return "Work areas";
   }
 
-  if (
-    propertyType === "other"
-  ) {
+  if (propertyType === "other") {
     return "Main rooms";
   }
 
   return "Bedrooms";
 }
 
-export default function BookingRouteBuilder() {
-  const prefersReducedMotion =
-    useReducedMotion();
+type BookingRouteBuilderProps = {
+  preferredServiceSlug?: string;
+};
 
-  const [
-    currentStepIndex,
-    setCurrentStepIndex,
-  ] = useState(0);
+export default function BookingRouteBuilder({ preferredServiceSlug }: BookingRouteBuilderProps) {
+  const prefersReducedMotion = useReducedMotion();
 
-  const [
-    furthestStepIndex,
-    setFurthestStepIndex,
-  ] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  const [draft, setDraft] =
-    useState<BookingDraft>({
-      ...INITIAL_BOOKING_DRAFT,
-      addOns: [],
-    });
+  const [furthestStepIndex, setFurthestStepIndex] = useState(0);
 
-  const [
-    stepError,
-    setStepError,
-  ] = useState<
-    string | null
-  >(null);
+  const [draft, setDraft] = useState<BookingDraft>({
+    ...INITIAL_BOOKING_DRAFT,
+    addOns: [],
+  });
 
-  const [profileSaveState, setProfileSaveState] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
+  const [stepError, setStepError] = useState<string | null>(null);
+
+  const [profileSaveState, setProfileSaveState] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle"
+  );
 
   const [newHomeSaving, setNewHomeSaving] = useState(false);
   const [newHomeError, setNewHomeError] = useState<string | null>(null);
@@ -489,53 +367,25 @@ export default function BookingRouteBuilder() {
       window.clearTimeout(saveTimer);
       controller.abort();
     };
-  }, [
-    draft.addressId,
-    draft.bathrooms,
-    draft.bedrooms,
-    draft.propertySize,
-    draft.propertyType,
-  ]);
+  }, [draft.addressId, draft.bathrooms, draft.bedrooms, draft.propertySize, draft.propertyType]);
 
-  const currentStep: BookingStep =
-    BOOKING_STEPS.at(
-      currentStepIndex,
-    ) ?? DEFAULT_BOOKING_STEP;
+  const currentStep: BookingStep = BOOKING_STEPS.at(currentStepIndex) ?? DEFAULT_BOOKING_STEP;
 
-  const CurrentStepIcon =
-    currentStep.icon;
+  const CurrentStepIcon = currentStep.icon;
 
-  const totalSteps =
-    BOOKING_STEPS.length;
+  const totalSteps = BOOKING_STEPS.length;
 
-  const progress =
-    totalSteps > 0
-      ? ((currentStepIndex + 1) /
-          totalSteps) *
-        100
-      : 0;
+  const progress = totalSteps > 0 ? ((currentStepIndex + 1) / totalSteps) * 100 : 0;
 
-  const routeLineProgress =
-    totalSteps > 1
-      ? (currentStepIndex /
-          (totalSteps - 1)) *
-        100
-      : 0;
+  const routeLineProgress = totalSteps > 1 ? (currentStepIndex / (totalSteps - 1)) * 100 : 0;
 
-  const isFirstStep =
-    currentStepIndex === 0;
+  const isFirstStep = currentStepIndex === 0;
 
-  const isLastStep =
-    currentStepIndex ===
-    totalSteps - 1;
+  const isLastStep = currentStepIndex === totalSteps - 1;
 
-  const completedStepCount =
-    currentStepIndex;
+  const completedStepCount = currentStepIndex;
 
-  const nextStep =
-    BOOKING_STEPS.at(
-      currentStepIndex + 1,
-    );
+  const nextStep = BOOKING_STEPS.at(currentStepIndex + 1);
 
   const isSpaceStepValid =
     draft.propertySize >= 20 &&
@@ -544,40 +394,27 @@ export default function BookingRouteBuilder() {
     draft.bedrooms <= 30 &&
     draft.bathrooms >= 0 &&
     draft.bathrooms <= 30 &&
-    Boolean(
-      draft.addressId &&
-        draft.serviceAreaId,
-    );
+    Boolean(draft.addressId && draft.serviceAreaId);
 
-  const isPlanStepValid =
-    Boolean(draft.serviceId);
+  const isPlanStepValid = Boolean(draft.serviceId);
 
-  const isScheduleStepValid =
-    Boolean(
-      draft.bookingDate &&
-        draft.startTime &&
-        draft.endTime,
-    );
+  const isScheduleStepValid = Boolean(draft.bookingDate && draft.startTime && draft.endTime);
 
   const isCurrentStepValid =
     currentStep.id === "space"
       ? isSpaceStepValid
       : currentStep.id === "plan"
         ? isPlanStepValid
-        : currentStep.id ===
-              "schedule"
-            ? isScheduleStepValid
-            : true;
+        : currentStep.id === "schedule"
+          ? isScheduleStepValid
+          : true;
 
   const roomPreview = useMemo(
     () => [
       {
-        name: roomLabel(
-          draft.propertyType,
-        ),
+        name: roomLabel(draft.propertyType),
 
-        value:
-          draft.bedrooms,
+        value: draft.bedrooms,
 
         icon: BedDouble,
       },
@@ -585,42 +422,22 @@ export default function BookingRouteBuilder() {
       {
         name: "Bathrooms",
 
-        value:
-          draft.bathrooms,
+        value: draft.bathrooms,
 
         icon: Bath,
       },
     ],
-    [
-      draft.bathrooms,
-      draft.bedrooms,
-      draft.propertyType,
-    ],
+    [draft.bathrooms, draft.bedrooms, draft.propertyType]
   );
 
-  const selectedExtraQuantity =
-    useMemo(() => {
-      return draft.addOns.reduce(
-        (
-          total,
-          addOn,
-        ) =>
-          total +
-          addOn.quantity,
-        0,
-      );
-    }, [draft.addOns]);
+  const selectedExtraQuantity = useMemo(() => {
+    return draft.addOns.reduce((total, addOn) => total + addOn.quantity, 0);
+  }, [draft.addOns]);
 
   function goToPreviousStep() {
     setStepError(null);
 
-    setCurrentStepIndex(
-      (previousIndex) =>
-        Math.max(
-          0,
-          previousIndex - 1,
-        ),
-    );
+    setCurrentStepIndex((previousIndex) => Math.max(0, previousIndex - 1));
   }
 
   function goToNextStep() {
@@ -629,27 +446,16 @@ export default function BookingRouteBuilder() {
     }
 
     if (!isCurrentStepValid) {
-      if (
-        currentStep.id === "plan"
-      ) {
-        setStepError(
-          "Select a cleaning plan before continuing.",
-        );
+      if (currentStep.id === "plan") {
+        setStepError("Select a cleaning plan before continuing.");
       } else if (currentStep.id === "space") {
         setStepError(
-          "Choose or add a serviceable home and complete its property details before continuing.",
+          "Choose or add a serviceable home and complete its property details before continuing."
         );
-      } else if (
-        currentStep.id ===
-        "schedule"
-      ) {
-        setStepError(
-          "Select an available cleaning date and arrival time before continuing.",
-        );
+      } else if (currentStep.id === "schedule") {
+        setStepError("Select an available cleaning date and arrival time before continuing.");
       } else {
-        setStepError(
-          "Complete the current route stage before continuing.",
-        );
+        setStepError("Complete the current route stage before continuing.");
       }
 
       return;
@@ -657,42 +463,21 @@ export default function BookingRouteBuilder() {
 
     setStepError(null);
 
-    const nextStepIndex =
-      Math.min(
-        currentStepIndex + 1,
-        totalSteps - 1,
-      );
+    const nextStepIndex = Math.min(currentStepIndex + 1, totalSteps - 1);
 
-    setCurrentStepIndex(
-      nextStepIndex,
-    );
+    setCurrentStepIndex(nextStepIndex);
 
-    setFurthestStepIndex(
-      (
-        previousFurthestStep,
-      ) =>
-        Math.max(
-          previousFurthestStep,
-          nextStepIndex,
-        ),
-    );
+    setFurthestStepIndex((previousFurthestStep) => Math.max(previousFurthestStep, nextStepIndex));
   }
 
-  function handleStepSelection(
-    stepIndex: number,
-  ) {
-    if (
-      stepIndex >
-      furthestStepIndex
-    ) {
+  function handleStepSelection(stepIndex: number) {
+    if (stepIndex > furthestStepIndex) {
       return;
     }
 
     setStepError(null);
 
-    setCurrentStepIndex(
-      stepIndex,
-    );
+    setCurrentStepIndex(stepIndex);
   }
 
   function resetRoute() {
@@ -709,110 +494,81 @@ export default function BookingRouteBuilder() {
     setFurthestStepIndex(0);
   }
 
-  function handleServiceSelection(
-    service: CleaningPlanService,
-  ) {
+  function handleServiceSelection(service: CleaningPlanService) {
     setStepError(null);
 
-    setDraft(
-      (currentDraft) => {
-        const nextBaseAmount =
-          service.basePrice;
+    setDraft((currentDraft) => {
+      const nextBaseAmount = service.basePrice;
 
-        const nextAddOnsAmount =
-          0;
+      const nextAddOnsAmount = 0;
 
-        const nextTotalAmount =
-          Math.max(
-            0,
-            nextBaseAmount +
-              nextAddOnsAmount +
-              currentDraft.serviceAreaFee -
-              currentDraft.discountAmount,
-          );
+      const nextTotalAmount = Math.max(
+        0,
+        nextBaseAmount +
+          nextAddOnsAmount +
+          currentDraft.serviceAreaFee -
+          currentDraft.discountAmount
+      );
 
-        return {
-          ...currentDraft,
+      return {
+        ...currentDraft,
 
-          serviceId:
-            service.id,
+        serviceId: service.id,
 
-          serviceName:
-            service.name,
+        serviceName: service.name,
 
-          baseAmount:
-            nextBaseAmount,
+        baseAmount: nextBaseAmount,
 
-          estimatedDurationMinutes:
-            service.estimatedDurationMinutes,
+        estimatedDurationMinutes: service.estimatedDurationMinutes,
 
-          addOns: [],
+        addOns: [],
 
-          addOnsAmount:
-            nextAddOnsAmount,
+        addOnsAmount: nextAddOnsAmount,
 
-          bookingDate: "",
-          startTime: "",
-          endTime: "",
+        bookingDate: "",
+        startTime: "",
+        endTime: "",
 
-          totalAmount:
-            nextTotalAmount,
-        };
-      },
-    );
+        totalAmount: nextTotalAmount,
+      };
+    });
   }
 
-  function handleAddOnsChange(
-    nextAddOns:
-      ExtraTouchSelection[],
-  ) {
+  function handleAddOnsChange(nextAddOns: ExtraTouchSelection[]) {
     setStepError(null);
 
-    setDraft(
-      (currentDraft) => {
-        const nextAddOnsAmount =
-          nextAddOns.reduce(
-            (
-              total,
-              addOn,
-            ) =>
-              total +
-              addOn.quantity *
-                addOn.unitPrice,
-            0,
-          );
+    setDraft((currentDraft) => {
+      const nextAddOnsAmount = nextAddOns.reduce(
+        (total, addOn) => total + addOn.quantity * addOn.unitPrice,
+        0
+      );
 
-        const nextTotalAmount =
-          Math.max(
-            0,
-            currentDraft.baseAmount +
-              nextAddOnsAmount +
-              currentDraft.serviceAreaFee -
-              currentDraft.discountAmount,
-          );
+      const nextTotalAmount = Math.max(
+        0,
+        currentDraft.baseAmount +
+          nextAddOnsAmount +
+          currentDraft.serviceAreaFee -
+          currentDraft.discountAmount
+      );
 
-        return {
-          ...currentDraft,
+      return {
+        ...currentDraft,
 
-          addOns:
-            nextAddOns,
+        addOns: nextAddOns,
 
-          addOnsAmount:
-            nextAddOnsAmount,
+        addOnsAmount: nextAddOnsAmount,
 
-          /*
-           * Add-ons can change the trusted duration.
-           * The previous slot is no longer valid.
-           */
-          bookingDate: "",
-          startTime: "",
-          endTime: "",
+        /*
+         * Add-ons can change the trusted duration.
+         * The previous slot is no longer valid.
+         */
+        bookingDate: "",
+        startTime: "",
+        endTime: "",
 
-          totalAmount:
-            nextTotalAmount,
-        };
-      },
-    );
+        totalAmount: nextTotalAmount,
+      };
+    });
   }
 
   const beginNewHome = useCallback(() => {
@@ -852,66 +608,50 @@ export default function BookingRouteBuilder() {
     });
   }, []);
 
-  function handleAddressSelection(
-    address: HomeBaseAddress,
-  ) {
+  function handleAddressSelection(address: HomeBaseAddress) {
     setStepError(null);
 
-    setDraft(
-      (currentDraft) => {
-        const nextServiceAreaFee =
-          address.serviceFee;
+    setDraft((currentDraft) => {
+      const nextServiceAreaFee = address.serviceFee;
 
-        return {
-          ...currentDraft,
+      return {
+        ...currentDraft,
 
-          propertyType:
-            address.propertyType,
+        propertyType: address.propertyType,
 
-          bedrooms:
-            address.bedrooms,
+        bedrooms: address.bedrooms,
 
-          bathrooms:
-            address.bathrooms,
+        bathrooms: address.bathrooms,
 
-          propertySize:
-            address.propertySize,
+        propertySize: address.propertySize,
 
-          addressId:
-            address.id,
+        addressId: address.id,
 
-          addressLabel:
-            address.fullAddress ||
-            address.label,
+        addressLabel: address.fullAddress || address.label,
 
-          serviceAreaId:
-            address.serviceAreaId,
+        serviceAreaId: address.serviceAreaId,
 
-          serviceAreaLabel:
-            address.serviceAreaLabel,
+        serviceAreaLabel: address.serviceAreaLabel,
 
-          serviceAreaFee:
-            nextServiceAreaFee,
+        serviceAreaFee: nextServiceAreaFee,
 
-          /*
-           * A different saved home can produce a different personalized
-           * service price and duration, so the plan must be confirmed again.
-           */
-          serviceId: "",
-          serviceName: "Not selected",
-          addOns: [],
-          baseAmount: 0,
-          addOnsAmount: 0,
+        /*
+         * A different saved home can produce a different personalized
+         * service price and duration, so the plan must be confirmed again.
+         */
+        serviceId: "",
+        serviceName: "Not selected",
+        addOns: [],
+        baseAmount: 0,
+        addOnsAmount: 0,
 
-          bookingDate: "",
-          startTime: "",
-          endTime: "",
+        bookingDate: "",
+        startTime: "",
+        endTime: "",
 
-          totalAmount:
-            nextServiceAreaFee,
-        };
-      },
-    );
+        totalAmount: nextServiceAreaFee,
+      };
+    });
   }
 
   async function handleNewHomeSubmit(values: CreateAddressValues) {
@@ -936,9 +676,7 @@ export default function BookingRouteBuilder() {
       });
 
       const responseText = await response.text();
-      const payload = responseText
-        ? (JSON.parse(responseText) as CreateHomeResponse)
-        : {};
+      const payload = responseText ? (JSON.parse(responseText) as CreateHomeResponse) : {};
 
       if (!response.ok || !payload.success) {
         throw new Error(payload.error ?? payload.message ?? "The new home could not be saved.");
@@ -964,94 +702,57 @@ export default function BookingRouteBuilder() {
       handleAddressSelection(createdHome);
       setNewHomeSuccess(`${createdHome.label} was saved and selected for this booking.`);
     } catch (error) {
-      setNewHomeError(
-        error instanceof Error ? error.message : "The new home could not be saved."
-      );
+      setNewHomeError(error instanceof Error ? error.message : "The new home could not be saved.");
     } finally {
       setNewHomeSaving(false);
     }
   }
 
-  function handleTimeRouteChange(
-    selection:
-      TimeRouteSelection,
-  ) {
+  function handleTimeRouteChange(selection: TimeRouteSelection) {
     setStepError(null);
 
-    setDraft(
-      (currentDraft) => ({
-        ...currentDraft,
+    setDraft((currentDraft) => ({
+      ...currentDraft,
 
-        bookingDate:
-          selection.bookingDate,
+      bookingDate: selection.bookingDate,
 
-        startTime:
-          selection.startTime,
+      startTime: selection.startTime,
 
-        endTime:
-          selection.endTime,
-      }),
-    );
+      endTime: selection.endTime,
+    }));
   }
 
-  function handleTrustedTimeRouteQuote(
-    snapshot:
-      TimeRoutePricingSnapshot,
-  ) {
-    setDraft(
-      (currentDraft) => ({
-        ...currentDraft,
+  function handleTrustedTimeRouteQuote(snapshot: TimeRoutePricingSnapshot) {
+    setDraft((currentDraft) => ({
+      ...currentDraft,
 
-        baseAmount:
-          snapshot.baseAmount,
+      baseAmount: snapshot.baseAmount,
 
-        addOnsAmount:
-          snapshot.addOnsAmount,
+      addOnsAmount: snapshot.addOnsAmount,
 
-        discountAmount:
-          snapshot.discountAmount,
+      discountAmount: snapshot.discountAmount,
 
-        estimatedDurationMinutes:
-          snapshot.estimatedDurationMinutes,
+      estimatedDurationMinutes: snapshot.estimatedDurationMinutes,
 
-        totalAmount:
-          Math.max(
-            0,
-            snapshot.totalAmount +
-              currentDraft.serviceAreaFee,
-          ),
-      }),
-    );
+      totalAmount: Math.max(0, snapshot.totalAmount + currentDraft.serviceAreaFee),
+    }));
   }
 
-  function handlePaymentMethodChange(
-    paymentMethod:
-      FinalCheckPaymentMethod,
-  ) {
+  function handlePaymentMethodChange(paymentMethod: FinalCheckPaymentMethod) {
     setStepError(null);
 
-    setDraft(
-      (currentDraft) => ({
-        ...currentDraft,
-        paymentMethod,
-      }),
-    );
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      paymentMethod,
+    }));
   }
 
-  function handleCustomerNotesChange(
-    customerNotes: string,
-  ) {
-    setDraft(
-      (currentDraft) => ({
-        ...currentDraft,
+  function handleCustomerNotesChange(customerNotes: string) {
+    setDraft((currentDraft) => ({
+      ...currentDraft,
 
-        customerNotes:
-          customerNotes.slice(
-            0,
-            1000,
-          ),
-      }),
-    );
+      customerNotes: customerNotes.slice(0, 1000),
+    }));
   }
 
   return (
@@ -1063,8 +764,7 @@ export default function BookingRouteBuilder() {
           backgroundImage:
             "linear-gradient(rgba(30,111,217,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(30,111,217,0.05) 1px, transparent 1px)",
 
-          backgroundSize:
-            "48px 48px",
+          backgroundSize: "48px 48px",
         }}
       />
 
@@ -1075,17 +775,9 @@ export default function BookingRouteBuilder() {
           prefersReducedMotion
             ? undefined
             : {
-                scale: [
-                  1,
-                  1.16,
-                  1,
-                ],
+                scale: [1, 1.16, 1],
 
-                x: [
-                  0,
-                  35,
-                  0,
-                ],
+                x: [0, 35, 0],
               }
         }
         transition={{
@@ -1102,17 +794,9 @@ export default function BookingRouteBuilder() {
           prefersReducedMotion
             ? undefined
             : {
-                scale: [
-                  1.1,
-                  0.92,
-                  1.1,
-                ],
+                scale: [1.1, 0.92, 1.1],
 
-                y: [
-                  0,
-                  -28,
-                  0,
-                ],
+                y: [0, -28, 0],
               }
         }
         transition={{
@@ -1123,7 +807,7 @@ export default function BookingRouteBuilder() {
       />
 
       <div className="relative mx-auto max-w-[1500px]">
-        <header className="mb-8 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+        <header className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <div className="flex items-center gap-4">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy text-cyan-300 shadow-[0_15px_35px_rgba(11,37,69,0.2)]">
@@ -1131,29 +815,22 @@ export default function BookingRouteBuilder() {
               </span>
 
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-primary">
-                  CleanNest booking system
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-primary">
+                  Simple, secure booking
                 </p>
 
                 <p className="mt-1 text-sm font-semibold text-slate-400">
-                  Route reference CN / NEW
+                  Usually takes less than 3 minutes
                 </p>
               </div>
             </div>
 
-            <h1 className="mt-6 max-w-4xl font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] text-navy sm:text-5xl lg:text-[3.5rem]">
-              Build a cleaning route
-              around your home.
+            <h1 className="mt-5 max-w-4xl font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] text-navy sm:text-5xl">
+              Book your cleaning in a few simple steps.
             </h1>
 
-            <p className="mt-5 max-w-3xl text-base font-medium leading-8 text-slate-500 lg:text-lg">
-              Each stage adds another
-              part to your cleaning
-              journey. Your selections
-              remain visible while
-              CleanNest calculates the
-              trusted price and estimated
-              duration.
+            <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-slate-600">
+              We guide you one decision at a time and keep your selections visible.
             </p>
           </div>
 
@@ -1163,12 +840,11 @@ export default function BookingRouteBuilder() {
             className="flex min-h-12 w-fit items-center gap-3 rounded-2xl border border-primary/10 bg-white/90 px-5 text-sm font-extrabold text-slate-600 shadow-sm transition hover:border-primary/30 hover:text-primary"
           >
             <RotateCcw className="h-4 w-4" />
-
             Reset route
           </button>
         </header>
 
-        <div className="grid items-start gap-8 2xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <section className="min-w-0 overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 shadow-[0_30px_90px_rgba(11,37,69,0.12)] backdrop-blur-md">
             <div className="relative overflow-hidden bg-navy px-5 pb-6 pt-6 text-white sm:px-7 lg:px-9">
               <div
@@ -1183,10 +859,7 @@ export default function BookingRouteBuilder() {
                   </p>
 
                   <p className="mt-2 font-heading text-xl font-black">
-                    Step{" "}
-                    {currentStepIndex +
-                      1}{" "}
-                    of {totalSteps}
+                    Step {currentStepIndex + 1} of {totalSteps}
                   </p>
                 </div>
 
@@ -1201,118 +874,80 @@ export default function BookingRouteBuilder() {
                 <motion.div
                   className="absolute left-[10%] top-5 h-0.5 origin-left bg-gradient-to-r from-primary via-cyan-300 to-emerald-300"
                   animate={{
-                    width: `${
-                      routeLineProgress *
-                      0.8
-                    }%`,
+                    width: `${routeLineProgress * 0.8}%`,
                   }}
                   transition={{
                     duration: 0.55,
 
-                    ease: [
-                      0.22,
-                      1,
-                      0.36,
-                      1,
-                    ],
+                    ease: [0.22, 1, 0.36, 1],
                   }}
                 />
 
                 <div className="relative grid grid-cols-5 gap-2">
-                  {BOOKING_STEPS.map(
-                    (
-                      step,
-                      stepIndex,
-                    ) => {
-                      const Icon =
-                        step.icon;
+                  {BOOKING_STEPS.map((step, stepIndex) => {
+                    const Icon = step.icon;
 
-                      const isCurrent =
-                        stepIndex ===
-                        currentStepIndex;
+                    const isCurrent = stepIndex === currentStepIndex;
 
-                      const isCompleted =
-                        stepIndex <
-                        currentStepIndex;
+                    const isCompleted = stepIndex < currentStepIndex;
 
-                      const isAccessible =
-                        stepIndex <=
-                        furthestStepIndex;
+                    const isAccessible = stepIndex <= furthestStepIndex;
 
-                      return (
-                        <button
-                          key={step.id}
-                          type="button"
-                          disabled={
-                            !isAccessible
-                          }
-                          onClick={() => {
-                            handleStepSelection(
-                              stepIndex,
-                            );
-                          }}
-                          className="group flex min-w-0 flex-col items-center"
-                          aria-current={
-                            isCurrent
-                              ? "step"
+                    return (
+                      <button
+                        key={step.id}
+                        type="button"
+                        disabled={!isAccessible}
+                        onClick={() => {
+                          handleStepSelection(stepIndex);
+                        }}
+                        className="group flex min-w-0 flex-col items-center"
+                        aria-current={isCurrent ? "step" : undefined}
+                      >
+                        <motion.span
+                          animate={
+                            isCurrent && !prefersReducedMotion
+                              ? {
+                                  scale: [1, 1.08, 1],
+                                }
                               : undefined
                           }
+                          transition={{
+                            duration: 2,
+                            repeat: 0,
+                            ease: "easeInOut",
+                          }}
+                          className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-2xl border transition-all sm:h-12 sm:w-12 ${
+                            isCurrent
+                              ? "border-cyan-300 bg-primary text-white shadow-[0_0_25px_rgba(34,211,238,0.32)]"
+                              : isCompleted
+                                ? "border-emerald-300 bg-emerald-400 text-navy"
+                                : isAccessible
+                                  ? "border-white/20 bg-white/10 text-blue-100 hover:bg-white/15"
+                                  : "cursor-not-allowed border-white/10 bg-white/5 text-white/25"
+                          }`}
                         >
-                          <motion.span
-                            animate={
-                              isCurrent &&
-                              !prefersReducedMotion
-                                ? {
-                                    scale:
-                                      [
-                                        1,
-                                        1.08,
-                                        1,
-                                      ],
-                                  }
-                                : undefined
-                            }
-                            transition={{
-                              duration: 2,
-                              repeat:
-                                0,
-                              ease:
-                                "easeInOut",
-                            }}
-                            className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-2xl border transition-all sm:h-12 sm:w-12 ${
-                              isCurrent
-                                ? "border-cyan-300 bg-primary text-white shadow-[0_0_25px_rgba(34,211,238,0.32)]"
-                                : isCompleted
-                                  ? "border-emerald-300 bg-emerald-400 text-navy"
-                                  : isAccessible
-                                    ? "border-white/20 bg-white/10 text-blue-100 hover:bg-white/15"
-                                    : "cursor-not-allowed border-white/10 bg-white/5 text-white/25"
-                            }`}
-                          >
-                            {isCompleted ? (
-                              <Check className="h-5 w-5" />
-                            ) : (
-                              <Icon className="h-5 w-5" />
-                            )}
-                          </motion.span>
+                          {isCompleted ? (
+                            <Check className="h-5 w-5" />
+                          ) : (
+                            <Icon className="h-5 w-5" />
+                          )}
+                        </motion.span>
 
-                          <span
-                            className={`mt-3 hidden max-w-full truncate text-[11px] font-extrabold sm:block ${
-                              isCurrent
-                                ? "text-cyan-300"
-                                : isCompleted
-                                  ? "text-emerald-300"
-                                  : "text-blue-100/55"
-                            }`}
-                          >
-                            {
-                              step.shortLabel
-                            }
-                          </span>
-                        </button>
-                      );
-                    },
-                  )}
+                        <span
+                          className={`mt-3 hidden max-w-full truncate text-[11px] font-extrabold sm:block ${
+                            isCurrent
+                              ? "text-cyan-300"
+                              : isCompleted
+                                ? "text-emerald-300"
+                                : "text-blue-100/55"
+                          }`}
+                        >
+                          {step.shortLabel}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1324,69 +959,67 @@ export default function BookingRouteBuilder() {
                   initial={{
                     opacity: 0,
                     y: 18,
-                    filter:
-                      "blur(6px)",
+                    filter: "blur(6px)",
                   }}
                   animate={{
                     opacity: 1,
                     y: 0,
-                    filter:
-                      "blur(0px)",
+                    filter: "blur(0px)",
                   }}
                   exit={{
                     opacity: 0,
                     y: -14,
-                    filter:
-                      "blur(5px)",
+                    filter: "blur(5px)",
                   }}
                   transition={{
                     duration: 0.35,
 
-                    ease: [
-                      0.22,
-                      1,
-                      0.36,
-                      1,
-                    ],
+                    ease: [0.22, 1, 0.36, 1],
                   }}
                 >
                   <div className="grid gap-8 min-[1750px]:grid-cols-[minmax(0,1fr)_260px]">
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-sm font-black text-primary/50">
-                          {
-                            currentStep.number
-                          }
+                          {currentStep.number}
                         </span>
 
                         <span className="h-px w-10 bg-primary/25" />
 
                         <p className="text-xs font-extrabold uppercase tracking-[0.17em] text-primary">
-                          {
-                            currentStep.eyebrow
-                          }
+                          {currentStep.eyebrow}
                         </p>
                       </div>
 
-                      <h2 className="mt-5 max-w-4xl font-heading text-3xl font-black leading-[1.08] tracking-[-0.04em] text-navy sm:text-4xl">
-                        {
-                          currentStep.title
-                        }
+                      <h2 className="mt-4 max-w-4xl font-heading text-3xl font-black leading-[1.08] tracking-[-0.04em] text-navy sm:text-[2.15rem]">
+                        {currentStep.title}
                       </h2>
 
-                      <p className="mt-4 max-w-3xl text-base font-medium leading-8 text-slate-500">
-                        {
-                          currentStep.description
-                        }
+                      <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-600 sm:text-base">
+                        {currentStep.description}
                       </p>
 
-                      {currentStep.id ===
-                      "space" ? (
+                      {currentStep.id === "space" ? (
                         <div className="space-y-10">
+                          {preferredServiceSlug && (
+                            <div className="flex items-start gap-4 rounded-[1.4rem] border border-cyan-200 bg-cyan-50/70 p-5">
+                              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
+                                <CheckCircle2 className="h-5 w-5" />
+                              </span>
+                              <div>
+                                <p className="font-heading text-lg font-black text-navy">
+                                  Your service choice is saved
+                                </p>
+                                <p className="mt-1 text-sm font-medium leading-6 text-slate-600">
+                                  Choose your home first. CleanNest will automatically select that
+                                  service when you reach the Cleaning Plan step.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
                           <HomeBaseStep
-                            selectedAddressId={
-                              draft.addressId
-                            }
+                            selectedAddressId={draft.addressId}
                             homeProfile={{
                               propertyType: draft.propertyType,
                               bedrooms: draft.bedrooms,
@@ -1410,62 +1043,49 @@ export default function BookingRouteBuilder() {
                                 Or describe and save a new home
                               </h3>
                               <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-blue-100/70">
-                                Complete both sections below. The property details and address
-                                will be saved together and reused on your next booking.
+                                Complete both sections below. The property details and address will
+                                be saved together and reused on your next booking.
                               </p>
                             </div>
 
                             <SpaceScanStep
                               value={{
-                                propertyType:
-                                  draft.propertyType,
+                                propertyType: draft.propertyType,
 
-                                bedrooms:
-                                  draft.bedrooms,
+                                bedrooms: draft.bedrooms,
 
-                                bathrooms:
-                                  draft.bathrooms,
+                                bathrooms: draft.bathrooms,
 
-                                propertySize:
-                                  draft.propertySize,
+                                propertySize: draft.propertySize,
                               }}
-                              onChange={(
-                                update,
-                              ) => {
+                              onChange={(update) => {
                                 beginNewHome();
 
-                                setDraft(
-                                  (
-                                    currentDraft,
-                                  ) => ({
-                                    ...currentDraft,
-                                    ...update,
+                                setDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  ...update,
 
-                                    /*
-                                     * Property changes invalidate an older
-                                     * personalized plan, duration, and slot.
-                                     */
-                                    serviceId: "",
-                                    serviceName: "Not selected",
-                                    addOns: [],
-                                    baseAmount: 0,
-                                    addOnsAmount: 0,
-                                    addressId: "",
-                                    addressLabel: "No address selected",
-                                    serviceAreaId: "",
-                                    serviceAreaLabel: "Not selected",
-                                    serviceAreaFee: 0,
-                                    totalAmount: 0,
-                                    bookingDate:
-                                      "",
+                                  /*
+                                   * Property changes invalidate an older
+                                   * personalized plan, duration, and slot.
+                                   */
+                                  serviceId: "",
+                                  serviceName: "Not selected",
+                                  addOns: [],
+                                  baseAmount: 0,
+                                  addOnsAmount: 0,
+                                  addressId: "",
+                                  addressLabel: "No address selected",
+                                  serviceAreaId: "",
+                                  serviceAreaLabel: "Not selected",
+                                  serviceAreaFee: 0,
+                                  totalAmount: 0,
+                                  bookingDate: "",
 
-                                    startTime:
-                                      "",
+                                  startTime: "",
 
-                                    endTime:
-                                      "",
-                                  }),
-                                );
+                                  endTime: "",
+                                }));
                               }}
                             />
 
@@ -1492,96 +1112,43 @@ export default function BookingRouteBuilder() {
                             </div>
                           </section>
                         </div>
-                      ) : currentStep.id ===
-                        "plan" ? (
+                      ) : currentStep.id === "plan" ? (
                         <CleaningPlanStep
-                          selectedServiceId={
-                            draft.serviceId
-                          }
-                          propertyType={
-                            draft.propertyType
-                          }
-                          propertySize={
-                            draft.propertySize
-                          }
-                          bedrooms={
-                            draft.bedrooms
-                          }
-                          bathrooms={
-                            draft.bathrooms
-                          }
-                          onSelect={
-                            handleServiceSelection
-                          }
+                          preferredServiceSlug={preferredServiceSlug}
+                          selectedServiceId={draft.serviceId}
+                          propertyType={draft.propertyType}
+                          propertySize={draft.propertySize}
+                          bedrooms={draft.bedrooms}
+                          bathrooms={draft.bathrooms}
+                          onSelect={handleServiceSelection}
                         />
-                      ) : currentStep.id ===
-                        "extras" ? (
+                      ) : currentStep.id === "extras" ? (
                         <ExtraTouchesStep
-                          serviceId={
-                            draft.serviceId
-                          }
-                          serviceName={
-                            draft.serviceName
-                          }
-                          selectedAddOns={
-                            draft.addOns
-                          }
-                          onChange={
-                            handleAddOnsChange
-                          }
+                          serviceId={draft.serviceId}
+                          serviceName={draft.serviceName}
+                          selectedAddOns={draft.addOns}
+                          onChange={handleAddOnsChange}
                         />
-                      ) : currentStep.id ===
-                        "schedule" ? (
+                      ) : currentStep.id === "schedule" ? (
                         <TimeRouteStep
-                          serviceId={
-                            draft.serviceId
-                          }
-                          serviceAreaId={
-                            draft.serviceAreaId
-                          }
-                          propertyType={
-                            draft.propertyType
-                          }
-                          bedrooms={
-                            draft.bedrooms
-                          }
-                          bathrooms={
-                            draft.bathrooms
-                          }
-                          propertySize={
-                            draft.propertySize
-                          }
-                          addOns={
-                            draft.addOns
-                          }
-                          bookingDate={
-                            draft.bookingDate
-                          }
-                          startTime={
-                            draft.startTime
-                          }
-                          endTime={
-                            draft.endTime
-                          }
-                          onChange={
-                            handleTimeRouteChange
-                          }
-                          onTrustedQuote={
-                            handleTrustedTimeRouteQuote
-                          }
+                          serviceId={draft.serviceId}
+                          serviceAreaId={draft.serviceAreaId}
+                          propertyType={draft.propertyType}
+                          bedrooms={draft.bedrooms}
+                          bathrooms={draft.bathrooms}
+                          propertySize={draft.propertySize}
+                          addOns={draft.addOns}
+                          bookingDate={draft.bookingDate}
+                          startTime={draft.startTime}
+                          endTime={draft.endTime}
+                          onChange={handleTimeRouteChange}
+                          onTrustedQuote={handleTrustedTimeRouteQuote}
                         />
-                      ) : currentStep.id ===
-                        "review" ? (
+                      ) : currentStep.id === "review" ? (
                         <FinalCheckStep
-                          draft={
-                            draft
-                          }
-                          onPaymentMethodChange={
-                            handlePaymentMethodChange
-                          }
-                          onCustomerNotesChange={
-                            handleCustomerNotesChange
-                          }
+                          draft={draft}
+                          onPaymentMethodChange={handlePaymentMethodChange}
+                          onCustomerNotesChange={handleCustomerNotesChange}
                         />
                       ) : (
                         <div className="mt-8 rounded-[1.7rem] border border-dashed border-primary/25 bg-primary-light/35 p-6 sm:p-7">
@@ -1592,15 +1159,11 @@ export default function BookingRouteBuilder() {
 
                             <div>
                               <p className="font-heading text-xl font-black text-navy">
-                                {
-                                  currentStep.label
-                                }{" "}
-                                workspace
+                                {currentStep.label} workspace
                               </p>
 
                               <p className="mt-3 text-base font-medium leading-7 text-slate-500">
-                                This route stage
-                                is not available.
+                                This route stage is not available.
                               </p>
                             </div>
                           </div>
@@ -1632,18 +1195,9 @@ export default function BookingRouteBuilder() {
                         <motion.div
                           className="absolute left-[22%] top-[23%] z-20 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-primary text-white shadow-lg"
                           animate={{
-                            left:
-                              currentStepIndex %
-                                2 ===
-                              0
-                                ? "22%"
-                                : "68%",
+                            left: currentStepIndex % 2 === 0 ? "22%" : "68%",
 
-                            top:
-                              currentStepIndex <
-                              3
-                                ? "23%"
-                                : "67%",
+                            top: currentStepIndex < 3 ? "23%" : "67%",
                           }}
                           transition={{
                             type: "spring",
@@ -1654,64 +1208,42 @@ export default function BookingRouteBuilder() {
                           <Sparkles className="h-4 w-4" />
                         </motion.div>
 
-                        {[
-                          "Living",
-                          "Kitchen",
-                          "Bedroom",
-                          "Bathroom",
-                        ].map(
-                          (
-                            room,
-                            roomIndex,
-                          ) => {
-                            const isClean =
-                              roomIndex <
-                              Math.min(
-                                completedStepCount,
-                                4,
-                              );
+                        {["Living", "Kitchen", "Bedroom", "Bathroom"].map((room, roomIndex) => {
+                          const isClean = roomIndex < Math.min(completedStepCount, 4);
 
-                            const isActive =
-                              roomIndex ===
-                              Math.min(
-                                currentStepIndex,
-                                3,
-                              );
+                          const isActive = roomIndex === Math.min(currentStepIndex, 3);
 
-                            return (
-                              <div
-                                key={room}
-                                className={`flex flex-col justify-end rounded-xl border p-3 transition-all ${
-                                  isActive
-                                    ? "border-primary/40 bg-primary-light shadow-sm"
-                                    : isClean
-                                      ? "border-emerald-200 bg-emerald-50"
-                                      : "border-slate-200 bg-white/75"
+                          return (
+                            <div
+                              key={room}
+                              className={`flex flex-col justify-end rounded-xl border p-3 transition-all ${
+                                isActive
+                                  ? "border-primary/40 bg-primary-light shadow-sm"
+                                  : isClean
+                                    ? "border-emerald-200 bg-emerald-50"
+                                    : "border-slate-200 bg-white/75"
+                              }`}
+                            >
+                              <span
+                                className={`mb-auto flex h-7 w-7 items-center justify-center rounded-lg ${
+                                  isClean
+                                    ? "bg-emerald-500 text-white"
+                                    : isActive
+                                      ? "bg-primary text-white"
+                                      : "bg-slate-100 text-slate-400"
                                 }`}
                               >
-                                <span
-                                  className={`mb-auto flex h-7 w-7 items-center justify-center rounded-lg ${
-                                    isClean
-                                      ? "bg-emerald-500 text-white"
-                                      : isActive
-                                        ? "bg-primary text-white"
-                                        : "bg-slate-100 text-slate-400"
-                                  }`}
-                                >
-                                  {isClean ? (
-                                    <Check className="h-3.5 w-3.5" />
-                                  ) : (
-                                    <Home className="h-3.5 w-3.5" />
-                                  )}
-                                </span>
+                                {isClean ? (
+                                  <Check className="h-3.5 w-3.5" />
+                                ) : (
+                                  <Home className="h-3.5 w-3.5" />
+                                )}
+                              </span>
 
-                                <p className="mt-3 text-[11px] font-extrabold text-navy">
-                                  {room}
-                                </p>
-                              </div>
-                            );
-                          },
-                        )}
+                              <p className="mt-3 text-[11px] font-extrabold text-navy">{room}</p>
+                            </div>
+                          );
+                        })}
                       </div>
 
                       <div className="mt-4 rounded-2xl bg-navy px-4 py-4 text-white">
@@ -1719,11 +1251,7 @@ export default function BookingRouteBuilder() {
                           Active stage
                         </p>
 
-                        <p className="mt-2 text-sm font-extrabold">
-                          {
-                            currentStep.label
-                          }
-                        </p>
+                        <p className="mt-2 text-sm font-extrabold">{currentStep.label}</p>
                       </div>
                     </div>
                   </div>
@@ -1733,37 +1261,29 @@ export default function BookingRouteBuilder() {
               <div className="mt-10 flex flex-col-reverse gap-4 border-t border-primary/10 pt-7 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
-                  onClick={
-                    goToPreviousStep
-                  }
-                  disabled={
-                    isFirstStep
-                  }
+                  onClick={goToPreviousStep}
+                  disabled={isFirstStep}
                   className="flex min-h-[52px] items-center justify-center gap-3 rounded-2xl border border-primary/10 bg-white px-6 py-3.5 text-sm font-extrabold text-slate-600 transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ArrowLeft className="h-5 w-5" />
-
-                  Previous stage
+                  Back
                 </button>
 
                 {!isLastStep && (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
                     <div className="text-left sm:text-right">
                       <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-400">
-                        Next route point
+                        Next
                       </p>
 
                       <p className="mt-1 text-sm font-extrabold text-navy">
-                        {nextStep?.label ??
-                          "Next stage"}
+                        {nextStep?.label ?? "Next stage"}
                       </p>
                     </div>
 
                     <motion.button
                       type="button"
-                      onClick={
-                        goToNextStep
-                      }
+                      onClick={goToNextStep}
                       whileHover={
                         prefersReducedMotion
                           ? undefined
@@ -1776,8 +1296,7 @@ export default function BookingRouteBuilder() {
                       }}
                       className="group flex min-h-[52px] items-center justify-center gap-3 rounded-2xl bg-navy px-7 py-3.5 text-sm font-extrabold text-white shadow-[0_14px_35px_rgba(11,37,69,0.2)] transition hover:bg-primary"
                     >
-                      Continue route
-
+                      Continue
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </motion.button>
                   </div>
@@ -1786,7 +1305,6 @@ export default function BookingRouteBuilder() {
                 {isLastStep && (
                   <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-extrabold text-emerald-700">
                     <CheckCircle2 className="h-5 w-5" />
-
                     Confirm your booking above
                   </div>
                 )}
@@ -1794,18 +1312,16 @@ export default function BookingRouteBuilder() {
             </div>
           </section>
 
-          <aside className="2xl:sticky 2xl:top-6">
+          <aside className="xl:sticky xl:top-6">
             <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_25px_70px_rgba(11,37,69,0.11)] backdrop-blur-md">
               <div className="bg-navy px-6 py-6 text-white">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-extrabold uppercase tracking-[0.19em] text-cyan-300">
-                      Live route ledger
+                      Your selections
                     </p>
 
-                    <p className="mt-2 font-heading text-2xl font-black">
-                      Booking snapshot
-                    </p>
+                    <p className="mt-2 font-heading text-2xl font-black">Booking summary</p>
                   </div>
 
                   <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-cyan-300">
@@ -1826,14 +1342,12 @@ export default function BookingRouteBuilder() {
                 </div>
 
                 <p className="mt-3 text-xs font-semibold text-blue-100/65">
-                  {completedStepCount}{" "}
-                  of {totalSteps} route
-                  stages completed
+                  {completedStepCount} of {totalSteps} steps completed
                 </p>
               </div>
 
-              <div className="p-6">
-                <div className="rounded-[1.4rem] border border-primary/10 bg-primary-light/35 p-5">
+              <div className="p-5">
+                <div className="rounded-[1.25rem] border border-primary/10 bg-primary-light/35 p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-primary">
@@ -1841,107 +1355,70 @@ export default function BookingRouteBuilder() {
                       </p>
 
                       <p className="mt-2 text-base font-extrabold text-navy">
-                        {propertyTypeLabel(
-                          draft.propertyType,
-                        )}
+                        {propertyTypeLabel(draft.propertyType)}
                       </p>
                     </div>
 
                     <Home className="h-6 w-6 text-primary" />
                   </div>
 
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    {roomPreview.map(
-                      ({
-                        name,
-                        value,
-                        icon: Icon,
-                      }) => (
-                        <div
-                          key={name}
-                          className="rounded-xl border border-white bg-white/80 p-4"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4 text-primary" />
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {roomPreview.map(({ name, value, icon: Icon }) => (
+                      <div
+                        key={name}
+                        className="rounded-lg border border-white bg-white/80 px-3 py-2.5"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-primary" />
 
-                            <span className="text-xs font-bold text-slate-500">
-                              {name}
-                            </span>
-                          </div>
-
-                          <p className="mt-3 font-heading text-2xl font-black text-navy">
-                            {value}
-                          </p>
+                          <span className="text-xs font-bold text-slate-500">{name}</span>
                         </div>
-                      ),
-                    )}
+
+                        <p className="mt-1 font-heading text-lg font-black text-navy">{value}</p>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="mt-3 rounded-xl border border-white bg-white/80 px-4 py-3">
+                  <div className="mt-2 rounded-lg border border-white bg-white/80 px-3 py-2.5">
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
                       Approximate size
                     </p>
 
-                    <p className="mt-2 text-base font-extrabold text-navy">
-                      {
-                        draft.propertySize
-                      }{" "}
-                      m²
-                    </p>
+                    <p className="mt-1 text-sm font-extrabold text-navy">{draft.propertySize} m²</p>
                   </div>
                 </div>
 
-                <div className="mt-6 space-y-5">
-                  <SummaryRow
-                    icon={SprayCan}
-                    label="Cleaning plan"
-                    value={
-                      draft.serviceName
-                    }
-                  />
+                <div className="mt-5 space-y-4">
+                  <SummaryRow icon={SprayCan} label="Cleaning plan" value={draft.serviceName} />
 
                   <SummaryRow
                     icon={Plus}
                     label="Extra touches"
                     value={
-                      selectedExtraQuantity >
-                      0
+                      selectedExtraQuantity > 0
                         ? `${selectedExtraQuantity} selected`
                         : "None selected"
                     }
                   />
 
-                  <SummaryRow
-                    icon={MapPin}
-                    label="Home base"
-                    value={
-                      draft.addressLabel
-                    }
-                  />
+                  <SummaryRow icon={MapPin} label="Home base" value={draft.addressLabel} />
 
                   <SummaryRow
                     icon={CalendarDays}
                     label="Date"
-                    value={formatBookingDate(
-                      draft.bookingDate,
-                    )}
+                    value={formatBookingDate(draft.bookingDate)}
                   />
 
                   <SummaryRow
                     icon={Clock3}
                     label="Arrival time"
-                    value={formatSelectedTime(
-                      draft.startTime,
-                      draft.endTime,
-                    )}
+                    value={formatSelectedTime(draft.startTime, draft.endTime)}
                   />
 
                   <SummaryRow
                     icon={Clock3}
                     label="Trusted duration"
-                    value={formatDuration(
-                      draft.estimatedDurationMinutes,
-                    )}
+                    value={formatDuration(draft.estimatedDurationMinutes)}
                   />
                 </div>
 
@@ -1951,54 +1428,32 @@ export default function BookingRouteBuilder() {
                   </p>
 
                   <div className="mt-5 space-y-4">
-                    <PriceRow
-                      label="Cleaning route"
-                      value={
-                        draft.baseAmount
-                      }
-                    />
+                    <PriceRow label="Cleaning route" value={draft.baseAmount} />
 
-                    <PriceRow
-                      label="Extra touches"
-                      value={
-                        draft.addOnsAmount
-                      }
-                    />
+                    {draft.addOnsAmount > 0 && (
+                      <PriceRow label="Extra touches" value={draft.addOnsAmount} />
+                    )}
 
-                    <PriceRow
-                      label="Area fee"
-                      value={
-                        draft.serviceAreaFee
-                      }
-                    />
+                    {draft.serviceAreaFee > 0 && (
+                      <PriceRow label="Area fee" value={draft.serviceAreaFee} />
+                    )}
 
-                    {draft.discountAmount >
-                      0 && (
-                      <PriceRow
-                        label="Discount"
-                        value={
-                          -draft.discountAmount
-                        }
-                      />
+                    {draft.discountAmount > 0 && (
+                      <PriceRow label="Discount" value={-draft.discountAmount} />
                     )}
                   </div>
 
                   <div className="mt-6 flex items-end justify-between gap-5 rounded-[1.4rem] bg-navy p-5 text-white">
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-cyan-300">
-                        Route estimate
+                        Estimated total
                       </p>
 
-                      <p className="mt-2 text-xs text-blue-100/65">
-                        Final price shown
-                        during review
-                      </p>
+                      <p className="mt-2 text-xs text-blue-100/65">Confirmed before booking</p>
                     </div>
 
                     <p className="font-heading text-3xl font-black">
-                      {formatCurrency(
-                        draft.totalAmount,
-                      )}
+                      {formatCurrency(draft.totalAmount)}
                     </p>
                   </div>
                 </div>
@@ -2007,10 +1462,7 @@ export default function BookingRouteBuilder() {
                   <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
 
                   <p className="text-xs font-medium leading-6 text-emerald-700">
-                    Prices, duration, and
-                    availability are
-                    verified again by the
-                    server before your
+                    Prices, duration, and availability are verified again by the server before your
                     booking is created.
                   </p>
                 </div>
@@ -2032,11 +1484,7 @@ interface SummaryRowProps {
   value: string;
 }
 
-function SummaryRow({
-  icon: Icon,
-  label,
-  value,
-}: SummaryRowProps) {
+function SummaryRow({ icon: Icon, label, value }: SummaryRowProps) {
   return (
     <div className="flex items-center gap-4">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary">
@@ -2044,14 +1492,9 @@ function SummaryRow({
       </span>
 
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-          {label}
-        </p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</p>
 
-        <p
-          className="mt-1 line-clamp-2 text-sm font-extrabold leading-5 text-navy"
-          title={value}
-        >
+        <p className="mt-1 line-clamp-2 text-sm font-extrabold leading-5 text-navy" title={value}>
           {value}
         </p>
       </div>
@@ -2064,24 +1507,15 @@ interface PriceRowProps {
   value: number;
 }
 
-function PriceRow({
-  label,
-  value,
-}: PriceRowProps) {
+function PriceRow({ label, value }: PriceRowProps) {
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
-      <span className="font-semibold text-slate-500">
-        {label}
-      </span>
+      <span className="font-semibold text-slate-500">{label}</span>
 
       <span className="font-extrabold text-navy">
-        {value < 0
-          ? "-"
-          : ""}
+        {value < 0 ? "-" : ""}
 
-        {formatCurrency(
-          Math.abs(value),
-        )}
+        {formatCurrency(Math.abs(value))}
       </span>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { BadgeCheck, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useReviews } from "@/hooks/useReviews";
 import { RatingStars } from "@/components/reviews/RatingStars";
 import { Alert } from "@/components/ui/Alert";
@@ -98,7 +98,19 @@ function PublicReviewCard({ review }: { review: Review }) {
   return (
     <article className="rounded-card border border-navy/10 bg-surface p-5 shadow-card">
       <div className="flex items-start justify-between gap-4">
-        <RatingStars value={review.rating} size="sm" />
+        <div>
+          <RatingStars value={review.rating} size="sm" />
+          {review.isVerified && (
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
+              <BadgeCheck className="h-4 w-4" />
+              Verified booking
+            </span>
+          )}
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            {review.customerName ?? "Verified customer"}
+            {review.serviceName ? ` · ${review.serviceName}` : ""}
+          </p>
+        </div>
         <span className="shrink-0 text-xs text-navy/35">
           {new Date(review.createdAt).toLocaleDateString(undefined, {
             year: "numeric",
@@ -109,6 +121,19 @@ function PublicReviewCard({ review }: { review: Review }) {
       </div>
 
       {review.comment && <p className="mt-3 text-sm leading-6 text-navy/80">{review.comment}</p>}
+
+      {review.tags.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {review.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-primary-light px-2.5 py-1 text-[11px] font-semibold text-primary"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {hasGallery && (
         <div className="mt-4 space-y-2">

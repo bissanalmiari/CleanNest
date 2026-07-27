@@ -20,6 +20,7 @@ import {
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 export interface AuthenticatedNavigationItem {
   label: string;
@@ -28,7 +29,7 @@ export interface AuthenticatedNavigationItem {
 }
 
 interface AuthenticatedNavbarProps {
-  role: "customer" | "admin";
+  role: "customer" | "admin" | "cleaner";
   items: AuthenticatedNavigationItem[];
   user: {
     name: string;
@@ -62,8 +63,14 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
 
   const initials = useMemo(() => getInitials(user.name), [user.name]);
 
-  const profileHref = role === "admin" ? "/admin/profile" : "/profile";
-  const roleLabel = role === "admin" ? "Administrator" : "Customer";
+  const profileHref =
+    role === "admin"
+      ? "/admin/profile"
+      : role === "cleaner"
+        ? "/cleaner/profile"
+        : "/profile";
+  const roleLabel =
+    role === "admin" ? "Administrator" : role === "cleaner" ? "Cleaning professional" : "Customer";
 
   useEffect(() => {
     function handleScroll() {
@@ -248,6 +255,8 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
               </Link>
             )}
 
+            <NotificationBell />
+
             <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
@@ -373,6 +382,13 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                     <span className="ml-auto rounded-full bg-white px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-primary">
                       {roleLabel}
                     </span>
+                  </div>
+
+                  <div className="mb-4 flex items-center justify-between rounded-2xl border border-primary/10 bg-white p-3">
+                    <span className="text-xs font-black text-navy">
+                      Account notifications
+                    </span>
+                    <NotificationBell />
                   </div>
 
                   <div className="grid gap-2 sm:grid-cols-2">

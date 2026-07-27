@@ -9,16 +9,16 @@ import { errorResponse } from "@/lib/apiError";
 
 export async function GET(req: NextRequest) {
   try {
-    const query = listReviewsQuerySchema.parse(
-      Object.fromEntries(req.nextUrl.searchParams)
-    );
+    const query = listReviewsQuerySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
 
     // Anyone can browse reviews (they're social proof), but only an admin
     // gets to see ones that have been hidden.
     const currentUser = await getCurrentUser();
     const includeHidden = currentUser?.role === "admin";
+    const includePrivate =
+      currentUser?.role === "admin" || Boolean(currentUser && query.customerId === currentUser.id);
 
-    const result = await listReviews(query, includeHidden);
+    const result = await listReviews(query, includeHidden, includePrivate);
     return successResponse(result);
   } catch (error) {
     return errorResponse(error);

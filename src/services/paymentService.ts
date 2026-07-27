@@ -19,6 +19,7 @@ import Payment, { type IPayment } from "@/models/Payment";
 import Booking from "@/models/Booking";
 import { AppError, NotFoundError, ForbiddenError } from "@/lib/apiError";
 import type { PaymentMethod, PaymentStatus } from "@/types/enums";
+import { createNotification } from "@/services/notificationService";
 
 /* ------------------------------------------------------------------ */
 /* Shared helpers                                                       */
@@ -29,6 +30,40 @@ async function syncBookingPaymentStatus(
   status: PaymentStatus
 ) {
   await Booking.findByIdAndUpdate(bookingId, { paymentStatus: status });
+}
+
+async function notifyCustomerOfPayment(
+  bookingId: string,
+  status: PaymentStatus,
+) {
+  const booking = await Booking.findById(bookingId)
+    .select("customerId bookingNumber")
+    .lean();
+  if (!booking) return;
+  const labels: Record<PaymentStatus, string> = {
+    unpaid: "Payment is still unpaid.",
+    pending: "Your payment is being processed.",
+    paid: "Your payment was received successfully.",
+    refunded: "Your payment was refunded.",
+    failed: "Your payment could not be completed.",
+  };
+  await createNotification({
+    userId: booking.customerId.toString(),
+    type: "payment_update",
+    title:
+      status === "paid"
+        ? "Payment received"
+        : status === "refunded"
+          ? "Payment refunded"
+          : status === "failed"
+            ? "Payment failed"
+            : "Payment updated",
+    message: `${labels[status]} Booking ${booking.bookingNumber}.`,
+    href: "/payments",
+    bookingId,
+    dedupeKey: `payment:${bookingId}:${status}`,
+    email: true,
+  }).catch((error) => console.error("[notification:payment]", error));
 }
 
 /** Ensures a Payment record exists for a booking, creating one from the
@@ -222,6 +257,7 @@ export async function payBookingWithTestCard(
     };
     await payment.save();
     await syncBookingPaymentStatus(bookingId, "failed");
+    await notifyCustomerOfPayment(bookingId, "failed");
     throw new AppError(
       "Payment declined. This is a simulated test-mode decline — try a different card number.",
       402
@@ -237,6 +273,7 @@ export async function payBookingWithTestCard(
   };
   await payment.save();
   await syncBookingPaymentStatus(bookingId, "paid");
+  await notifyCustomerOfPayment(bookingId, "paid");
 
   return payment;
 }
@@ -363,6 +400,7 @@ export async function markCashPaymentReceived(paymentId: string) {
   payment.status = "paid";
   await payment.save();
   await syncBookingPaymentStatus(payment.bookingId.toString(), "paid");
+  await notifyCustomerOfPayment(payment.bookingId.toString(), "paid");
 
   return payment;
 }
@@ -385,6 +423,7 @@ export async function markPaymentFailed(paymentId: string, reason?: string) {
   payment.failureReason = reason?.trim() || "Marked as failed by admin.";
   await payment.save();
   await syncBookingPaymentStatus(payment.bookingId.toString(), "failed");
+  await notifyCustomerOfPayment(payment.bookingId.toString(), "failed");
 
   return payment;
 }
@@ -412,6 +451,7 @@ export async function refundPayment(
   payment.refundReference = `RF-${Date.now().toString(36).toUpperCase()}`;
   await payment.save();
   await syncBookingPaymentStatus(payment.bookingId.toString(), "refunded");
+  await notifyCustomerOfPayment(payment.bookingId.toString(), "refunded");
 
   return payment;
 }

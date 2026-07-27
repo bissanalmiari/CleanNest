@@ -1,3 +1,5 @@
-export default function CleanerAvailabilityPage() {
-  return <div>CleanerAvailabilityPage</div>;
+import { redirect } from "next/navigation";
+
+export default function LegacyCleanerAvailabilityPage() {
+  redirect("/cleaner/availability");
 }

@@ -1,3 +1,5 @@
-export default function UpcomingJobsPage() {
-  return <div>UpcomingJobsPage</div>;
+import { redirect } from "next/navigation";
+
+export default function LegacyCleanerUpcomingPage() {
+  redirect("/cleaner/upcoming");
 }

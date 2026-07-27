@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentType,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 
 import Link from "next/link";
 
@@ -27,30 +21,20 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  Star,
   TimerReset,
   UserRound,
   WandSparkles,
   XCircle,
 } from "lucide-react";
 
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-} from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
+import ServiceProofReportPanel from "@/components/proof/ServiceProofReportPanel";
 
-type BookingFilter =
-  | "all"
-  | "active"
-  | "completed"
-  | "cancelled";
+type BookingStatus = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
+
+type BookingFilter = "all" | "active" | "completed" | "cancelled";
 
 interface BookingApiItem {
   id?: string;
@@ -85,6 +69,12 @@ interface BookingApiItem {
     area?: string;
     street?: string;
   } | null;
+
+  review?: {
+    id?: string;
+    rating?: number;
+  } | null;
+  canReview?: boolean;
 }
 
 interface BookingRecord {
@@ -106,6 +96,9 @@ interface BookingRecord {
 
   paymentMethod: string;
   paymentStatus: string;
+  reviewId: string | null;
+  reviewRating: number | null;
+  canReview: boolean;
 }
 
 interface StatusDesign {
@@ -118,63 +111,45 @@ interface StatusDesign {
   routeClassName: string;
 }
 
-const STATUS_DESIGNS: Record<
-  BookingStatus,
-  StatusDesign
-> = {
+const STATUS_DESIGNS: Record<BookingStatus, StatusDesign> = {
   pending: {
     label: "Pending",
     icon: Clock3,
-    badgeClassName:
-      "border-amber-200 bg-amber-50 text-amber-700",
-    iconClassName:
-      "bg-amber-100 text-amber-600",
-    routeClassName:
-      "from-amber-400 to-orange-400",
+    badgeClassName: "border-amber-200 bg-amber-50 text-amber-700",
+    iconClassName: "bg-amber-100 text-amber-600",
+    routeClassName: "from-amber-400 to-orange-400",
   },
 
   confirmed: {
     label: "Confirmed",
     icon: CheckCircle2,
-    badgeClassName:
-      "border-blue-200 bg-blue-50 text-primary",
-    iconClassName:
-      "bg-primary-light text-primary",
-    routeClassName:
-      "from-primary to-cyan-400",
+    badgeClassName: "border-blue-200 bg-blue-50 text-primary",
+    iconClassName: "bg-primary-light text-primary",
+    routeClassName: "from-primary to-cyan-400",
   },
 
   in_progress: {
     label: "In progress",
     icon: Sparkles,
-    badgeClassName:
-      "border-cyan-200 bg-cyan-50 text-cyan-700",
-    iconClassName:
-      "bg-cyan-100 text-cyan-700",
-    routeClassName:
-      "from-cyan-400 to-emerald-400",
+    badgeClassName: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    iconClassName: "bg-cyan-100 text-cyan-700",
+    routeClassName: "from-cyan-400 to-emerald-400",
   },
 
   completed: {
     label: "Completed",
     icon: CheckCircle2,
-    badgeClassName:
-      "border-emerald-200 bg-emerald-50 text-emerald-700",
-    iconClassName:
-      "bg-emerald-100 text-emerald-700",
-    routeClassName:
-      "from-emerald-400 to-emerald-600",
+    badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    iconClassName: "bg-emerald-100 text-emerald-700",
+    routeClassName: "from-emerald-400 to-emerald-600",
   },
 
   cancelled: {
     label: "Cancelled",
     icon: XCircle,
-    badgeClassName:
-      "border-red-200 bg-red-50 text-red-700",
-    iconClassName:
-      "bg-red-100 text-red-600",
-    routeClassName:
-      "from-red-300 to-red-500",
+    badgeClassName: "border-red-200 bg-red-50 text-red-700",
+    iconClassName: "bg-red-100 text-red-600",
+    routeClassName: "from-red-300 to-red-500",
   },
 };
 
@@ -200,9 +175,7 @@ const FILTERS: Array<{
   },
 ];
 
-function normalizeStatus(
-  status?: string,
-): BookingStatus {
+function normalizeStatus(status?: string): BookingStatus {
   switch (status) {
     case "confirmed":
     case "in_progress":
@@ -216,13 +189,8 @@ function normalizeStatus(
   }
 }
 
-function extractBookingArray(
-  payload: unknown,
-): BookingApiItem[] {
-  if (
-    typeof payload !== "object" ||
-    payload === null
-  ) {
+function extractBookingArray(payload: unknown): BookingApiItem[] {
+  if (typeof payload !== "object" || payload === null) {
     return [];
   }
 
@@ -239,10 +207,7 @@ function extractBookingArray(
     return response.data as BookingApiItem[];
   }
 
-  if (
-    typeof response.data === "object" &&
-    response.data !== null
-  ) {
+  if (typeof response.data === "object" && response.data !== null) {
     const data = response.data as {
       bookings?: unknown;
       items?: unknown;
@@ -265,10 +230,7 @@ function extractBookingArray(
   return [];
 }
 
-function normalizeBooking(
-  booking: BookingApiItem,
-  index: number,
-): BookingRecord {
+function normalizeBooking(booking: BookingApiItem, index: number): BookingRecord {
   const addressParts = [
     booking.address?.label,
     booking.address?.area,
@@ -276,148 +238,96 @@ function normalizeBooking(
   ].filter(Boolean);
 
   return {
-    id:
-      booking.id ??
-      booking._id ??
-      `booking-${index}`,
+    id: booking.id ?? booking._id ?? `booking-${index}`,
 
-    bookingNumber:
-      booking.bookingNumber ??
-      `CN-ROUTE-${index + 1}`,
+    bookingNumber: booking.bookingNumber ?? `CN-ROUTE-${index + 1}`,
 
-    status: normalizeStatus(
-      booking.status,
-    ),
+    status: normalizeStatus(booking.status),
 
-    bookingDate:
-      booking.bookingDate ?? "",
+    bookingDate: booking.bookingDate ?? "",
 
-    startTime:
-      booking.startTime ?? "",
+    startTime: booking.startTime ?? "",
 
-    endTime:
-      booking.endTime ?? "",
+    endTime: booking.endTime ?? "",
 
-    estimatedDurationMinutes:
-      Number(
-        booking.estimatedDurationMinutes,
-      ) || 0,
+    estimatedDurationMinutes: Number(booking.estimatedDurationMinutes) || 0,
 
-    totalAmount:
-      Number(booking.totalAmount) || 0,
+    totalAmount: Number(booking.totalAmount) || 0,
 
-    serviceName:
-      booking.service?.name ??
-      booking.serviceName ??
-      "Cleaning service",
+    serviceName: booking.service?.name ?? booking.serviceName ?? "Cleaning service",
 
-    addressLabel:
-      addressParts.join(" · ") ||
-      booking.addressLabel ||
-      "Address unavailable",
+    addressLabel: addressParts.join(" · ") || booking.addressLabel || "Address unavailable",
 
-    assignedCleanerName:
-      booking.assignedCleanerName ??
-      null,
+    assignedCleanerName: booking.assignedCleanerName ?? null,
 
-    paymentMethod:
-      booking.paymentMethod ??
-      "cash",
+    paymentMethod: booking.paymentMethod ?? "cash",
 
-    paymentStatus:
-      booking.paymentStatus ??
-      "unpaid",
+    paymentStatus: booking.paymentStatus ?? "unpaid",
+
+    reviewId: booking.review?.id ?? null,
+    reviewRating: typeof booking.review?.rating === "number" ? booking.review.rating : null,
+    canReview: booking.canReview === true,
   };
 }
 
-function formatCurrency(
-  value: number,
-) {
-  return new Intl.NumberFormat(
-    "en-US",
-    {
-      style: "currency",
-      currency: "USD",
-    },
-  ).format(value);
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
 }
 
-function formatBookingDate(
-  value: string,
-) {
+function formatBookingDate(value: string) {
   if (!value) {
     return "Date unavailable";
   }
 
   const date = new Date(value);
 
-  if (
-    Number.isNaN(date.getTime())
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "Asia/Beirut",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Beirut",
+  }).format(date);
 }
 
-function formatDuration(
-  minutes: number,
-) {
+function formatDuration(minutes: number) {
   if (minutes <= 0) {
     return "Not calculated";
   }
 
-  const hours = Math.floor(
-    minutes / 60,
-  );
+  const hours = Math.floor(minutes / 60);
 
-  const remainingMinutes =
-    minutes % 60;
+  const remainingMinutes = minutes % 60;
 
   if (hours === 0) {
     return `${remainingMinutes} min`;
   }
 
-  if (
-    remainingMinutes === 0
-  ) {
+  if (remainingMinutes === 0) {
     return `${hours} hr`;
   }
 
   return `${hours} hr ${remainingMinutes} min`;
 }
 
-function paymentMethodLabel(
-  value: string,
-) {
-  return value === "card"
-    ? "Test card"
-    : "Cash after service";
+function paymentMethodLabel(value: string) {
+  return value === "card" ? "Test card" : "Cash after service";
 }
 
-function matchesFilter(
-  booking: BookingRecord,
-  filter: BookingFilter,
-) {
+function matchesFilter(booking: BookingRecord, filter: BookingFilter) {
   if (filter === "all") {
     return true;
   }
 
   if (filter === "active") {
-    return [
-      "pending",
-      "confirmed",
-      "in_progress",
-    ].includes(booking.status);
+    return ["pending", "confirmed", "in_progress"].includes(booking.status);
   }
 
   return booking.status === filter;
@@ -447,13 +357,9 @@ function getVisitCountdown(value: string): string {
 
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startOfVisit = new Date(
-    visitDate.getFullYear(),
-    visitDate.getMonth(),
-    visitDate.getDate(),
-  );
+  const startOfVisit = new Date(visitDate.getFullYear(), visitDate.getMonth(), visitDate.getDate());
   const days = Math.round(
-    (startOfVisit.getTime() - startOfToday.getTime()) / (24 * 60 * 60 * 1000),
+    (startOfVisit.getTime() - startOfToday.getTime()) / (24 * 60 * 60 * 1000)
   );
 
   if (days === 0) {
@@ -472,28 +378,19 @@ function getVisitCountdown(value: string): string {
 }
 
 export default function MyBookingsPage() {
-  const prefersReducedMotion =
-    useReducedMotion();
+  const prefersReducedMotion = useReducedMotion();
 
-  const [bookings, setBookings] =
-    useState<BookingRecord[]>([]);
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
 
-  const [selectedFilter, setSelectedFilter] =
-    useState<BookingFilter>("all");
+  const [selectedFilter, setSelectedFilter] = useState<BookingFilter>("all");
 
-  const [searchQuery, setSearchQuery] =
-    useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const [
-    expandedBookingId,
-    setExpandedBookingId,
-  ] = useState<string | null>(null);
+  const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [errorMessage, setErrorMessage] =
-    useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const initialLoadStarted = useRef(false);
 
   async function loadBookings() {
@@ -501,63 +398,38 @@ export default function MyBookingsPage() {
     setErrorMessage(null);
 
     try {
-      const response = await fetch(
-        "/api/customer/bookings",
-        {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        },
-      );
+      const response = await fetch("/api/customer/bookings", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
 
-      const payload: unknown =
-        await response.json();
+      const payload: unknown = await response.json();
 
       if (!response.ok) {
-        const errorPayload =
-          payload as {
-            message?: string;
-            error?: string;
-          };
+        const errorPayload = payload as {
+          message?: string;
+          error?: string;
+        };
 
         throw new Error(
-          errorPayload.message ??
-            errorPayload.error ??
-            "Unable to load your bookings.",
+          errorPayload.message ?? errorPayload.error ?? "Unable to load your bookings."
         );
       }
 
-      const rawBookings =
-        extractBookingArray(payload);
+      const rawBookings = extractBookingArray(payload);
 
-      const normalizedBookings =
-        rawBookings
-          .map(normalizeBooking)
-          .sort((first, second) => {
-            const firstDate =
-              new Date(
-                first.bookingDate,
-              ).getTime();
+      const normalizedBookings = rawBookings.map(normalizeBooking).sort((first, second) => {
+        const firstDate = new Date(first.bookingDate).getTime();
 
-            const secondDate =
-              new Date(
-                second.bookingDate,
-              ).getTime();
+        const secondDate = new Date(second.bookingDate).getTime();
 
-            return (
-              secondDate - firstDate
-            );
-          });
+        return secondDate - firstDate;
+      });
 
-      setBookings(
-        normalizedBookings,
-      );
+      setBookings(normalizedBookings);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to load your bookings.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Unable to load your bookings.");
     } finally {
       setIsLoading(false);
     }
@@ -572,52 +444,31 @@ export default function MyBookingsPage() {
     void loadBookings();
   }, []);
 
-  const bookingCounts =
-    useMemo(() => {
-      return {
-        all: bookings.length,
+  const bookingCounts = useMemo(() => {
+    return {
+      all: bookings.length,
 
-        active: bookings.filter(
-          (booking) =>
-            [
-              "pending",
-              "confirmed",
-              "in_progress",
-            ].includes(
-              booking.status,
-            ),
-        ).length,
+      active: bookings.filter((booking) =>
+        ["pending", "confirmed", "in_progress"].includes(booking.status)
+      ).length,
 
-        completed:
-          bookings.filter(
-            (booking) =>
-              booking.status ===
-              "completed",
-          ).length,
+      completed: bookings.filter((booking) => booking.status === "completed").length,
 
-        cancelled:
-          bookings.filter(
-            (booking) =>
-              booking.status ===
-              "cancelled",
-          ).length,
-      };
-    }, [bookings]);
+      cancelled: bookings.filter((booking) => booking.status === "cancelled").length,
+    };
+  }, [bookings]);
 
   const nextBooking = useMemo(() => {
     const activeBookings = bookings
-      .filter((booking) =>
-        ["pending", "confirmed", "in_progress"].includes(booking.status),
-      )
+      .filter((booking) => ["pending", "confirmed", "in_progress"].includes(booking.status))
       .sort(
         (first, second) =>
-          new Date(first.bookingDate).getTime() -
-          new Date(second.bookingDate).getTime(),
+          new Date(first.bookingDate).getTime() - new Date(second.bookingDate).getTime()
       );
 
     return (
       activeBookings.find(
-        (booking) => new Date(booking.bookingDate).getTime() >= Date.now() - 86400000,
+        (booking) => new Date(booking.bookingDate).getTime() >= Date.now() - 86400000
       ) ??
       activeBookings[0] ??
       null
@@ -629,51 +480,29 @@ export default function MyBookingsPage() {
       bookings
         .filter((booking) => booking.status === "completed")
         .reduce((total, booking) => total + booking.totalAmount, 0),
-    [bookings],
+    [bookings]
   );
 
-  const filteredBookings =
-    useMemo(() => {
-      const normalizedSearch =
-        searchQuery
-          .trim()
-          .toLowerCase();
+  const filteredBookings = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
 
-      return bookings.filter(
-        (booking) => {
-          if (
-            !matchesFilter(
-              booking,
-              selectedFilter,
-            )
-          ) {
-            return false;
-          }
+    return bookings.filter((booking) => {
+      if (!matchesFilter(booking, selectedFilter)) {
+        return false;
+      }
 
-          if (!normalizedSearch) {
-            return true;
-          }
+      if (!normalizedSearch) {
+        return true;
+      }
 
-          return [
-            booking.bookingNumber,
-            booking.serviceName,
-            booking.addressLabel,
-            booking.assignedCleanerName ??
-              "",
-          ].some((value) =>
-            value
-              .toLowerCase()
-              .includes(
-                normalizedSearch,
-              ),
-          );
-        },
-      );
-    }, [
-      bookings,
-      searchQuery,
-      selectedFilter,
-    ]);
+      return [
+        booking.bookingNumber,
+        booking.serviceName,
+        booking.addressLabel,
+        booking.assignedCleanerName ?? "",
+      ].some((value) => value.toLowerCase().includes(normalizedSearch));
+    });
+  }, [bookings, searchQuery, selectedFilter]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f3f7fc] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -683,8 +512,7 @@ export default function MyBookingsPage() {
         style={{
           backgroundImage:
             "linear-gradient(rgba(30,111,217,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(30,111,217,0.045) 1px, transparent 1px)",
-          backgroundSize:
-            "46px 46px",
+          backgroundSize: "46px 46px",
         }}
       />
 
@@ -695,16 +523,8 @@ export default function MyBookingsPage() {
           prefersReducedMotion
             ? undefined
             : {
-                scale: [
-                  1,
-                  1.18,
-                  1,
-                ],
-                y: [
-                  0,
-                  30,
-                  0,
-                ],
+                scale: [1, 1.18, 1],
+                y: [0, 30, 0],
               }
         }
         transition={{
@@ -750,8 +570,8 @@ export default function MyBookingsPage() {
                 </h1>
 
                 <p className="mt-5 max-w-2xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                  Follow upcoming visits, cleaner assignments, payments, and finished
-                  services without losing track of a single detail.
+                  Follow upcoming visits, cleaner assignments, payments, and finished services
+                  without losing track of a single detail.
                 </p>
               </div>
 
@@ -836,9 +656,7 @@ export default function MyBookingsPage() {
                   <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/10 text-cyan-300">
                     <CalendarDays className="h-7 w-7" />
                   </span>
-                  <h2 className="mt-5 font-heading text-2xl font-black">
-                    Your calendar is clear
-                  </h2>
+                  <h2 className="mt-5 font-heading text-2xl font-black">Your calendar is clear</h2>
                   <p className="mt-3 max-w-xs text-sm leading-6 text-blue-100/60">
                     Book a cleaning and your next visit will appear here.
                   </p>
@@ -893,9 +711,7 @@ export default function MyBookingsPage() {
                 type="search"
                 value={searchQuery}
                 onChange={(event) => {
-                  setSearchQuery(
-                    event.target.value,
-                  );
+                  setSearchQuery(event.target.value);
                 }}
                 placeholder="Search route, service, address, or cleaner"
                 className="min-h-12 w-full rounded-2xl border border-primary/10 bg-surface-soft pl-11 pr-4 text-sm font-semibold text-navy outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-primary/35 focus:bg-white focus:ring-4 focus:ring-primary/10"
@@ -903,46 +719,34 @@ export default function MyBookingsPage() {
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {FILTERS.map(
-                (filter) => {
-                  const isSelected =
-                    selectedFilter ===
-                    filter.id;
+              {FILTERS.map((filter) => {
+                const isSelected = selectedFilter === filter.id;
 
-                  return (
-                    <button
-                      key={filter.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedFilter(
-                          filter.id,
-                        );
-                      }}
-                      className={`shrink-0 rounded-xl border px-4 py-2.5 text-xs font-bold transition ${
-                        isSelected
-                          ? "border-navy bg-navy text-white shadow-md"
-                          : "border-primary/10 bg-white text-slate-500 hover:border-primary/25 hover:text-primary"
+                return (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedFilter(filter.id);
+                    }}
+                    className={`shrink-0 rounded-xl border px-4 py-2.5 text-xs font-bold transition ${
+                      isSelected
+                        ? "border-navy bg-navy text-white shadow-md"
+                        : "border-primary/10 bg-white text-slate-500 hover:border-primary/25 hover:text-primary"
+                    }`}
+                  >
+                    {filter.label}
+
+                    <span
+                      className={`ml-2 rounded-full px-2 py-0.5 text-[9px] ${
+                        isSelected ? "bg-white/10 text-cyan-200" : "bg-primary-light text-primary"
                       }`}
                     >
-                      {filter.label}
-
-                      <span
-                        className={`ml-2 rounded-full px-2 py-0.5 text-[9px] ${
-                          isSelected
-                            ? "bg-white/10 text-cyan-200"
-                            : "bg-primary-light text-primary"
-                        }`}
-                      >
-                        {
-                          bookingCounts[
-                            filter.id
-                          ]
-                        }
-                      </span>
-                    </button>
-                  );
-                },
-              )}
+                      {bookingCounts[filter.id]}
+                    </span>
+                  </button>
+                );
+              })}
 
               <button
                 type="button"
@@ -952,14 +756,7 @@ export default function MyBookingsPage() {
                 disabled={isLoading}
                 className="flex shrink-0 items-center gap-2 rounded-xl border border-primary/10 bg-white px-4 py-2.5 text-xs font-bold text-slate-500 transition hover:border-primary/25 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <RefreshCw
-                  className={`h-3.5 w-3.5 ${
-                    isLoading
-                      ? "animate-spin"
-                      : ""
-                  }`}
-                />
-
+                <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                 Refresh
               </button>
             </div>
@@ -972,9 +769,7 @@ export default function MyBookingsPage() {
             <div className="text-center">
               <LoaderCircle className="mx-auto h-8 w-8 animate-spin text-primary" />
 
-              <p className="mt-4 text-sm font-bold text-navy">
-                Loading your cleaning routes
-              </p>
+              <p className="mt-4 text-sm font-bold text-navy">Loading your cleaning routes</p>
 
               <p className="mt-2 text-xs text-slate-400">
                 Connecting to the CleanNest booking archive.
@@ -984,142 +779,104 @@ export default function MyBookingsPage() {
         )}
 
         {/* Error */}
-        {!isLoading &&
-          errorMessage && (
-            <div className="mt-6 rounded-[2rem] border border-red-200 bg-red-50 p-8 text-center">
-              <AlertCircle className="mx-auto h-8 w-8 text-red-500" />
+        {!isLoading && errorMessage && (
+          <div className="mt-6 rounded-[2rem] border border-red-200 bg-red-50 p-8 text-center">
+            <AlertCircle className="mx-auto h-8 w-8 text-red-500" />
 
-              <h2 className="mt-4 font-heading text-xl font-bold text-red-800">
-                We could not load your routes
-              </h2>
+            <h2 className="mt-4 font-heading text-xl font-bold text-red-800">
+              We could not load your routes
+            </h2>
 
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-red-600">
-                {errorMessage}
-              </p>
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-red-600">{errorMessage}</p>
 
-              <button
-                type="button"
-                onClick={() => {
-                  void loadBookings();
-                }}
-                className="mt-5 rounded-xl bg-red-600 px-5 py-3 text-xs font-bold text-white"
-              >
-                Try again
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => {
+                void loadBookings();
+              }}
+              className="mt-5 rounded-xl bg-red-600 px-5 py-3 text-xs font-bold text-white"
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
         {/* Empty state */}
-        {!isLoading &&
-          !errorMessage &&
-          filteredBookings.length ===
-            0 && (
-            <div className="mt-6 overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 shadow-[0_25px_70px_rgba(11,37,69,0.09)]">
-              <div className="grid min-h-[400px] items-center gap-8 p-8 lg:grid-cols-2 lg:p-12">
-                <div>
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
-                    Route archive empty
-                  </p>
+        {!isLoading && !errorMessage && filteredBookings.length === 0 && (
+          <div className="mt-6 overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 shadow-[0_25px_70px_rgba(11,37,69,0.09)]">
+            <div className="grid min-h-[400px] items-center gap-8 p-8 lg:grid-cols-2 lg:p-12">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
+                  Route archive empty
+                </p>
 
-                  <h2 className="mt-4 max-w-lg font-heading text-3xl font-black tracking-[-0.035em] text-navy">
-                    No cleaning routes match this view.
-                  </h2>
+                <h2 className="mt-4 max-w-lg font-heading text-3xl font-black tracking-[-0.035em] text-navy">
+                  No cleaning routes match this view.
+                </h2>
 
-                  <p className="mt-4 max-w-lg text-sm leading-7 text-slate-500">
-                    Create a new CleanNest route or change the
-                    current search and filter options.
-                  </p>
+                <p className="mt-4 max-w-lg text-sm leading-7 text-slate-500">
+                  Create a new CleanNest route or change the current search and filter options.
+                </p>
 
-                  <Link
-                    href="/book-service"
-                    className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-xl bg-navy px-6 text-sm font-bold text-white"
+                <Link
+                  href="/book-service"
+                  className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-xl bg-navy px-6 text-sm font-bold text-white"
+                >
+                  <Sparkles className="h-4 w-4 text-cyan-300" />
+                  Start a cleaning route
+                </Link>
+              </div>
+
+              <div className="relative mx-auto grid aspect-square w-full max-w-sm grid-cols-2 gap-3 rounded-[2rem] border border-primary/10 bg-primary-light/40 p-4">
+                {["Space", "Plan", "Address", "Time"].map((routePoint, index) => (
+                  <motion.div
+                    key={routePoint}
+                    animate={
+                      prefersReducedMotion
+                        ? undefined
+                        : {
+                            y: [0, index % 2 === 0 ? -5 : 5, 0],
+                          }
+                    }
+                    transition={{
+                      duration: 3 + index,
+                      repeat: 0,
+                      ease: "easeInOut",
+                    }}
+                    className="flex flex-col justify-between rounded-2xl border border-white bg-white/80 p-4"
                   >
-                    <Sparkles className="h-4 w-4 text-cyan-300" />
-                    Start a cleaning route
-                  </Link>
-                </div>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </span>
 
-                <div className="relative mx-auto grid aspect-square w-full max-w-sm grid-cols-2 gap-3 rounded-[2rem] border border-primary/10 bg-primary-light/40 p-4">
-                  {[
-                    "Space",
-                    "Plan",
-                    "Address",
-                    "Time",
-                  ].map(
-                    (routePoint, index) => (
-                      <motion.div
-                        key={routePoint}
-                        animate={
-                          prefersReducedMotion
-                            ? undefined
-                            : {
-                                y: [
-                                  0,
-                                  index % 2 ===
-                                  0
-                                    ? -5
-                                    : 5,
-                                  0,
-                                ],
-                              }
-                        }
-                        transition={{
-                          duration:
-                            3 + index,
-                          repeat: 0,
-                          ease: "easeInOut",
-                        }}
-                        className="flex flex-col justify-between rounded-2xl border border-white bg-white/80 p-4"
-                      >
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
-                          <Sparkles className="h-4 w-4" />
-                        </span>
-
-                        <p className="text-xs font-bold text-navy">
-                          {routePoint}
-                        </p>
-                      </motion.div>
-                    ),
-                  )}
-                </div>
+                    <p className="text-xs font-bold text-navy">{routePoint}</p>
+                  </motion.div>
+                ))}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
         {/* Booking routes */}
-        {!isLoading &&
-          !errorMessage &&
-          filteredBookings.length >
-            0 && (
-            <section className="mt-6 space-y-4">
-              <AnimatePresence initial={false}>
-                {filteredBookings.map(
-                  (booking, index) => (
-                    <BookingRouteCard
-                      key={booking.id}
-                      booking={booking}
-                      index={index}
-                      expanded={
-                        expandedBookingId ===
-                        booking.id
-                      }
-                      onToggle={() => {
-                        setExpandedBookingId(
-                          (
-                            currentBookingId,
-                          ) =>
-                            currentBookingId ===
-                            booking.id
-                              ? null
-                              : booking.id,
-                        );
-                      }}
-                    />
-                  ),
-                )}
-              </AnimatePresence>
-            </section>
-          )}
+        {!isLoading && !errorMessage && filteredBookings.length > 0 && (
+          <section className="mt-6 space-y-4">
+            <AnimatePresence initial={false}>
+              {filteredBookings.map((booking, index) => (
+                <BookingRouteCard
+                  key={booking.id}
+                  booking={booking}
+                  index={index}
+                  expanded={expandedBookingId === booking.id}
+                  onToggle={() => {
+                    setExpandedBookingId((currentBookingId) =>
+                      currentBookingId === booking.id ? null : booking.id
+                    );
+                  }}
+                />
+              ))}
+            </AnimatePresence>
+          </section>
+        )}
       </div>
     </main>
   );
@@ -1135,13 +892,7 @@ interface RouteMetricProps {
   }>;
 }
 
-function RouteMetric({
-  label,
-  value,
-  description,
-  tone,
-  icon: Icon,
-}: RouteMetricProps) {
+function RouteMetric({ label, value, description, tone, icon: Icon }: RouteMetricProps) {
   const toneClasses = {
     blue: {
       icon: "bg-blue-50 text-primary",
@@ -1186,12 +937,12 @@ function RouteMetric({
             {value}
           </p>
 
-          <p className="mt-2 text-[11px] text-slate-400">
-            {description}
-          </p>
+          <p className="mt-2 text-[11px] text-slate-400">{description}</p>
         </div>
 
-        <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${toneClasses.icon}`}>
+        <span
+          className={`flex h-11 w-11 items-center justify-center rounded-2xl ${toneClasses.icon}`}
+        >
           <Icon className="h-5 w-5" />
         </span>
       </div>
@@ -1208,17 +959,10 @@ interface BookingRouteCardProps {
   onToggle: () => void;
 }
 
-function BookingRouteCard({
-  booking,
-  index,
-  expanded,
-  onToggle,
-}: BookingRouteCardProps) {
-  const statusDesign =
-    STATUS_DESIGNS[booking.status];
+function BookingRouteCard({ booking, index, expanded, onToggle }: BookingRouteCardProps) {
+  const statusDesign = STATUS_DESIGNS[booking.status];
 
-  const StatusIcon =
-    statusDesign.icon;
+  const StatusIcon = statusDesign.icon;
 
   return (
     <motion.article
@@ -1234,10 +978,7 @@ function BookingRouteCard({
       }}
       transition={{
         duration: 0.35,
-        delay: Math.min(
-          index * 0.05,
-          0.3,
-        ),
+        delay: Math.min(index * 0.05, 0.3),
       }}
       className="group/card relative overflow-hidden rounded-[1.9rem] border border-white bg-white/95 shadow-[0_18px_55px_rgba(11,37,69,0.08)] transition hover:border-primary/15 hover:shadow-[0_26px_75px_rgba(11,37,69,0.13)]"
     >
@@ -1298,9 +1039,7 @@ function BookingRouteCard({
           <div className="hidden min-w-[170px] flex-1 items-center xl:flex">
             <span className="h-2.5 w-2.5 rounded-full bg-primary" />
 
-            <span
-              className={`h-1 flex-1 bg-gradient-to-r ${statusDesign.routeClassName}`}
-            />
+            <span className={`h-1 flex-1 bg-gradient-to-r ${statusDesign.routeClassName}`} />
 
             <span className="flex h-8 w-8 items-center justify-center rounded-full border-4 border-primary-light bg-white">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -1312,9 +1051,7 @@ function BookingRouteCard({
             <CompactDetail
               icon={CalendarDays}
               label="Cleaning date"
-              value={formatBookingDate(
-                booking.bookingDate,
-              )}
+              value={formatBookingDate(booking.bookingDate)}
             />
 
             <CompactDetail
@@ -1330,17 +1067,13 @@ function BookingRouteCard({
             <CompactDetail
               icon={ReceiptText}
               label="Route total"
-              value={formatCurrency(
-                booking.totalAmount,
-              )}
+              value={formatCurrency(booking.totalAmount)}
             />
           </div>
 
           <span
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary-light text-primary transition-transform duration-300 ${
-              expanded
-                ? "rotate-180 bg-primary text-white"
-                : ""
+              expanded ? "rotate-180 bg-primary text-white" : ""
             }`}
           >
             <ChevronDown className="h-4 w-4" />
@@ -1373,26 +1106,19 @@ function BookingRouteCard({
                 <ExpandedDetail
                   icon={Clock3}
                   label="Estimated duration"
-                  value={formatDuration(
-                    booking.estimatedDurationMinutes,
-                  )}
+                  value={formatDuration(booking.estimatedDurationMinutes)}
                 />
 
                 <ExpandedDetail
                   icon={UserRound}
                   label="Assigned cleaner"
-                  value={
-                    booking.assignedCleanerName ??
-                    "Waiting for admin assignment"
-                  }
+                  value={booking.assignedCleanerName ?? "Waiting for admin assignment"}
                 />
 
                 <ExpandedDetail
                   icon={CreditCard}
                   label="Payment"
-                  value={`${paymentMethodLabel(
-                    booking.paymentMethod,
-                  )} · ${booking.paymentStatus}`}
+                  value={`${paymentMethodLabel(booking.paymentMethod)} · ${booking.paymentStatus}`}
                 />
 
                 <ExpandedDetail
@@ -1404,6 +1130,54 @@ function BookingRouteCard({
 
               <BookingJourney status={booking.status} />
 
+              {booking.status === "completed" && (
+                <>
+                  <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-amber-200 bg-[linear-gradient(120deg,#fffbeb,#ffffff)] p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                        <Star className="h-5 w-5 fill-current" />
+                      </span>
+                      <div>
+                        <p className="font-heading text-lg font-black text-navy">
+                          {booking.reviewId
+                            ? "Thanks for reviewing this cleaning"
+                            : "How was your cleaning?"}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                          {booking.reviewId
+                            ? `Your verified rating: ${booking.reviewRating ?? 0} out of 5`
+                            : "Share a verified review in less than a minute."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {booking.canReview ? (
+                      <Link
+                        href={`/bookings/${booking.id}/review`}
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-navy px-5 text-sm font-extrabold text-white transition hover:bg-primary"
+                      >
+                        Rate your cleaning
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/reviews"
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white px-5 text-sm font-extrabold text-amber-700 transition hover:bg-amber-50"
+                      >
+                        View my reviews
+                      </Link>
+                    )}
+                  </div>
+
+                  <div className="mt-5">
+                    <p className="mb-3 text-[9px] font-extrabold uppercase tracking-[0.15em] text-primary">
+                      Completion report
+                    </p>
+                    <ServiceProofReportPanel bookingId={booking.id} audience="customer" />
+                  </div>
+                </>
+              )}
+
               <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-primary/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-primary">
@@ -1411,8 +1185,8 @@ function BookingRouteCard({
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Your booking details and payment status are kept together in this
-                    protected route record.
+                    Your booking details and payment status are kept together in this protected
+                    route record.
                   </p>
                 </div>
 
@@ -1429,11 +1203,7 @@ function BookingRouteCard({
   );
 }
 
-function BookingJourney({
-  status,
-}: {
-  status: BookingStatus;
-}) {
+function BookingJourney({ status }: { status: BookingStatus }) {
   const steps = [
     {
       label: "Requested",
@@ -1503,7 +1273,10 @@ function BookingJourney({
           const isReached = status !== "cancelled" && index <= activeStep;
 
           return (
-            <div key={step.label} className="relative flex min-w-0 flex-col items-center text-center">
+            <div
+              key={step.label}
+              className="relative flex min-w-0 flex-col items-center text-center"
+            >
               <span
                 className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl border transition ${
                   isReached
@@ -1538,11 +1311,7 @@ interface CompactDetailProps {
   value: string;
 }
 
-function CompactDetail({
-  icon: Icon,
-  label,
-  value,
-}: CompactDetailProps) {
+function CompactDetail({ icon: Icon, label, value }: CompactDetailProps) {
   return (
     <div className="rounded-xl border border-primary/10 bg-surface-soft px-3 py-3">
       <div className="flex items-center gap-2">
@@ -1553,9 +1322,7 @@ function CompactDetail({
         </p>
       </div>
 
-      <p className="mt-2 truncate text-[11px] font-bold text-navy">
-        {value}
-      </p>
+      <p className="mt-2 truncate text-[11px] font-bold text-navy">{value}</p>
     </div>
   );
 }
@@ -1568,11 +1335,7 @@ interface ExpandedDetailProps {
   value: string;
 }
 
-function ExpandedDetail({
-  icon: Icon,
-  label,
-  value,
-}: ExpandedDetailProps) {
+function ExpandedDetail({ icon: Icon, label, value }: ExpandedDetailProps) {
   return (
     <div className="rounded-2xl border border-primary/10 bg-white p-4">
       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
@@ -1583,9 +1346,7 @@ function ExpandedDetail({
         {label}
       </p>
 
-      <p className="mt-2 text-xs font-bold leading-5 text-navy">
-        {value}
-      </p>
+      <p className="mt-2 text-xs font-bold leading-5 text-navy">{value}</p>
     </div>
   );
 }

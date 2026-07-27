@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 import type { DayOfWeek } from "@/types/enums";
 
 export interface ICleanerAvailability extends Document {
@@ -24,5 +24,18 @@ const cleanerAvailabilitySchema = new Schema<ICleanerAvailability>(
   { timestamps: true }
 );
 
-export default mongoose.models.CleanerAvailability ||
-  mongoose.model<ICleanerAvailability>("CleanerAvailability", cleanerAvailabilitySchema);
+cleanerAvailabilitySchema.index(
+  { cleanerId: 1, dayOfWeek: 1 },
+  { unique: true }
+);
+
+const CleanerAvailability =
+  (mongoose.models.CleanerAvailability as
+    | Model<ICleanerAvailability>
+    | undefined) ??
+  mongoose.model<ICleanerAvailability>(
+    "CleanerAvailability",
+    cleanerAvailabilitySchema,
+  );
+
+export default CleanerAvailability;

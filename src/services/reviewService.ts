@@ -5,6 +5,8 @@ import { connectDB } from "@/lib/db";
 import Review, { type IReview } from "@/models/Review";
 import Booking from "@/models/Booking";
 import CleanerAssignment from "@/models/CleanerAssignment";
+import User from "@/models/User";
+import Service from "@/models/Service";
 import { AppError, ForbiddenError, NotFoundError } from "@/lib/apiError";
 import type { Review as ReviewDTO } from "@/types/payment";
 import type {
@@ -13,18 +15,26 @@ import type {
   ListReviewsQuery,
 } from "@/validators/reviewValidator";
 
-function toReviewDTO(doc: IReview): ReviewDTO {
+const REVIEW_EDIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+function toReviewDTO(doc: IReview, includePrivate = false): ReviewDTO {
   return {
     id: doc._id.toString(),
     bookingId: doc.bookingId.toString(),
     customerId: doc.customerId.toString(),
+    serviceId: doc.serviceId?.toString(),
     rating: doc.rating,
     comment: doc.comment,
+    tags: doc.tags ?? [],
+    privateFeedback: includePrivate ? doc.privateFeedback : undefined,
+    isVerified: doc.isVerified !== false,
+    canEdit: Date.now() - doc.createdAt.getTime() <= REVIEW_EDIT_WINDOW_MS,
     beforeImages: doc.beforeImages,
     afterImages: doc.afterImages,
     adminReply: doc.adminReply,
     isVisible: doc.isVisible,
     createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
   };
 }
 
@@ -50,13 +60,17 @@ export async function createReview(
   const doc = await Review.create({
     bookingId: input.bookingId,
     customerId,
+    serviceId: booking.serviceId,
     rating: input.rating,
     comment: input.comment,
+    tags: input.tags ?? [],
+    privateFeedback: input.privateFeedback,
+    isVerified: true,
     beforeImages: input.beforeImages ?? [],
     afterImages: input.afterImages ?? [],
   });
 
-  return toReviewDTO(doc);
+  return toReviewDTO(doc, true);
 }
 
 interface ListResult {
@@ -66,6 +80,13 @@ interface ListResult {
   limit: number;
 }
 
+function anonymizeCustomerName(name?: string) {
+  const parts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
+  if (parts.length === 0) return "Verified customer";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts.at(-1)?.charAt(0)}.`;
+}
+
 /**
  * Lists reviews, optionally scoped to a booking, customer, or cleaner.
  * `includeHidden` should only ever be true for admin callers — everyone
@@ -73,7 +94,8 @@ interface ListResult {
  */
 export async function listReviews(
   query: ListReviewsQuery,
-  includeHidden: boolean
+  includeHidden: boolean,
+  includePrivate = false
 ): Promise<ListResult> {
   await connectDB();
 
@@ -81,6 +103,14 @@ export async function listReviews(
   if (query.bookingId) filter.bookingId = query.bookingId;
   if (query.customerId) filter.customerId = query.customerId;
   if (!includeHidden) filter.isVisible = true;
+
+  if (query.serviceId) {
+    const serviceBookings = await Booking.find({ serviceId: query.serviceId }).select("_id");
+    filter.$or = [
+      { serviceId: query.serviceId },
+      { bookingId: { $in: serviceBookings.map((booking) => booking._id) } },
+    ];
+  }
 
   // Reviews don't store cleanerId directly (a review is of a booking, and
   // cleaner assignment is tracked separately) — resolve it via CleanerAssignment.
@@ -101,8 +131,49 @@ export async function listReviews(
     Review.countDocuments(filter),
   ]);
 
+  const bookingDocuments = await Booking.find({
+    _id: { $in: docs.map((doc) => doc.bookingId) },
+  })
+    .select("_id serviceId")
+    .lean();
+  const serviceIdByBookingId = new Map(
+    bookingDocuments.map((booking) => [booking._id.toString(), booking.serviceId.toString()])
+  );
+  const serviceIds = Array.from(
+    new Set(
+      docs
+        .map(
+          (doc) => doc.serviceId?.toString() ?? serviceIdByBookingId.get(doc.bookingId.toString())
+        )
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+  const [customers, services] = await Promise.all([
+    User.find({ _id: { $in: docs.map((doc) => doc.customerId) } })
+      .select("_id name")
+      .lean(),
+    Service.find({ _id: { $in: serviceIds } })
+      .select("_id name")
+      .lean(),
+  ]);
+  const customerNameById = new Map(
+    customers.map((customer) => [customer._id.toString(), anonymizeCustomerName(customer.name)])
+  );
+  const serviceNameById = new Map(
+    services.map((service) => [service._id.toString(), service.name])
+  );
+
   return {
-    reviews: docs.map(toReviewDTO),
+    reviews: docs.map((doc) => {
+      const serviceId =
+        doc.serviceId?.toString() ?? serviceIdByBookingId.get(doc.bookingId.toString());
+      return {
+        ...toReviewDTO(doc, includePrivate),
+        serviceId,
+        customerName: customerNameById.get(doc.customerId.toString()) ?? "Verified customer",
+        serviceName: serviceId ? serviceNameById.get(serviceId) : undefined,
+      };
+    }),
     total,
     page: query.page,
     limit: query.limit,
@@ -129,14 +200,19 @@ export async function updateReview(
   if (doc.customerId.toString() !== requesterId) {
     throw new ForbiddenError("You can only edit your own review");
   }
+  if (Date.now() - doc.createdAt.getTime() > REVIEW_EDIT_WINDOW_MS) {
+    throw new AppError("Reviews can only be edited within 7 days of submission", 409);
+  }
 
   if (input.rating !== undefined) doc.rating = input.rating;
   if (input.comment !== undefined) doc.comment = input.comment;
+  if (input.tags !== undefined) doc.tags = input.tags;
+  if (input.privateFeedback !== undefined) doc.privateFeedback = input.privateFeedback;
   if (input.beforeImages !== undefined) doc.beforeImages = input.beforeImages;
   if (input.afterImages !== undefined) doc.afterImages = input.afterImages;
 
   await doc.save();
-  return toReviewDTO(doc);
+  return toReviewDTO(doc, true);
 }
 
 /** Admin-only: reply to a review. */
@@ -189,6 +265,9 @@ export async function assertBookingOwnership(bookingId: string, customerId: stri
   if (!booking) throw new NotFoundError("Booking not found");
   if (booking.customerId.toString() !== customerId) {
     throw new ForbiddenError("You can only upload photos for your own bookings");
+  }
+  if (booking.status !== "completed") {
+    throw new AppError("Photos can only be added to completed bookings", 400);
   }
   return booking;
 }

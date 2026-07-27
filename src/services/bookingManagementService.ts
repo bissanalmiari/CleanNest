@@ -19,6 +19,7 @@ import "@/models/AddOn";
 import { AppError, NotFoundError } from "@/lib/apiError";
 import { reconcileElapsedBookings } from "@/services/bookingStatusAutomationService";
 import type { BookingStatus } from "@/types/enums";
+import { createNotification, createNotifications } from "@/services/notificationService";
 
 /* ------------------------------------------------------------------ */
 /* Allowed status transitions                                          */
@@ -33,9 +34,7 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   cancelled: [],
 };
 
-export function getAllowedNextStatuses(
-  currentStatus: BookingStatus
-): BookingStatus[] {
+export function getAllowedNextStatuses(currentStatus: BookingStatus): BookingStatus[] {
   return ALLOWED_TRANSITIONS[currentStatus] ?? [];
 }
 
@@ -58,16 +57,7 @@ export async function getAllBookings(filters: BookingListFilters = {}) {
   await connectDB();
   await reconcileElapsedBookings();
 
-  const {
-    status,
-    dateFrom,
-    dateTo,
-    customerId,
-    serviceId,
-    search,
-    page = 1,
-    limit = 20,
-  } = filters;
+  const { status, dateFrom, dateTo, customerId, serviceId, search, page = 1, limit = 20 } = filters;
 
   const match: Record<string, unknown> = {};
 
@@ -124,36 +114,32 @@ export async function getBookingById(id: string) {
   await connectDB();
   await reconcileElapsedBookings();
 
-  const [booking, addons, assignments, statusHistory, availableCleaners] =
-    await Promise.all([
-      Booking.findById(id)
-        .populate("customerId", "name email phone")
-        .populate("serviceId", "name category price durationMinutes")
-        .populate("addressId", "city area street building floor apartment")
-        .populate("promoCodeId", "code discountType discountValue")
-        .lean()
-        .exec(),
-      BookingAddon.find({ bookingId: id })
-        .populate("addonId", "name")
-        .lean()
-        .exec(),
-      CleanerAssignment.find({ bookingId: id })
-        .sort({ assignedAt: -1 })
-        .populate("cleanerId", "name email phone")
-        .populate("assignedByUserId", "name")
-        .lean()
-        .exec(),
-      BookingStatusHistory.find({ bookingId: id })
-        .sort({ createdAt: -1 })
-        .populate("changedByUserId", "name")
-        .lean()
-        .exec(),
-      User.find({ role: "cleaner", status: "active" })
-        .select("name email phone")
-        .sort({ name: 1 })
-        .lean()
-        .exec(),
-    ]);
+  const [booking, addons, assignments, statusHistory, availableCleaners] = await Promise.all([
+    Booking.findById(id)
+      .populate("customerId", "name email phone")
+      .populate("serviceId", "name category price durationMinutes")
+      .populate("addressId", "city area street building floor apartment")
+      .populate("promoCodeId", "code discountType discountValue")
+      .lean()
+      .exec(),
+    BookingAddon.find({ bookingId: id }).populate("addonId", "name").lean().exec(),
+    CleanerAssignment.find({ bookingId: id })
+      .sort({ assignedAt: -1 })
+      .populate("cleanerId", "name email phone")
+      .populate("assignedByUserId", "name")
+      .lean()
+      .exec(),
+    BookingStatusHistory.find({ bookingId: id })
+      .sort({ createdAt: -1 })
+      .populate("changedByUserId", "name")
+      .lean()
+      .exec(),
+    User.find({ role: "cleaner", status: "active" })
+      .select("name email phone")
+      .sort({ name: 1 })
+      .lean()
+      .exec(),
+  ]);
 
   if (!booking) {
     throw new NotFoundError("Booking not found");
@@ -185,7 +171,7 @@ export async function assignCleaners(
       role: "cleaner",
       status: "active",
     })
-      .select("_id")
+      .select("_id name")
       .lean()
       .exec(),
     CleanerAssignment.find({
@@ -221,10 +207,7 @@ export async function assignCleaners(
   // A fresh assignment on a still-pending booking implicitly confirms it —
   // but not for an unpaid card booking; payment must clear first.
   if (booking.status === "pending") {
-    if (
-      booking.paymentMethod === "card" &&
-      booking.paymentStatus !== "paid"
-    ) {
+    if (booking.paymentMethod === "card" && booking.paymentStatus !== "paid") {
       throw new AppError(
         "This booking is paid by card and cannot be confirmed until the customer completes payment.",
         409
@@ -253,6 +236,30 @@ export async function assignCleaners(
     }))
   );
 
+  await createNotifications(
+    newCleanerIds.map((cleanerId) => ({
+      userId: cleanerId,
+      type: "assignment_new" as const,
+      title: "New cleaning assignment",
+      message: `You were assigned to booking ${booking.bookingNumber}. Review the job and respond.`,
+      href: `/cleaner/jobs/${bookingId}`,
+      bookingId,
+      dedupeKey: `assignment-new:${bookingId}:${cleanerId}`,
+      email: true,
+    }))
+  ).catch((error) => console.error("[notification:assignment-new]", error));
+
+  await createNotification({
+    userId: booking.customerId.toString(),
+    type: "cleaner_assigned",
+    title: "Your booking has been approved",
+    message: `${newCleanerIds.length === 1 ? "A cleaner has" : "Your cleaning team has"} been assigned to booking ${booking.bookingNumber}.`,
+    href: "/bookings",
+    bookingId,
+    dedupeKey: `cleaner-assigned:${bookingId}`,
+    email: true,
+  }).catch((error) => console.error("[notification:cleaner-assigned]", error));
+
   return assignments.map((assignment) => assignment.toObject());
 }
 
@@ -277,10 +284,7 @@ export async function changeBookingStatus(
   const allowedNext = getAllowedNextStatuses(currentStatus);
 
   if (!allowedNext.includes(newStatus)) {
-    throw new AppError(
-      `Cannot change status from "${currentStatus}" to "${newStatus}"`,
-      422
-    );
+    throw new AppError(`Cannot change status from "${currentStatus}" to "${newStatus}"`, 422);
   }
 
   if (
@@ -300,18 +304,13 @@ export async function changeBookingStatus(
       status: { $in: ["assigned", "accepted"] },
     });
     if (assignedCleanerCount === 0) {
-      throw new AppError(
-        "Assign at least one cleaner before approving this booking",
-        422
-      );
+      throw new AppError("Assign at least one cleaner before approving this booking", 422);
     }
   }
 
   booking.status = newStatus;
   if (note) {
-    booking.adminNotes = booking.adminNotes
-      ? `${booking.adminNotes}\n${note}`
-      : note;
+    booking.adminNotes = booking.adminNotes ? `${booking.adminNotes}\n${note}` : note;
   }
   await booking.save();
 
@@ -322,6 +321,41 @@ export async function changeBookingStatus(
     changedByUserId,
     reason: note ?? "",
   });
+
+  if (newStatus === "confirmed") {
+    await createNotification({
+      userId: booking.customerId.toString(),
+      type: "booking_confirmed",
+      title: "Your booking is approved",
+      message: `Booking ${booking.bookingNumber} is officially scheduled.`,
+      href: "/bookings",
+      bookingId,
+      dedupeKey: `booking-confirmed:${bookingId}`,
+      email: true,
+    }).catch((error) => console.error("[notification:booking-confirmed]", error));
+  } else if (newStatus === "cancelled") {
+    await createNotification({
+      userId: booking.customerId.toString(),
+      type: "booking_cancelled",
+      title: "Your booking was cancelled",
+      message: `Booking ${booking.bookingNumber} has been cancelled.`,
+      href: "/bookings",
+      bookingId,
+      dedupeKey: `booking-cancelled:${bookingId}`,
+      email: true,
+    }).catch((error) => console.error("[notification:booking-cancelled]", error));
+  } else if (newStatus === "completed") {
+    await createNotification({
+      userId: booking.customerId.toString(),
+      type: "service_completed",
+      title: "Your cleaning is complete",
+      message: `Booking ${booking.bookingNumber} is complete. Tell us how it went.`,
+      href: `/bookings/${bookingId}/review`,
+      bookingId,
+      dedupeKey: `service-completed:${bookingId}`,
+      email: true,
+    }).catch((error) => console.error("[notification:service-completed]", error));
+  }
 
   return booking.toObject();
 }

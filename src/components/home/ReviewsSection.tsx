@@ -17,7 +17,6 @@ import { useReviews } from "@/hooks/useReviews";
 import { Alert } from "@/components/ui/Alert";
 import type { Review } from "@/types/payment";
 
-
 const trustItems = [
   {
     icon: ShieldCheck,
@@ -82,14 +81,9 @@ const backgroundParticles = [
   },
 ];
 
-
-
 function RatingStars({ rating }: { rating: number }) {
   return (
-    <div
-      className="flex items-center gap-1 text-amber-400"
-      aria-label={`${rating} out of 5 stars`}
-    >
+    <div className="flex items-center gap-1 text-amber-400" aria-label={`${rating} out of 5 stars`}>
       {Array.from({ length: 5 }).map((_, index) => (
         <motion.span
           key={index}
@@ -113,17 +107,12 @@ function RatingStars({ rating }: { rating: number }) {
             damping: 13,
           }}
         >
-          <Star
-            className={`h-5 w-5 ${
-              index < rating ? "fill-current" : "text-amber-200"
-            }`}
-          />
+          <Star className={`h-5 w-5 ${index < rating ? "fill-current" : "text-amber-200"}`} />
         </motion.span>
       ))}
     </div>
   );
 }
-
 
 const AVATAR_PALETTE = [
   "bg-gradient-to-br from-blue-500 to-cyan-500 text-white",
@@ -138,7 +127,7 @@ function initialsFor(name: string) {
 }
 
 function LiveReviewCard({ review, index }: { review: Review; index: number }) {
-  const name = "Verified CleanNest customer";
+  const name = review.customerName?.trim() || "Verified customer";
 
   return (
     <motion.article
@@ -336,7 +325,6 @@ export default function ReviewsSection() {
               >
                 <HeartHandshake className="h-4 w-4" />
               </motion.span>
-
               Customer Experiences
             </motion.div>
 
@@ -348,18 +336,15 @@ export default function ReviewsSection() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Discover how convenient booking, dependable service, and
-              thoughtful care helped customers enjoy cleaner homes and
-              workplaces.
+              Discover how convenient booking, dependable service, and thoughtful care helped
+              customers enjoy cleaner homes and workplaces.
             </p>
           </motion.div>
 
           {/* Live reviews */}
           <div className="mt-16">
             {loading && (
-              <p className="text-center text-sm font-medium text-slate-500">
-                Loading reviews…
-              </p>
+              <p className="text-center text-sm font-medium text-slate-500">Loading reviews…</p>
             )}
 
             {!loading && error && (
@@ -394,9 +379,7 @@ export default function ReviewsSection() {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="text-sm font-bold text-navy">
-                    {item.label}
-                  </span>
+                  <span className="text-sm font-bold text-navy">{item.label}</span>
                 </div>
               );
             })}
@@ -414,8 +397,8 @@ export default function ReviewsSection() {
                   Join customers who trust CleanNest with their spaces.
                 </h3>
                 <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-blue-100/65">
-                  Select your service, choose a convenient time, and enjoy a
-                  simpler cleaning experience.
+                  Select your service, choose a convenient time, and enjoy a simpler cleaning
+                  experience.
                 </p>
               </div>
 
@@ -429,7 +412,6 @@ export default function ReviewsSection() {
             </div>
           </div>
         </div>
-
       </section>
     </MotionConfig>
   );

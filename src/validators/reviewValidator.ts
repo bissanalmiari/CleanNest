@@ -2,6 +2,7 @@
 // Requires zod: npm install zod
 import { z } from "zod";
 import { objectIdSchema } from "./common";
+import { REVIEW_TAGS } from "@/constants/reviews";
 
 const MAX_GALLERY_IMAGES = 5;
 const urlSchema = z.string().trim().url("Invalid image URL");
@@ -13,6 +14,8 @@ export const createReviewSchema = z.object({
   bookingId: objectIdSchema,
   rating: z.number().int().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5"),
   comment: z.string().trim().max(1000).optional(),
+  tags: z.array(z.enum(REVIEW_TAGS)).max(5).optional().default([]),
+  privateFeedback: z.string().trim().max(1000).optional(),
   beforeImages: z.array(urlSchema).max(MAX_GALLERY_IMAGES).optional().default([]),
   afterImages: z.array(urlSchema).max(MAX_GALLERY_IMAGES).optional().default([]),
 });
@@ -21,6 +24,8 @@ export const createReviewSchema = z.object({
 export const updateReviewSchema = z.object({
   rating: z.number().int().min(1).max(5).optional(),
   comment: z.string().trim().max(1000).optional(),
+  tags: z.array(z.enum(REVIEW_TAGS)).max(5).optional(),
+  privateFeedback: z.string().trim().max(1000).optional(),
   beforeImages: z.array(urlSchema).max(MAX_GALLERY_IMAGES).optional(),
   afterImages: z.array(urlSchema).max(MAX_GALLERY_IMAGES).optional(),
 });
@@ -51,6 +56,7 @@ export const listReviewsQuerySchema = z.object({
   bookingId: objectIdSchema.optional(),
   customerId: objectIdSchema.optional(),
   cleanerId: objectIdSchema.optional(),
+  serviceId: objectIdSchema.optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(50).optional().default(20),
 });

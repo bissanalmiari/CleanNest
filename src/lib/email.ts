@@ -4,18 +4,52 @@
 //      EMAIL_FROM   (e.g. "CleanNest <no-reply@cleannest.com>")
 //      APP_URL      (e.g. "http://localhost:3000" in dev, your real domain in prod)
 import "server-only";
+import crypto from "node:crypto";
 import nodemailer, { type Transporter } from "nodemailer";
 
 const EMAIL_SERVER = process.env.EMAIL_SERVER;
 const EMAIL_FROM = process.env.EMAIL_FROM || "CleanNest <no-reply@cleannest.com>";
+const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO;
+const EMAIL_RETURN_PATH = process.env.EMAIL_RETURN_PATH;
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
+
+function emailFromDomain() {
+  const match = EMAIL_FROM.match(/@([^>\s]+)/);
+  return match?.[1]?.toLowerCase() ?? "cleannest.local";
+}
+
+if (
+  process.env.NODE_ENV === "production" &&
+  EMAIL_FROM.includes("no-reply@cleannest.com") &&
+  !process.env.EMAIL_FROM
+) {
+  console.warn(
+    "[email] EMAIL_FROM is not configured. Use an authenticated address on your own domain.",
+  );
+}
 
 let transporter: Transporter | null = null;
 
 function getTransporter(): Transporter | null {
   if (!EMAIL_SERVER) return null;
   if (!transporter) {
-    transporter = nodemailer.createTransport(EMAIL_SERVER);
+    const dkimDomain = process.env.EMAIL_DKIM_DOMAIN?.trim();
+    const dkimSelector = process.env.EMAIL_DKIM_SELECTOR?.trim();
+    const dkimPrivateKey = process.env.EMAIL_DKIM_PRIVATE_KEY?.replaceAll(
+      "\\n",
+      "\n",
+    );
+    transporter = nodemailer.createTransport(EMAIL_SERVER, {
+      ...(dkimDomain && dkimSelector && dkimPrivateKey
+        ? {
+            dkim: {
+              domainName: dkimDomain,
+              keySelector: dkimSelector,
+              privateKey: dkimPrivateKey,
+            },
+          }
+        : {}),
+    });
   }
   return transporter;
 }
@@ -25,6 +59,8 @@ export interface SendEmailInput {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
+  referenceId?: string;
 }
 
 /**
@@ -32,7 +68,14 @@ export interface SendEmailInput {
  * If EMAIL_SERVER isn't configured (e.g. local development), the message is
  * logged to the console instead of failing the request outright.
  */
-export async function sendEmail({ to, subject, html, text }: SendEmailInput): Promise<void> {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+  replyTo,
+  referenceId,
+}: SendEmailInput): Promise<void> {
   const client = getTransporter();
 
   if (!client) {
@@ -49,7 +92,35 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
     subject,
     html,
     text: text ?? html.replace(/<[^>]+>/g, ""),
+    replyTo: replyTo ?? EMAIL_REPLY_TO,
+    envelope: EMAIL_RETURN_PATH
+      ? { from: EMAIL_RETURN_PATH, to }
+      : undefined,
+    messageId: `<${referenceId ?? crypto.randomUUID()}@${
+      process.env.EMAIL_MESSAGE_DOMAIN?.trim() || emailFromDomain()
+    }>`,
+    headers: {
+      "Auto-Submitted": "auto-generated",
+      "X-Auto-Response-Suppress": "All",
+      "X-Entity-Ref-ID": referenceId ?? crypto.randomUUID(),
+    },
   });
+}
+
+export function emailAppUrl(path: string) {
+  return new URL(path, APP_URL).toString();
+}
+
+export function isPublicEmailUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      !["localhost", "127.0.0.1", "::1"].includes(url.hostname)
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -74,6 +145,7 @@ export async function sendOtpEmail(
 
   const actionPath = isVerify ? "/verify-email" : "/reset-password";
   const actionUrl = `${APP_URL}${actionPath}?email=${encodeURIComponent(to)}&otp=${otp}`;
+  const includeActionLink = isPublicEmailUrl(actionUrl);
   const actionLabel = isVerify ? "Verify email" : "Reset password";
 
   const html = `
@@ -81,13 +153,13 @@ export async function sendOtpEmail(
       <h2 style="color:#0f766e;">${heading}</h2>
       <p>${body}</p>
 
-      <div style="text-align:center; margin: 24px 0;">
+      ${includeActionLink ? `<div style="text-align:center; margin: 24px 0;">
         <a href="${actionUrl}"
            style="display:inline-block; background:#1E6FD9; color:#ffffff; text-decoration:none;
                   font-weight:600; padding:12px 28px; border-radius:8px;">
           ${actionLabel}
         </a>
-      </div>
+      </div>` : ""}
 
       <p style="color:#666; font-size: 13px; text-align:center;">
         Or enter this code manually on the ${isVerify ? "verification" : "reset"} page:
@@ -105,7 +177,9 @@ export async function sendOtpEmail(
     html,
     text:
       `${heading}\n\n` +
-      `Open this link to ${actionLabel.toLowerCase()}: ${actionUrl}\n\n` +
+      (includeActionLink
+        ? `Open this link to ${actionLabel.toLowerCase()}: ${actionUrl}\n\n`
+        : "") +
       `Or enter this code manually: ${otp}\n` +
       `This code expires in 10 minutes.`,
   });

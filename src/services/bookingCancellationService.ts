@@ -14,6 +14,12 @@ import BookingModel from "@/models/Booking";
 import BookingStatusHistoryModel from "@/models/BookingStatusHistory";
 import PaymentModel from "@/models/Payment";
 import PromoCodeModel from "@/models/PromoCode";
+import CleanerAssignment from "@/models/CleanerAssignment";
+import {
+  createNotification,
+  createNotifications,
+  notifyActiveAdmins,
+} from "@/services/notificationService";
 
 import {
   checkBookingChangeWindow,
@@ -762,6 +768,46 @@ export async function cancelCustomerBooking({
       paymentResult,
       promoCodeUsageRestored,
     } = transactionResult;
+
+    const assignedCleaners = await CleanerAssignment.find({
+      bookingId: booking._id,
+      status: { $in: ["assigned", "accepted"] },
+    })
+      .select("cleanerId")
+      .lean();
+    await Promise.all([
+      createNotification({
+        userId: customerId,
+        type: "booking_cancelled",
+        title: "Booking cancelled",
+        message: `Booking ${booking.bookingNumber} was cancelled successfully.`,
+        href: "/bookings",
+        bookingId,
+        dedupeKey: `booking-cancelled:${bookingId}`,
+        email: true,
+      }),
+      createNotifications(
+        assignedCleaners.map((assignment) => ({
+          userId: assignment.cleanerId.toString(),
+          type: "booking_cancelled" as const,
+          title: "Assigned job cancelled",
+          message: `Booking ${booking.bookingNumber} has been cancelled and removed from your route.`,
+          href: "/cleaner/upcoming",
+          bookingId,
+          dedupeKey: `booking-cancelled:${bookingId}:${assignment.cleanerId.toString()}`,
+          email: true,
+        })),
+      ),
+      notifyActiveAdmins({
+        type: "booking_cancelled",
+        title: "Customer cancelled a booking",
+        message: `Booking ${booking.bookingNumber} was cancelled by the customer.`,
+        href: `/admin/bookings/${bookingId}`,
+        bookingId,
+        dedupeKey: `customer-cancelled:${bookingId}`,
+        email: false,
+      }),
+    ]).catch((error) => console.error("[notification:cancellation]", error));
 
     return {
       booking: {

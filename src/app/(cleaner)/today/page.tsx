@@ -1,3 +1,5 @@
-export default function TodaysJobsPage() {
-  return <div>TodaysJobsPage</div>;
+import { redirect } from "next/navigation";
+
+export default function LegacyCleanerTodayPage() {
+  redirect("/cleaner/today");
 }

@@ -8,6 +8,23 @@ export const metadata: Metadata = {
     "Create and schedule your personalized CleanNest cleaning route.",
 };
 
-export default function BookServicePage() {
-  return <BookingRouteBuilder />;
+type BookServicePageProps = {
+  searchParams: Promise<{
+    service?: string | string[];
+  }>;
+};
+
+export default async function BookServicePage({
+  searchParams,
+}: BookServicePageProps) {
+  const parameters = await searchParams;
+  const requestedService = Array.isArray(parameters.service)
+    ? parameters.service[0]
+    : parameters.service;
+  const preferredServiceSlug =
+    requestedService && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(requestedService)
+      ? requestedService
+      : undefined;
+
+  return <BookingRouteBuilder preferredServiceSlug={preferredServiceSlug} />;
 }

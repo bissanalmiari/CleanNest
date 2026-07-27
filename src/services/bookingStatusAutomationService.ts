@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import CleanerAssignment from "@/models/CleanerAssignment";
 import BookingStatusHistory from "@/models/BookingStatusHistory";
+import { createNotification } from "@/services/notificationService";
 
 const BUSINESS_TIME_ZONE =
   process.env.BUSINESS_TIME_ZONE?.trim() || "Asia/Beirut";
@@ -56,9 +57,7 @@ function localDateTimeKey(date: Date, timeZone: string) {
 }
 
 function scheduledEndKey(bookingDate: Date, endTime: string) {
-  // Booking dates are calendar values stored at UTC midnight. Reading the UTC
-  // date avoids changing the booked day when the server runs in another zone.
-  const day = bookingDate.toISOString().slice(0, 10);
+  const day = localDateTimeKey(bookingDate, BUSINESS_TIME_ZONE).slice(0, 10);
   return `${day}T${endTime.slice(0, 5)}`;
 }
 
@@ -71,7 +70,7 @@ async function performElapsedBookingReconciliation(now = new Date()) {
     status: { $in: ["confirmed", "in_progress"] },
     bookingDate: { $lte: new Date(`${currentDay}T23:59:59.999Z`) },
   })
-    .select("_id bookingDate endTime status")
+    .select("_id bookingNumber customerId bookingDate endTime status")
     .lean()
     .exec();
 
@@ -118,6 +117,18 @@ async function performElapsedBookingReconciliation(now = new Date()) {
             status: { $in: ["assigned", "accepted"] },
           },
           { $set: { status: "completed" } }
+        ),
+        createNotification({
+          userId: booking.customerId.toString(),
+          type: "service_completed",
+          title: "Your cleaning is complete",
+          message: `Booking ${booking.bookingNumber} reached its scheduled completion time. You can now review the service.`,
+          href: `/bookings/${booking._id.toString()}/review`,
+          bookingId: booking._id.toString(),
+          dedupeKey: `service-completed:${booking._id.toString()}`,
+          email: true,
+        }).catch((error) =>
+          console.error("[notification:auto-completion]", error),
         ),
       ]);
     })

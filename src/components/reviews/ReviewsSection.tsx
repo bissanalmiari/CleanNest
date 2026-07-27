@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BadgeCheck } from "lucide-react";
 import { useReviews } from "@/hooks/useReviews";
 import { RatingStars } from "./RatingStars";
 import { Alert } from "@/components/ui/Alert";
 import type { Review } from "@/types/payment";
+import { ReviewForm } from "./ReviewForm";
 
 interface ReviewsSectionProps {
   /** Scope the list to one of these — pass exactly one. */
@@ -34,6 +35,7 @@ export function ReviewsSection({
   viewAllHref,
 }: ReviewsSectionProps) {
   const { reviews, loading, error, fetchReviews, deleteReview } = useReviews();
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchReviews({ bookingId, customerId, cleanerId, limit });
@@ -57,14 +59,28 @@ export function ReviewsSection({
 
   return (
     <div className="space-y-4">
-      {reviews.map((review) => (
-        <ReviewCard
-          key={review.id}
-          review={review}
-          isOwner={currentUserId === review.customerId}
-          onDelete={() => handleDelete(review.id)}
-        />
-      ))}
+      {reviews.map((review) =>
+        editingReviewId === review.id ? (
+          <ReviewForm
+            key={review.id}
+            bookingId={review.bookingId}
+            initialReview={review}
+            onCancel={() => setEditingReviewId(null)}
+            onSubmitted={() => {
+              setEditingReviewId(null);
+              void fetchReviews({ bookingId, customerId, cleanerId, limit });
+            }}
+          />
+        ) : (
+          <ReviewCard
+            key={review.id}
+            review={review}
+            isOwner={currentUserId === review.customerId}
+            onEdit={() => setEditingReviewId(review.id)}
+            onDelete={() => handleDelete(review.id)}
+          />
+        )
+      )}
 
       {viewAllHref && (
         <div className="flex justify-center pt-2">
@@ -85,10 +101,12 @@ function ReviewCard({
   review,
   isOwner,
   onDelete,
+  onEdit,
 }: {
   review: Review;
   isOwner: boolean;
   onDelete: () => void;
+  onEdit: () => void;
 }) {
   const hasGallery = review.beforeImages.length > 0 || review.afterImages.length > 0;
   const pairCount = Math.max(review.beforeImages.length, review.afterImages.length);
@@ -96,19 +114,55 @@ function ReviewCard({
   return (
     <div className="rounded-card bg-surface p-5 shadow-card">
       <div className="flex items-start justify-between">
-        <RatingStars value={review.rating} size="sm" />
+        <div>
+          <RatingStars value={review.rating} size="sm" />
+          {review.isVerified && (
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
+              <BadgeCheck className="h-4 w-4" />
+              Verified booking
+            </span>
+          )}
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            {review.customerName ?? "Verified customer"}
+            {review.serviceName ? ` · ${review.serviceName}` : ""}
+          </p>
+        </div>
         {isOwner && (
-          <button
-            type="button"
-            onClick={onDelete}
-            className="text-xs text-navy/40 hover:text-status-cancelled"
-          >
-            Delete
-          </button>
+          <div className="flex items-center gap-3">
+            {review.canEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="text-xs font-bold text-primary hover:text-primary-dark"
+              >
+                Edit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onDelete}
+              className="text-xs text-navy/40 hover:text-status-cancelled"
+            >
+              Delete
+            </button>
+          </div>
         )}
       </div>
 
       {review.comment && <p className="mt-2 text-sm text-navy/80">{review.comment}</p>}
+
+      {review.tags.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {review.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-primary-light px-2.5 py-1 text-[11px] font-semibold text-primary"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {hasGallery && (
         <div className="mt-3 space-y-2">

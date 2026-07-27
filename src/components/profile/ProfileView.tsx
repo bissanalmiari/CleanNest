@@ -9,6 +9,7 @@ import {
 
 import {
   BadgeCheck,
+  BellRing,
   Cake,
   CalendarDays,
   Check,
@@ -36,13 +37,15 @@ import { EditProfileForm } from "@/components/shared/EditProfileForm";
 import { Alert } from "@/components/ui/Alert";
 
 import { ChangePasswordForm } from "./ChangePasswordForm";
+import NotificationPreferencesCard from "@/components/notifications/NotificationPreferencesCard";
 
 import type { PublicUser } from "@/types/user";
 
 type ProfileTab =
   | "overview"
   | "edit"
-  | "security";
+  | "security"
+  | "notifications";
 
 interface ProfileTabItem {
   id: ProfileTab;
@@ -72,6 +75,12 @@ const PROFILE_TABS: ProfileTabItem[] = [
     label: "Security",
     description: "Password protection",
     icon: LockKeyhole,
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    description: "Email preferences",
+    icon: BellRing,
   },
 ];
 
@@ -1192,6 +1201,12 @@ export function ProfileView() {
               </div>
             </aside>
           </section>
+        )}
+
+        {activeTab === "notifications" && (
+          <div className="mt-7">
+            <NotificationPreferencesCard />
+          </div>
         )}
       </div>
     </main>

@@ -9,7 +9,10 @@ import PromoCodeModel from "@/models/PromoCode";
 import PromoCodeUsageModel from "@/models/PromoCodeUsage";
 import BookingModel from "@/models/Booking";
 
-import type { BookingPricePreviewInput } from "@/validators/bookingValidator";
+import type {
+  BookingBatchPricePreviewInput,
+  BookingPricePreviewInput,
+} from "@/validators/bookingValidator";
 
 export type BookingPricingErrorCode =
   | "INVALID_ID"
@@ -38,7 +41,7 @@ export class BookingPricingError extends Error {
     code: BookingPricingErrorCode,
     message: string,
     statusCode = 400,
-    details?: Record<string, unknown>,
+    details?: Record<string, unknown>
   ) {
     super(message);
 
@@ -56,11 +59,7 @@ interface PropertyPricingResult {
 }
 
 export interface PropertyPriceLine {
-  code:
-    | "property_type"
-    | "bedrooms"
-    | "bathrooms"
-    | "property_size";
+  code: "property_type" | "bedrooms" | "bathrooms" | "property_size";
 
   label: string;
   quantity: number;
@@ -137,6 +136,14 @@ export interface BookingPriceQuote {
   estimatedDurationMinutes: number;
 }
 
+export interface ServicePricePreviewQuote {
+  serviceId: string;
+  serviceBaseAmount: number;
+  propertyAdjustmentAmount: number;
+  baseAmount: number;
+  estimatedDurationMinutes: number;
+}
+
 /*
  * These rules are centralized so they can be changed
  * without changing the calculation algorithm.
@@ -155,7 +162,6 @@ export const PROPERTY_PRICING_RULES = {
     includedBathrooms: 1,
     extraBathroomAmount: 6,
     extraBathroomMinutes: 15,
-
   },
 
   house: {
@@ -169,7 +175,6 @@ export const PROPERTY_PRICING_RULES = {
     includedBathrooms: 1,
     extraBathroomAmount: 7,
     extraBathroomMinutes: 20,
-
   },
 
   office: {
@@ -183,7 +188,6 @@ export const PROPERTY_PRICING_RULES = {
     includedBathrooms: 1,
     extraBathroomAmount: 6,
     extraBathroomMinutes: 15,
-
   },
 
   other: {
@@ -197,41 +201,25 @@ export const PROPERTY_PRICING_RULES = {
     includedBathrooms: 0,
     extraBathroomAmount: 6,
     extraBathroomMinutes: 15,
-
   },
 } as const;
 
 function roundMoney(value: number) {
-  return Math.round(
-    (value + Number.EPSILON) * 100,
-  ) / 100;
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-function safeNumber(
-  value: unknown,
-  fallback = 0,
-) {
+function safeNumber(value: unknown, fallback = 0) {
   const parsed = Number(value);
 
-  return Number.isFinite(parsed)
-    ? parsed
-    : fallback;
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function toObjectId(
-  value: string,
-  fieldName: string,
-) {
+function toObjectId(value: string, fieldName: string) {
   if (!Types.ObjectId.isValid(value)) {
-    throw new BookingPricingError(
-      "INVALID_ID",
-      `${fieldName} is invalid.`,
-      400,
-      {
-        field: fieldName,
-        value,
-      },
-    );
+    throw new BookingPricingError("INVALID_ID", `${fieldName} is invalid.`, 400, {
+      field: fieldName,
+      value,
+    });
   }
 
   return new Types.ObjectId(value);
@@ -243,173 +231,105 @@ function calculatePropertyPricing(
     includedSquareMeters: number;
     pricePerAdditionalSquareMeter: number;
     minutesPerAdditionalSquareMeter: number;
-  },
+  }
 ): PropertyPricingResult {
-  const rules =
-    PROPERTY_PRICING_RULES[
-      property.propertyType
-    ];
+  const rules = PROPERTY_PRICING_RULES[property.propertyType];
 
   if (!rules) {
-    throw new BookingPricingError(
-      "INVALID_PROPERTY",
-      "The selected property type is invalid.",
-    );
+    throw new BookingPricingError("INVALID_PROPERTY", "The selected property type is invalid.");
   }
 
-  const bedrooms = Math.max(
-    0,
-    safeNumber(property.bedrooms),
-  );
+  const bedrooms = Math.max(0, safeNumber(property.bedrooms));
 
-  const bathrooms = Math.max(
-    0,
-    safeNumber(property.bathrooms),
-  );
+  const bathrooms = Math.max(0, safeNumber(property.bathrooms));
 
-  const propertySize = Math.max(
-    0,
-    safeNumber(property.propertySize),
-  );
+  const propertySize = Math.max(0, safeNumber(property.propertySize));
 
   const lines: PropertyPriceLine[] = [];
 
   let amount = 0;
   let extraDurationMinutes = 0;
 
-  if (
-    rules.flatAmount > 0 ||
-    rules.flatMinutes > 0
-  ) {
+  if (rules.flatAmount > 0 || rules.flatMinutes > 0) {
     lines.push({
       code: "property_type",
       label: `${
-        property.propertyType
-          .charAt(0)
-          .toUpperCase() +
-        property.propertyType.slice(1)
+        property.propertyType.charAt(0).toUpperCase() + property.propertyType.slice(1)
       } property adjustment`,
       quantity: 1,
       unitAmount: rules.flatAmount,
       totalAmount: rules.flatAmount,
-      extraDurationMinutes:
-        rules.flatMinutes,
+      extraDurationMinutes: rules.flatMinutes,
     });
 
     amount += rules.flatAmount;
 
-    extraDurationMinutes +=
-      rules.flatMinutes;
+    extraDurationMinutes += rules.flatMinutes;
   }
 
-  const extraBedrooms = Math.max(
-    0,
-    bedrooms -
-      rules.includedBedrooms,
-  );
+  const extraBedrooms = Math.max(0, bedrooms - rules.includedBedrooms);
 
-  if (
-    extraBedrooms > 0 &&
-    rules.extraBedroomAmount > 0
-  ) {
-    const bedroomAmount =
-      extraBedrooms *
-      rules.extraBedroomAmount;
+  if (extraBedrooms > 0 && rules.extraBedroomAmount > 0) {
+    const bedroomAmount = extraBedrooms * rules.extraBedroomAmount;
 
-    const bedroomMinutes =
-      extraBedrooms *
-      rules.extraBedroomMinutes;
+    const bedroomMinutes = extraBedrooms * rules.extraBedroomMinutes;
 
     lines.push({
       code: "bedrooms",
       label: "Additional bedrooms",
       quantity: extraBedrooms,
-      unitAmount:
-        rules.extraBedroomAmount,
+      unitAmount: rules.extraBedroomAmount,
       totalAmount: bedroomAmount,
-      extraDurationMinutes:
-        bedroomMinutes,
+      extraDurationMinutes: bedroomMinutes,
     });
 
     amount += bedroomAmount;
 
-    extraDurationMinutes +=
-      bedroomMinutes;
+    extraDurationMinutes += bedroomMinutes;
   }
 
-  const extraBathrooms = Math.max(
-    0,
-    bathrooms -
-      rules.includedBathrooms,
-  );
+  const extraBathrooms = Math.max(0, bathrooms - rules.includedBathrooms);
 
-  if (
-    extraBathrooms > 0 &&
-    rules.extraBathroomAmount > 0
-  ) {
-    const bathroomAmount =
-      extraBathrooms *
-      rules.extraBathroomAmount;
+  if (extraBathrooms > 0 && rules.extraBathroomAmount > 0) {
+    const bathroomAmount = extraBathrooms * rules.extraBathroomAmount;
 
-    const bathroomMinutes =
-      extraBathrooms *
-      rules.extraBathroomMinutes;
+    const bathroomMinutes = extraBathrooms * rules.extraBathroomMinutes;
 
     lines.push({
       code: "bathrooms",
       label: "Additional bathrooms",
       quantity: extraBathrooms,
-      unitAmount:
-        rules.extraBathroomAmount,
+      unitAmount: rules.extraBathroomAmount,
       totalAmount: bathroomAmount,
-      extraDurationMinutes:
-        bathroomMinutes,
+      extraDurationMinutes: bathroomMinutes,
     });
 
     amount += bathroomAmount;
 
-    extraDurationMinutes +=
-      bathroomMinutes;
+    extraDurationMinutes += bathroomMinutes;
   }
 
-  const additionalSquareMeters =
-    Math.max(
-      0,
-      propertySize -
-        sizePricing.includedSquareMeters,
+  const additionalSquareMeters = Math.max(0, propertySize - sizePricing.includedSquareMeters);
+
+  if (additionalSquareMeters > 0 && sizePricing.pricePerAdditionalSquareMeter > 0) {
+    const sizeAmount = additionalSquareMeters * sizePricing.pricePerAdditionalSquareMeter;
+
+    const sizeMinutes = Math.ceil(
+      additionalSquareMeters * sizePricing.minutesPerAdditionalSquareMeter
     );
-
-  if (
-    additionalSquareMeters > 0 &&
-    sizePricing.pricePerAdditionalSquareMeter >
-      0
-  ) {
-    const sizeAmount =
-      additionalSquareMeters *
-      sizePricing.pricePerAdditionalSquareMeter;
-
-    const sizeMinutes =
-      Math.ceil(
-        additionalSquareMeters *
-          sizePricing.minutesPerAdditionalSquareMeter,
-      );
 
     lines.push({
       code: "property_size",
       label: `Floor area above the included ${sizePricing.includedSquareMeters} m²`,
-      quantity:
-        additionalSquareMeters,
-      unitAmount:
-        sizePricing.pricePerAdditionalSquareMeter,
+      quantity: additionalSquareMeters,
+      unitAmount: sizePricing.pricePerAdditionalSquareMeter,
       totalAmount: sizeAmount,
-      extraDurationMinutes:
-        sizeMinutes,
+      extraDurationMinutes: sizeMinutes,
     });
 
     amount += sizeAmount;
 
-    extraDurationMinutes +=
-      sizeMinutes;
+    extraDurationMinutes += sizeMinutes;
   }
 
   return {
@@ -417,19 +337,15 @@ function calculatePropertyPricing(
     extraDurationMinutes,
     lines: lines.map((line) => ({
       ...line,
-      unitAmount: roundMoney(
-        line.unitAmount,
-      ),
-      totalAmount: roundMoney(
-        line.totalAmount,
-      ),
+      unitAmount: roundMoney(line.unitAmount),
+      totalAmount: roundMoney(line.totalAmount),
     })),
   };
 }
 
 async function calculateAddonPricing(
   serviceId: Types.ObjectId,
-  selectedAddOns: BookingPricePreviewInput["addOns"],
+  selectedAddOns: BookingPricePreviewInput["addOns"]
 ) {
   if (selectedAddOns.length === 0) {
     return {
@@ -439,30 +355,20 @@ async function calculateAddonPricing(
     };
   }
 
-  const selectedAddOnIds =
-    selectedAddOns.map((selection) =>
-      toObjectId(
-        selection.addOnId,
-        "Add-on ID",
-      ),
-    );
+  const selectedAddOnIds = selectedAddOns.map((selection) =>
+    toObjectId(selection.addOnId, "Add-on ID")
+  );
 
-  const serviceAddOnRelations =
-    await ServiceAddonModel.find({
-      serviceId,
-      addonId: {
-        $in: selectedAddOnIds,
-      },
-      isActive: true,
-    }).exec();
+  const serviceAddOnRelations = await ServiceAddonModel.find({
+    serviceId,
+    addonId: {
+      $in: selectedAddOnIds,
+    },
+    isActive: true,
+  }).exec();
 
   const relationByAddOnId = new Map(
-    serviceAddOnRelations.map(
-      (relation) => [
-        relation.addonId.toString(),
-        relation,
-      ],
-    ),
+    serviceAddOnRelations.map((relation) => [relation.addonId.toString(), relation])
   );
 
   const addOns = await AddonModel.find({
@@ -471,25 +377,17 @@ async function calculateAddonPricing(
     },
   }).exec();
 
-  const addOnById = new Map(
-    addOns.map((addOn) => [
-      addOn._id.toString(),
-      addOn,
-    ]),
-  );
+  const addOnById = new Map(addOns.map((addOn) => [addOn._id.toString(), addOn]));
 
-  const lines: BookingAddonPriceLine[] =
-    [];
+  const lines: BookingAddonPriceLine[] = [];
 
   let addOnsAmount = 0;
   let addOnsExtraDurationMinutes = 0;
 
   for (const selection of selectedAddOns) {
-    const addOnId =
-      selection.addOnId;
+    const addOnId = selection.addOnId;
 
-    const relation =
-      relationByAddOnId.get(addOnId);
+    const relation = relationByAddOnId.get(addOnId);
 
     if (!relation) {
       throw new BookingPricingError(
@@ -498,12 +396,11 @@ async function calculateAddonPricing(
         400,
         {
           addOnId,
-        },
+        }
       );
     }
 
-    const addOn =
-      addOnById.get(addOnId);
+    const addOn = addOnById.get(addOnId);
 
     if (!addOn) {
       throw new BookingPricingError(
@@ -512,7 +409,7 @@ async function calculateAddonPricing(
         404,
         {
           addOnId,
-        },
+        }
       );
     }
 
@@ -524,56 +421,38 @@ async function calculateAddonPricing(
         {
           addOnId,
           addOnName: addOn.name,
-        },
+        }
       );
     }
 
-    const maximumQuantity =
-      relation.maxQuantity ??
-      addOn.maxQuantity ??
-      1;
+    const maximumQuantity = relation.maxQuantity ?? addOn.maxQuantity ?? 1;
 
-    if (
-      selection.quantity >
-      maximumQuantity
-    ) {
+    if (selection.quantity > maximumQuantity) {
       throw new BookingPricingError(
         "ADDON_QUANTITY_EXCEEDED",
         `${addOn.name} allows a maximum quantity of ${maximumQuantity}.`,
         400,
         {
           addOnId,
-          requestedQuantity:
-            selection.quantity,
+          requestedQuantity: selection.quantity,
           maximumQuantity,
-        },
+        }
       );
     }
 
-    const unitPrice = roundMoney(
-      relation.overridePrice ??
-        addOn.price,
-    );
+    const unitPrice = roundMoney(relation.overridePrice ?? addOn.price);
 
     const unitExtraDurationMinutes =
-      relation.overrideDurationMinutes ??
-      addOn.extraDurationMinutes ??
-      0;
+      relation.overrideDurationMinutes ?? addOn.extraDurationMinutes ?? 0;
 
-    const totalPrice = roundMoney(
-      unitPrice *
-        selection.quantity,
-    );
+    const totalPrice = roundMoney(unitPrice * selection.quantity);
 
-    const totalExtraDurationMinutes =
-      unitExtraDurationMinutes *
-      selection.quantity;
+    const totalExtraDurationMinutes = unitExtraDurationMinutes * selection.quantity;
 
     lines.push({
       addOnId,
       name: addOn.name,
-      description:
-        addOn.description ?? "",
+      description: addOn.description ?? "",
       quantity: selection.quantity,
       unitPrice,
       totalPrice,
@@ -584,17 +463,13 @@ async function calculateAddonPricing(
 
     addOnsAmount += totalPrice;
 
-    addOnsExtraDurationMinutes +=
-      totalExtraDurationMinutes;
+    addOnsExtraDurationMinutes += totalExtraDurationMinutes;
   }
 
   return {
     lines,
-    amount: roundMoney(
-      addOnsAmount,
-    ),
-    extraDurationMinutes:
-      addOnsExtraDurationMinutes,
+    amount: roundMoney(addOnsAmount),
+    extraDurationMinutes: addOnsExtraDurationMinutes,
   };
 }
 
@@ -617,78 +492,45 @@ async function calculatePromoDiscount({
     return null;
   }
 
-  const promoObjectId = toObjectId(
-    promoCodeId,
-    "Promo-code ID",
-  );
+  const promoObjectId = toObjectId(promoCodeId, "Promo-code ID");
 
-  const promoCode =
-    await PromoCodeModel.findById(
-      promoObjectId,
-    ).exec();
+  const promoCode = await PromoCodeModel.findById(promoObjectId).exec();
 
   if (!promoCode) {
     throw new BookingPricingError(
       "PROMO_NOT_FOUND",
       "The selected promo code could not be found.",
-      404,
+      404
     );
   }
 
   if (!promoCode.isActive) {
-    throw new BookingPricingError(
-      "PROMO_INACTIVE",
-      "This promo code is not active.",
-    );
+    throw new BookingPricingError("PROMO_INACTIVE", "This promo code is not active.");
   }
 
-  const startDate =
-    promoCode.startDate
-      ? new Date(promoCode.startDate)
-      : new Date(0);
+  const startDate = promoCode.startDate ? new Date(promoCode.startDate) : new Date(0);
 
-  const expiryDate = new Date(
-    promoCode.expiryDate,
-  );
+  const expiryDate = new Date(promoCode.expiryDate);
 
-  if (
-    now.getTime() <
-    startDate.getTime()
-  ) {
-    throw new BookingPricingError(
-      "PROMO_NOT_STARTED",
-      "This promo code is not available yet.",
-    );
+  if (now.getTime() < startDate.getTime()) {
+    throw new BookingPricingError("PROMO_NOT_STARTED", "This promo code is not available yet.");
   }
 
-  if (
-    now.getTime() >
-    expiryDate.getTime()
-  ) {
-    throw new BookingPricingError(
-      "PROMO_EXPIRED",
-      "This promo code has expired.",
-    );
+  if (now.getTime() > expiryDate.getTime()) {
+    throw new BookingPricingError("PROMO_EXPIRED", "This promo code has expired.");
   }
 
-  const usageCount =
-    promoCode.usageCount ?? 0;
+  const usageCount = promoCode.usageCount ?? 0;
 
-  if (
-    usageCount >=
-    promoCode.maximumUses
-  ) {
+  if (usageCount >= promoCode.maximumUses) {
     throw new BookingPricingError(
       "PROMO_USAGE_LIMIT_REACHED",
-      "This promo code has reached its maximum number of uses.",
+      "This promo code has reached its maximum number of uses."
     );
   }
 
   if (customerId) {
-    const customerObjectId = toObjectId(
-      customerId,
-      "Customer ID",
-    );
+    const customerObjectId = toObjectId(customerId, "Customer ID");
     const usageMatch: Record<string, unknown> = {
       promoCodeId: promoCode._id,
       customerId: customerObjectId,
@@ -696,10 +538,7 @@ async function calculatePromoDiscount({
 
     if (excludeBookingId) {
       usageMatch.bookingId = {
-        $ne: toObjectId(
-          excludeBookingId,
-          "Booking ID",
-        ),
+        $ne: toObjectId(excludeBookingId, "Booking ID"),
       };
     }
 
@@ -709,130 +548,145 @@ async function calculatePromoDiscount({
     };
     if (excludeBookingId) {
       bookingUsageMatch._id = {
-        $ne: toObjectId(
-          excludeBookingId,
-          "Booking ID",
-        ),
+        $ne: toObjectId(excludeBookingId, "Booking ID"),
       };
     }
 
-    const [trackedUsageCount, bookingUsageCount] =
-      await Promise.all([
-        PromoCodeUsageModel.countDocuments(
-          usageMatch,
-        ),
-        BookingModel.countDocuments(
-          bookingUsageMatch,
-        ),
-      ]);
-    const customerUsageCount = Math.max(
-      trackedUsageCount,
-      bookingUsageCount,
-    );
+    const [trackedUsageCount, bookingUsageCount] = await Promise.all([
+      PromoCodeUsageModel.countDocuments(usageMatch),
+      BookingModel.countDocuments(bookingUsageMatch),
+    ]);
+    const customerUsageCount = Math.max(trackedUsageCount, bookingUsageCount);
 
-    if (
-      customerUsageCount >=
-      promoCode.perCustomerLimit
-    ) {
+    if (customerUsageCount >= promoCode.perCustomerLimit) {
       throw new BookingPricingError(
         "PROMO_CUSTOMER_LIMIT_REACHED",
-        "You have already used this promo code the maximum number of times.",
+        "You have already used this promo code the maximum number of times."
       );
     }
   }
 
-  const applicableServiceIds =
-    promoCode.applicableServiceIds ??
-    [];
+  const applicableServiceIds = promoCode.applicableServiceIds ?? [];
 
-  const appliesToEveryService =
-    applicableServiceIds.length === 0;
+  const appliesToEveryService = applicableServiceIds.length === 0;
 
-  const appliesToSelectedService =
-    applicableServiceIds.some(
-      (applicableServiceId) =>
-        applicableServiceId.toString() ===
-        serviceId.toString(),
-    );
+  const appliesToSelectedService = applicableServiceIds.some(
+    (applicableServiceId) => applicableServiceId.toString() === serviceId.toString()
+  );
 
-  if (
-    !appliesToEveryService &&
-    !appliesToSelectedService
-  ) {
+  if (!appliesToEveryService && !appliesToSelectedService) {
     throw new BookingPricingError(
       "PROMO_SERVICE_NOT_ALLOWED",
-      "This promo code does not apply to the selected service.",
+      "This promo code does not apply to the selected service."
     );
   }
 
-  const minimumBookingAmount =
-    promoCode.minimumBookingAmount ??
-    0;
+  const minimumBookingAmount = promoCode.minimumBookingAmount ?? 0;
 
-  if (
-    subtotalAmount <
-    minimumBookingAmount
-  ) {
+  if (subtotalAmount < minimumBookingAmount) {
     throw new BookingPricingError(
       "PROMO_MINIMUM_NOT_REACHED",
       `This promo code requires a minimum booking amount of $${roundMoney(
-        minimumBookingAmount,
+        minimumBookingAmount
       ).toFixed(2)}.`,
       400,
       {
         subtotalAmount,
         minimumBookingAmount,
-      },
+      }
     );
   }
 
   let discountAmount = 0;
 
-  if (
-    promoCode.discountType ===
-    "percentage"
-  ) {
-    discountAmount =
-      subtotalAmount *
-      (promoCode.discountValue / 100);
+  if (promoCode.discountType === "percentage") {
+    discountAmount = subtotalAmount * (promoCode.discountValue / 100);
 
-    const maximumDiscountAmount =
-      promoCode.maximumDiscountAmount;
+    const maximumDiscountAmount = promoCode.maximumDiscountAmount;
 
-    if (
-      maximumDiscountAmount !==
-        undefined &&
-      maximumDiscountAmount !== null
-    ) {
-      discountAmount = Math.min(
-        discountAmount,
-        maximumDiscountAmount,
-      );
+    if (maximumDiscountAmount !== undefined && maximumDiscountAmount !== null) {
+      discountAmount = Math.min(discountAmount, maximumDiscountAmount);
     }
   } else {
-    discountAmount =
-      promoCode.discountValue;
+    discountAmount = promoCode.discountValue;
   }
 
-  discountAmount = roundMoney(
-    Math.min(
-      Math.max(discountAmount, 0),
-      subtotalAmount,
-    ),
-  );
+  discountAmount = roundMoney(Math.min(Math.max(discountAmount, 0), subtotalAmount));
 
   return {
     id: promoCode._id.toString(),
     code: promoCode.code,
-    description:
-      promoCode.description ?? "",
-    discountType:
-      promoCode.discountType,
-    discountValue: roundMoney(
-      promoCode.discountValue,
-    ),
+    description: promoCode.description ?? "",
+    discountType: promoCode.discountType,
+    discountValue: roundMoney(promoCode.discountValue),
     discountAmount,
   };
+}
+
+/*
+ * Calculates the service catalogue quotes with one
+ * service query. Add-ons and promo codes are intentionally
+ * excluded because they are selected in later booking steps.
+ */
+export async function calculateServicePricePreviews(
+  input: BookingBatchPricePreviewInput
+): Promise<Record<string, ServicePricePreviewQuote>> {
+  const serviceObjectIds = input.serviceIds.map((serviceId) => toObjectId(serviceId, "Service ID"));
+
+  const services = await ServiceModel.find({
+    _id: {
+      $in: serviceObjectIds,
+    },
+    isActive: true,
+  }).exec();
+
+  const servicesById = new Map(services.map((service) => [service._id.toString(), service]));
+
+  const quotes: Record<string, ServicePricePreviewQuote> = {};
+
+  for (const serviceId of input.serviceIds) {
+    const service = servicesById.get(serviceId);
+
+    if (!service) {
+      throw new BookingPricingError(
+        "SERVICE_NOT_FOUND",
+        "One of the requested services is unavailable.",
+        404,
+        {
+          serviceId,
+        }
+      );
+    }
+
+    const serviceBaseAmount = roundMoney(service.price);
+    const serviceDurationMinutes = Math.max(0, safeNumber(service.durationMinutes));
+    const includedSquareMeters = Math.max(0, safeNumber(service.includedSquareMeters, 60));
+    const pricePerAdditionalSquareMeter = Math.max(
+      0,
+      safeNumber(service.pricePerAdditionalSquareMeter, 0.4)
+    );
+    const minutesPerAdditionalSquareMeter = Math.max(
+      0,
+      safeNumber(service.minutesPerAdditionalSquareMeter, 0.75)
+    );
+
+    const propertyPricing = calculatePropertyPricing(input.property, {
+      includedSquareMeters,
+      pricePerAdditionalSquareMeter,
+      minutesPerAdditionalSquareMeter,
+    });
+    const propertyAdjustmentAmount = propertyPricing.amount;
+
+    quotes[serviceId] = {
+      serviceId,
+      serviceBaseAmount,
+      propertyAdjustmentAmount,
+      baseAmount: roundMoney(serviceBaseAmount + propertyAdjustmentAmount),
+      estimatedDurationMinutes: serviceDurationMinutes + propertyPricing.extraDurationMinutes,
+    };
+  }
+
+  return quotes;
 }
 
 /*
@@ -847,126 +701,71 @@ export async function calculateBookingPrice(
     now?: Date;
     customerId?: string;
     excludeBookingId?: string;
-  },
+  }
 ): Promise<BookingPriceQuote> {
-  const now =
-    options?.now ?? new Date();
+  const now = options?.now ?? new Date();
 
-  const serviceObjectId = toObjectId(
-    input.serviceId,
-    "Service ID",
-  );
+  const serviceObjectId = toObjectId(input.serviceId, "Service ID");
 
-  const service =
-    await ServiceModel.findById(
-      serviceObjectId,
-    ).exec();
+  const service = await ServiceModel.findById(serviceObjectId).exec();
 
   if (!service) {
     throw new BookingPricingError(
       "SERVICE_NOT_FOUND",
       "The selected service could not be found.",
-      404,
+      404
     );
   }
 
   if (!service.isActive) {
     throw new BookingPricingError(
       "SERVICE_INACTIVE",
-      "The selected service is currently unavailable.",
+      "The selected service is currently unavailable."
     );
   }
 
-  const serviceBaseAmount =
-    roundMoney(service.price);
+  const serviceBaseAmount = roundMoney(service.price);
 
-  const serviceDurationMinutes =
-    Math.max(
-      0,
-      safeNumber(
-        service.durationMinutes,
-      ),
-    );
+  const serviceDurationMinutes = Math.max(0, safeNumber(service.durationMinutes));
 
-  const includedSquareMeters =
-    Math.max(
-      0,
-      safeNumber(
-        service.includedSquareMeters,
-        60,
-      ),
-    );
-  const pricePerAdditionalSquareMeter =
-    Math.max(
-      0,
-      safeNumber(
-        service.pricePerAdditionalSquareMeter,
-        0.4,
-      ),
-    );
-  const minutesPerAdditionalSquareMeter =
-    Math.max(
-      0,
-      safeNumber(
-        service.minutesPerAdditionalSquareMeter,
-        0.75,
-      ),
-    );
-
-  const propertyPricing =
-    calculatePropertyPricing(
-      input.property,
-      {
-        includedSquareMeters,
-        pricePerAdditionalSquareMeter,
-        minutesPerAdditionalSquareMeter,
-      },
-    );
-
-  const addOnPricing =
-    await calculateAddonPricing(
-      serviceObjectId,
-      input.addOns,
-    );
-
-  const propertyAdjustmentAmount =
-    propertyPricing.amount;
-
-  const baseAmount = roundMoney(
-    serviceBaseAmount +
-      propertyAdjustmentAmount,
+  const includedSquareMeters = Math.max(0, safeNumber(service.includedSquareMeters, 60));
+  const pricePerAdditionalSquareMeter = Math.max(
+    0,
+    safeNumber(service.pricePerAdditionalSquareMeter, 0.4)
+  );
+  const minutesPerAdditionalSquareMeter = Math.max(
+    0,
+    safeNumber(service.minutesPerAdditionalSquareMeter, 0.75)
   );
 
-  const addOnsAmount =
-    addOnPricing.amount;
+  const propertyPricing = calculatePropertyPricing(input.property, {
+    includedSquareMeters,
+    pricePerAdditionalSquareMeter,
+    minutesPerAdditionalSquareMeter,
+  });
 
-  const subtotalAmount = roundMoney(
-    baseAmount + addOnsAmount,
-  );
+  const addOnPricing = await calculateAddonPricing(serviceObjectId, input.addOns);
 
-  const appliedPromo =
-    await calculatePromoDiscount({
-      promoCodeId:
-        input.promoCodeId || undefined,
-      serviceId: serviceObjectId,
-      subtotalAmount,
-      now,
-      customerId:
-        options?.customerId,
-      excludeBookingId:
-        options?.excludeBookingId,
-    });
+  const propertyAdjustmentAmount = propertyPricing.amount;
 
-  const discountAmount =
-    appliedPromo?.discountAmount ?? 0;
+  const baseAmount = roundMoney(serviceBaseAmount + propertyAdjustmentAmount);
 
-  const totalAmount = roundMoney(
-    Math.max(
-      0,
-      subtotalAmount -
-        discountAmount,
-    ),
-  );
+  const addOnsAmount = addOnPricing.amount;
+
+  const subtotalAmount = roundMoney(baseAmount + addOnsAmount);
+
+  const appliedPromo = await calculatePromoDiscount({
+    promoCodeId: input.promoCodeId || undefined,
+    serviceId: serviceObjectId,
+    subtotalAmount,
+    now,
+    customerId: options?.customerId,
+    excludeBookingId: options?.excludeBookingId,
+  });
+
+  const discountAmount = appliedPromo?.discountAmount ?? 0;
+
+  const totalAmount = roundMoney(Math.max(0, subtotalAmount - discountAmount));
 
   const estimatedDurationMinutes =
     serviceDurationMinutes +
@@ -979,34 +778,23 @@ export async function calculateBookingPrice(
     service: {
       id: service._id.toString(),
       name: service.name,
-      basePrice:
-        serviceBaseAmount,
-      baseDurationMinutes:
-        serviceDurationMinutes,
+      basePrice: serviceBaseAmount,
+      baseDurationMinutes: serviceDurationMinutes,
     },
 
     property: {
       type: input.property.propertyType,
-      bedrooms:
-        input.property.bedrooms,
-      bathrooms:
-        input.property.bathrooms,
-      size:
-        input.property.propertySize,
+      bedrooms: input.property.bedrooms,
+      bathrooms: input.property.bathrooms,
+      size: input.property.propertySize,
       includedSquareMeters,
-      additionalSquareMeters:
-        Math.max(
-          0,
-          safeNumber(
-            input.property.propertySize,
-          ) -
-            includedSquareMeters,
-        ),
+      additionalSquareMeters: Math.max(
+        0,
+        safeNumber(input.property.propertySize) - includedSquareMeters
+      ),
       pricePerAdditionalSquareMeter,
-      adjustmentAmount:
-        propertyAdjustmentAmount,
-      extraDurationMinutes:
-        propertyPricing.extraDurationMinutes,
+      adjustmentAmount: propertyAdjustmentAmount,
+      extraDurationMinutes: propertyPricing.extraDurationMinutes,
       lines: propertyPricing.lines,
     },
 
@@ -1023,10 +811,8 @@ export async function calculateBookingPrice(
     totalAmount,
 
     serviceDurationMinutes,
-    propertyExtraDurationMinutes:
-      propertyPricing.extraDurationMinutes,
-    addOnsExtraDurationMinutes:
-      addOnPricing.extraDurationMinutes,
+    propertyExtraDurationMinutes: propertyPricing.extraDurationMinutes,
+    addOnsExtraDurationMinutes: addOnPricing.extraDurationMinutes,
     estimatedDurationMinutes,
   };
 }

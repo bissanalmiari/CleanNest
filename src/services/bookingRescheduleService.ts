@@ -10,6 +10,7 @@ import { connectDB } from "@/lib/db";
 import BookingModel from "@/models/Booking";
 import BookingRescheduleHistoryModel from "@/models/BookingRescheduleHistory";
 import ServiceAreaModel from "@/models/ServiceArea";
+import CleanerAssignment from "@/models/CleanerAssignment";
 
 import {
   bookingDateTimeToUtc,
@@ -21,6 +22,11 @@ import {
   BookingAvailabilityError,
   checkBookingAvailability,
 } from "@/services/bookingAvailabilityService";
+import {
+  createNotification,
+  createNotifications,
+  notifyActiveAdmins,
+} from "@/services/notificationService";
 
 interface RescheduleCustomerBookingOptions {
   customerId: string;
@@ -694,6 +700,47 @@ export async function rescheduleCustomerBooking({
       previousDurationMinutes,
       previousCleanerName,
     } = transactionResult;
+
+    const assignedCleaners = await CleanerAssignment.find({
+      bookingId: updatedBooking._id,
+      status: { $in: ["assigned", "accepted"] },
+    })
+      .select("cleanerId")
+      .lean();
+    const newScheduleMessage = `Booking ${updatedBooking.bookingNumber} moved to ${input.bookingDate} from ${updatedBooking.startTime} to ${updatedBooking.endTime}.`;
+    await Promise.all([
+      createNotification({
+        userId: customerId,
+        type: "booking_rescheduled",
+        title: "Booking rescheduled",
+        message: newScheduleMessage,
+        href: "/bookings",
+        bookingId,
+        dedupeKey: `booking-rescheduled:${bookingId}:${updatedBooking.rescheduleCount}`,
+        email: true,
+      }),
+      createNotifications(
+        assignedCleaners.map((assignment) => ({
+          userId: assignment.cleanerId.toString(),
+          type: "booking_rescheduled" as const,
+          title: "Assigned job rescheduled",
+          message: newScheduleMessage,
+          href: `/cleaner/jobs/${bookingId}`,
+          bookingId,
+          dedupeKey: `booking-rescheduled:${bookingId}:${updatedBooking.rescheduleCount}:${assignment.cleanerId.toString()}`,
+          email: true,
+        })),
+      ),
+      notifyActiveAdmins({
+        type: "booking_rescheduled",
+        title: "Customer rescheduled a booking",
+        message: newScheduleMessage,
+        href: `/admin/bookings/${bookingId}`,
+        bookingId,
+        dedupeKey: `customer-rescheduled:${bookingId}:${updatedBooking.rescheduleCount}`,
+        email: false,
+      }),
+    ]).catch((error) => console.error("[notification:reschedule]", error));
 
     return {
       booking: {

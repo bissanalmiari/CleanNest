@@ -30,6 +30,7 @@ import {
 } from "@/services/bookingPriceService";
 
 import { checkBookingAvailability } from "@/services/bookingAvailabilityService";
+import { createNotification } from "@/services/notificationService";
 
 interface CreateCustomerBookingOptions {
     customerId: string;
@@ -855,6 +856,19 @@ export async function createCustomerBooking({
                 500,
             );
         }
+
+        await createNotification({
+            userId: customerId,
+            type: "booking_created",
+            title: "Booking request received",
+            message: `Booking ${createdBooking.bookingNumber} was created and is waiting for approval.`,
+            href: "/bookings",
+            bookingId: createdBooking._id.toString(),
+            dedupeKey: `booking-created:${createdBooking._id.toString()}`,
+            email: true,
+        }).catch((error) =>
+            console.error("[notification:booking-created]", error),
+        );
 
         return {
             booking: {
