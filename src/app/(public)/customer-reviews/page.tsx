@@ -344,7 +344,7 @@ export default function PublicReviewsPage() {
                   </div>
                 </div>
                 <Link
-                  href="/book"
+                  href="/book-service"
                   className="group inline-flex min-h-[54px] shrink-0 items-center justify-center gap-3 rounded-xl bg-white px-7 font-extrabold text-primary shadow-xl transition hover:bg-cyan-50"
                 >
                   Book your cleaning
