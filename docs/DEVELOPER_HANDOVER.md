@@ -140,6 +140,7 @@ Never expose server-only values through `NEXT_PUBLIC_*`, commit `.env.local`, or
 | `EMAIL_FROM` | Production email | Authenticated From identity. |
 | `EMAIL_REPLY_TO` | No | Default reply-to address. |
 | `CONTACT_EMAIL` | No | Inbox for public contact-form submissions; defaults to `cleannest.project@gmail.com`. |
+| `CONTACT_EMAIL` | No | Inbox for public contact-form submissions; defaults to `cleannest.project@gmail.com`. |
 | `EMAIL_RETURN_PATH` | No | SMTP envelope/bounce address. |
 | `EMAIL_MESSAGE_DOMAIN` | No | Domain used in generated message IDs. |
 | `EMAIL_DKIM_DOMAIN` | No | DKIM signing domain when signing in-app. |
@@ -282,6 +283,10 @@ Domain services queue in-app/email notifications. `/api/internal/notifications/p
 
 `vercel.json` currently schedules booking reconciliation every five minutes, but does **not** schedule notification processing.
 
+### Contact-message support workflow
+
+The public homepage form posts to `/api/contact`. A valid enquiry is saved as a `ContactMessage`, emailed to `CONTACT_EMAIL`, and announced through in-app notifications to active admins. Administrators manage these enquiries at `/admin/contact-messages`, where they can search, filter, read the full message, reply through their email client, and move it through `new`, `in_progress`, and `resolved`. Moving a message out of `new` assigns the current administrator; returning it to `new` clears that assignment.
+
 ## 8. API routes
 
 All routes are under `/api`. Inputs are generally validated with Zod and errors are normalized through `apiError`/`apiResponse` helpers.
@@ -353,6 +358,8 @@ All routes are under `/api`. Inputs are generally validated with Zod and errors 
 | `/admin/payments`, `/admin/payments/[id]` | Payment list/detail. |
 | `/admin/payments/[id]/mark-cash-paid`, `/fail`, `/refund` | Admin payment transitions. |
 | `/admin/promo-codes`, `/admin/promo-codes/[id]` | Promo-code CRUD. |
+| `/admin/contact-messages` | `GET` searchable, filterable, paginated contact inbox and status totals. |
+| `/admin/contact-messages/[id]` | `PATCH` message handling status and administrator assignment. |
 | `/admin/settings` | `GET/PATCH` business settings. |
 | `/admin/reports/bookings`, `/revenue`, `/popular-services`, `/export` | Reporting datasets and document export. |
 | `/admin/dev/seed-addons` | Admin-only development data mutation; disable/remove in production. |

@@ -5,6 +5,7 @@ import {
   Bell,
   CalendarDays,
   CreditCard,
+  Inbox,
   LayoutDashboard,
   Megaphone,
   MessageSquareText,
@@ -73,6 +74,11 @@ const adminNavigation: AuthenticatedNavigationItem[] = [
     label: "Reviews",
     href: "/admin/reviews",
     icon: MessageSquareText,
+  },
+  {
+    label: "Contact Messages",
+    href: "/admin/contact-messages",
+    icon: Inbox,
   },
   {
     label: "Notifications",

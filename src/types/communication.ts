@@ -6,6 +6,7 @@ export interface ContactMessage {
   email: string;
   phone?: string;
   subject: string;
+  message: string;
   status: ContactMessageStatus;
   assignedAdminId?: string;
   createdAt: string;
