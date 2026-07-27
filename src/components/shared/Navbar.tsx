@@ -587,7 +587,7 @@ export default function Navbar({ user = null }: NavbarProps) {
                 }}
                 className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md xl:hidden"
               >
-                <div className="mx-auto max-h-[calc(100vh-76px)] max-w-7xl overflow-y-auto px-5 py-6 sm:px-8 lg:px-10">
+                <div className="mx-auto max-h-[calc(100dvh-76px)] max-w-7xl overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-6 lg:px-10">
                   {user && (
                     <div className="mb-5 flex items-center gap-3 rounded-2xl bg-primary-light/60 p-3">
                       {avatar}

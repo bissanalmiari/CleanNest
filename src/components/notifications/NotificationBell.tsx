@@ -192,7 +192,7 @@ export default function NotificationBell({ historyHref }: { historyHref?: string
               </button>
             </div>
 
-            <div className="max-h-[min(520px,calc(100vh-160px))] overflow-y-auto">
+            <div className="max-h-[min(520px,calc(100dvh-160px))] overflow-y-auto overscroll-contain">
               {loading ? (
                 <div className="flex items-center justify-center gap-2 px-5 py-14 text-sm font-bold text-slate-500">
                   <LoaderCircle className="h-5 w-5 animate-spin text-primary" />

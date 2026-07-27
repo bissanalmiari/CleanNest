@@ -18,3 +18,7 @@ Cleaning services booking platform — Next.js, TypeScript, Tailwind CSS, MongoD
 - `src/types` — shared TypeScript types
 - `src/hooks` — custom React hooks
 - `src/store` — booking wizard client state
+
+## Developer documentation
+
+See [`docs/DEVELOPER_HANDOVER.md`](docs/DEVELOPER_HANDOVER.md) for architecture, environment variables, data models, API routes, authentication, workflows, testing, deployment, and known issues.

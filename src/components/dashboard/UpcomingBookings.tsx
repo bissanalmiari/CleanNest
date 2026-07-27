@@ -116,7 +116,7 @@ export function UpcomingBookings({ bookings, loading = false }: UpcomingBookings
                   <BookingStatusBadge status={booking.status} />
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="mt-5 grid gap-3 min-[400px]:grid-cols-2">
                   <div className="rounded-2xl bg-surface-soft p-4">
                     <CalendarDays className="h-4 w-4 text-primary" />
                     <p className="mt-3 text-[9px] font-extrabold uppercase tracking-[0.11em] text-slate-400">

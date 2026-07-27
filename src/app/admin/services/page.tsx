@@ -106,7 +106,7 @@ export default function AdminServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface p-6 sm:p-8">
+    <div className="min-h-screen bg-surface p-4 sm:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
         {/* Header */}
         <div className="flex flex-wrap items-center gap-4">

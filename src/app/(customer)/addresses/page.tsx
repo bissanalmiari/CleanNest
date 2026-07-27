@@ -639,7 +639,7 @@ function AddressesContent() {
             exit={{
               opacity: 0,
             }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-navy/65 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy/65 p-2 backdrop-blur-sm sm:p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-address-title"
@@ -677,9 +677,9 @@ function AddressesContent() {
               transition={{
                 duration: 0.25,
               }}
-              className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_35px_100px_rgba(11,37,69,0.3)]"
+              className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-white bg-white shadow-[0_35px_100px_rgba(11,37,69,0.3)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[2rem]"
             >
-              <div className="bg-red-500 p-7 text-white">
+              <div className="bg-red-500 p-5 text-white sm:p-7">
                 <div className="flex items-start justify-between gap-5">
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
                     <Trash2 className="h-7 w-7" />
@@ -702,12 +702,15 @@ function AddressesContent() {
                   Permanent action
                 </p>
 
-                <h2 id="delete-address-title" className="mt-2 font-heading text-3xl font-black">
+                <h2
+                  id="delete-address-title"
+                  className="mt-2 font-heading text-2xl font-black sm:text-3xl"
+                >
                   Remove this address?
                 </h2>
               </div>
 
-              <div className="p-7">
+              <div className="p-5 sm:p-7">
                 <div className="rounded-[1.4rem] border border-red-100 bg-red-50 p-5">
                   <p className="font-heading text-xl font-black text-navy">
                     {addressToDelete.label}

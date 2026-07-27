@@ -52,9 +52,9 @@ const contactItems: ContactItem[] = [
   {
     icon: Mail,
     title: "Email Support",
-    value: "support@cleannest.com",
+    value: "cleannest.project@gmail.com",
     description: "Send us your questions at any time.",
-    href: "mailto:support@cleannest.com",
+    href: "mailto:cleannest.project@gmail.com",
     iconClass: "bg-blue-50 text-blue-600",
     glowClass: "bg-blue-400/15",
   },
@@ -215,6 +215,7 @@ export default function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submissionReference, setSubmissionReference] = useState("");
   const [submissionError, setSubmissionError] = useState("");
 
   function handleChange(
@@ -235,6 +236,7 @@ export default function ContactSection() {
     }));
 
     setIsSubmitted(false);
+    setSubmissionReference("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -261,11 +263,16 @@ export default function ContactSection() {
       const payload = (await response.json()) as {
         success?: boolean;
         error?: string;
+        data?: {
+          submitted?: boolean;
+          reference?: string;
+        };
       };
-      if (!response.ok || !payload.success) {
+      if (!response.ok || !payload.success || !payload.data?.submitted) {
         throw new Error(payload.error ?? "Your message could not be sent.");
       }
       setIsSubmitted(true);
+      setSubmissionReference(payload.data.reference ?? "");
       setValues(initialValues);
     } catch (error) {
       setIsSubmitted(false);
@@ -833,12 +840,17 @@ export default function ContactSection() {
                         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
 
                         <div>
-                          <p className="text-sm font-bold">Message prepared successfully.</p>
+                          <p className="text-sm font-bold">Message sent successfully.</p>
 
                           <p className="mt-1 text-xs leading-5">
-                            The form is ready to connect to your contact API when the backend
-                            endpoint is added.
+                            Your request was saved and the CleanNest support team has been notified.
                           </p>
+
+                          {submissionReference && (
+                            <p className="mt-2 text-xs font-bold">
+                              Reference: CN-{submissionReference}
+                            </p>
+                          )}
                         </div>
                       </motion.div>
                     )}

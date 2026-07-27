@@ -47,19 +47,19 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       />
 
       <div className="relative mx-auto flex min-h-screen max-w-[1540px] flex-col px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
-        <header className="flex items-center justify-between gap-4">
+        <header className="flex items-center justify-between gap-3 sm:gap-4">
           <Link
             href="/"
-            className="group inline-flex items-center gap-3 rounded-2xl bg-white/90 px-3 py-2 shadow-[0_12px_35px_rgba(11,37,69,0.08)] transition hover:bg-white"
+            className="group inline-flex min-w-0 items-center gap-2.5 rounded-2xl bg-white/90 px-2.5 py-2 shadow-[0_12px_35px_rgba(11,37,69,0.08)] transition hover:bg-white sm:gap-3 sm:px-3"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-blue-600 to-cyan-500 text-white shadow-[0_10px_25px_rgba(30,111,217,0.25)]">
               <Sparkles className="h-5 w-5" />
             </span>
-            <span>
-              <span className="block font-heading text-lg font-black leading-none text-navy">
+            <span className="min-w-0">
+              <span className="block whitespace-nowrap font-heading text-base font-black leading-none text-navy sm:text-lg">
                 CleanNest
               </span>
-              <span className="mt-1 block text-[8px] font-extrabold uppercase tracking-[0.18em] text-primary">
+              <span className="mt-1 hidden whitespace-nowrap text-[8px] font-extrabold uppercase tracking-[0.18em] text-primary min-[360px]:block">
                 Cleaning made simple
               </span>
             </span>
@@ -67,10 +67,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/10 bg-white/85 px-4 text-xs font-extrabold text-slate-600 transition hover:border-primary/25 hover:text-primary"
+            aria-label="Back to home"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/10 bg-white/85 text-xs font-extrabold text-slate-600 transition hover:border-primary/25 hover:text-primary min-[390px]:h-auto min-[390px]:w-auto min-[390px]:px-4"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to home
+            <span className="hidden min-[390px]:inline">Back to home</span>
           </Link>
         </header>
 

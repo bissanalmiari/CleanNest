@@ -28,7 +28,7 @@ const orbitParticles = [
 export default function FloatingBookingOrb() {
   return (
     <MotionConfig reducedMotion="always">
-      <div className="pointer-events-none fixed bottom-5 right-4 z-[100] sm:bottom-7 sm:right-7">
+      <div className="pointer-events-none fixed bottom-7 right-7 z-[100] hidden lg:block">
         <motion.div
           initial={{
             opacity: 0,

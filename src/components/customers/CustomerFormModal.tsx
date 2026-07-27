@@ -79,9 +79,9 @@ export default function CustomerFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-card border border-navy/[0.06] bg-surface shadow-card">
-        <div className="flex items-center justify-between border-b border-navy/[0.06] px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy/40 p-2 backdrop-blur-sm sm:p-4">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-navy/[0.06] bg-surface shadow-card sm:max-h-[calc(100dvh-2rem)] sm:rounded-card">
+        <div className="flex items-center justify-between gap-3 border-b border-navy/[0.06] px-4 py-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark text-white">
               {isEditMode ? <Save size={16} /> : <UserPlus size={16} />}
@@ -99,7 +99,7 @@ export default function CustomerFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
+        <form onSubmit={handleSubmit} className="space-y-4 px-4 py-5 sm:px-6">
           {errorMessage && (
             <div className="rounded-card border border-status-cancelled/20 bg-status-cancelled/5 px-3.5 py-2.5 text-sm font-medium text-status-cancelled">
               {errorMessage}

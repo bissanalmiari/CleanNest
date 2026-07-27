@@ -729,7 +729,10 @@ export default function Footer() {
               <div className="mt-4 h-1 w-12 rounded-full bg-gradient-to-r from-primary to-cyan-400" />
 
               <div className="mt-6 space-y-4">
-                <a href="mailto:support@cleannest.com" className="group flex items-start gap-3">
+                <a
+                  href="mailto:cleannest.project@gmail.com"
+                  className="group flex items-start gap-3"
+                >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-cyan-300 transition-colors group-hover:bg-white/[0.14]">
                     <Mail className="h-5 w-5" />
                   </span>
@@ -740,7 +743,7 @@ export default function Footer() {
                     </span>
 
                     <span className="mt-1 block break-all text-sm font-semibold text-blue-50">
-                      support@cleannest.com
+                      cleannest.project@gmail.com
                     </span>
                   </span>
                 </a>

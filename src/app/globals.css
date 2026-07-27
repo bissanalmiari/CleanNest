@@ -4,11 +4,16 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
 }
 
 body {
   @apply min-h-screen overflow-x-hidden bg-surface font-body text-navy antialiased;
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
   background-color: #ffffff;
   color: #0b2545;
@@ -17,4 +22,39 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+/*
+ * Flex/grid children default to min-width:auto, which lets long emails,
+ * booking references, and translated labels widen the viewport. Keep every
+ * structural element shrinkable; explicit Tailwind min-width utilities still
+ * take precedence where horizontal scrolling is intentional (for tables).
+ */
+:where(main, section, article, header, footer, nav, aside, form, div) {
+  min-width: 0;
+}
+
+:where(img, video, canvas) {
+  max-width: 100%;
+  height: auto;
+}
+
+:where(input, select, textarea, button) {
+  max-width: 100%;
+}
+
+:where(h1, h2, h3, p, a, span) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  /*
+   * iOS Safari zooms focused controls below 16px. Avoiding that zoom keeps
+   * dialogs and multi-step forms anchored to the mobile viewport.
+   */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

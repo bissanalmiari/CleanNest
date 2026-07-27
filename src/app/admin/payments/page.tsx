@@ -987,7 +987,7 @@ function PaymentActionModal({
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={reduceMotion ? undefined : { opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy/55 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy/55 p-2 backdrop-blur-sm sm:p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -1000,9 +1000,9 @@ function PaymentActionModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={reduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.98 }}
         transition={{ duration: 0.22 }}
-        className="w-full max-w-lg overflow-hidden rounded-[2rem] bg-white shadow-[0_30px_90px_rgba(11,37,69,0.3)]"
+        className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-[0_30px_90px_rgba(11,37,69,0.3)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[2rem]"
       >
-        <div className="relative overflow-hidden bg-[linear-gradient(125deg,#071d38,#154f9e)] p-6 text-white">
+        <div className="relative overflow-hidden bg-[linear-gradient(125deg,#071d38,#154f9e)] p-4 text-white sm:p-6">
           <div className="absolute -right-14 -top-20 h-44 w-44 rounded-full bg-cyan-300/10" />
           <div className="relative flex items-start gap-4">
             <span
@@ -1033,8 +1033,8 @@ function PaymentActionModal({
           </div>
         </div>
 
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-3 rounded-2xl bg-slate-50 p-4">
+        <div className="p-4 sm:p-6">
+          <div className="grid gap-3 rounded-2xl bg-slate-50 p-4 min-[380px]:grid-cols-2">
             <div>
               <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
                 Booking
@@ -1043,7 +1043,7 @@ function PaymentActionModal({
                 {payment.bookingId?.bookingNumber ?? "Unavailable"}
               </p>
             </div>
-            <div className="text-right">
+            <div className="min-[380px]:text-right">
               <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
                 Payment total
               </p>

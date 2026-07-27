@@ -123,7 +123,7 @@ export default function CleanerAvailabilityPage() {
                 assignments and keeps your routes predictable.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 min-[400px]:grid-cols-2">
               <HeroMetric label="Available days" value={`${availableDays}/7`} />
               <HeroMetric label="Weekly hours" value={`${Math.round(totalHours)}h`} />
             </div>

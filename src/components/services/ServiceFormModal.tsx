@@ -329,9 +329,9 @@ export default function ServiceFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy/40 p-4 backdrop-blur-sm">
-      <div className="my-8 w-full max-w-lg overflow-hidden rounded-card border border-navy/[0.06] bg-surface shadow-2xl">
-        <div className="flex items-center justify-between border-b border-navy/[0.06] px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy/40 p-2 backdrop-blur-sm sm:p-4">
+      <div className="my-2 flex max-h-[calc(100dvh-1rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-navy/[0.06] bg-surface shadow-2xl sm:my-8 sm:max-h-[calc(100dvh-4rem)] sm:rounded-card">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-navy/[0.06] px-4 py-4 sm:px-6">
           <h2 className="font-heading text-lg font-semibold text-navy">
             {mode === "create" ? "Add Service" : "Edit Service"}
           </h2>
@@ -344,7 +344,10 @@ export default function ServiceFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5">
+        <form
+          onSubmit={handleSubmit}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6"
+        >
           {submitError && (
             <div className="rounded-xl border border-status-cancelled/20 bg-status-cancelled/5 px-3.5 py-2.5 text-sm font-medium text-status-cancelled">
               {submitError}
@@ -506,7 +509,7 @@ export default function ServiceFormModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-navy/50">
                 Price ($)

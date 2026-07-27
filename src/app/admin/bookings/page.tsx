@@ -328,7 +328,7 @@ export default function AdminBookingsPage() {
             </div>
 
             <motion.div
-              className="grid grid-cols-3 gap-2 sm:gap-3"
+              className="grid gap-2 min-[420px]:grid-cols-3 sm:gap-3"
               initial={reduceMotion ? false : "hidden"}
               animate="visible"
               variants={{
