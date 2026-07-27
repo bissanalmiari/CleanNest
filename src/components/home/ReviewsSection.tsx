@@ -359,13 +359,31 @@ export default function ReviewsSection() {
               </p>
             )}
 
-            {!loading && !error && liveReviews.length > 0 && (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {liveReviews.map((review, index) => (
-                  <LiveReviewCard key={review.id} review={review} index={index} />
-                ))}
-              </div>
-            )}
+           {!loading && !error && liveReviews.length > 0 && (
+  <>
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {liveReviews.map((review, index) => (
+        <LiveReviewCard key={review.id} review={review} index={index} />
+      ))}
+    </div>
+
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="mt-10 flex justify-center"
+    >
+      <Link
+        href="/customer-reviews"
+        className="group inline-flex items-center gap-3 rounded-xl border border-primary bg-white px-6 py-3 font-semibold text-primary shadow-md transition-all duration-300 hover:-translate-y-1 hover:bg-primary hover:text-white hover:shadow-xl"
+      >
+        View All Reviews
+        <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+      </Link>
+    </motion.div>
+  </>
+)}
           </div>
 
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
