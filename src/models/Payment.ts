@@ -14,7 +14,7 @@ const PAYMENT_STATUSES = [
   "failed",
 ] as const satisfies readonly PaymentStatus[];
 
-const PAYMENT_PROVIDERS = ["cash", "test_card"] as const;
+const PAYMENT_PROVIDERS = ["cash", "test_card", "stripe"] as const;
 
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
@@ -29,6 +29,10 @@ export interface IPayment extends Document {
   status: PaymentStatus;
 
   transactionReference?: string;
+
+  stripeCheckoutSessionId?: string;
+  stripePaymentIntentId?: string;
+  stripeCustomerId?: string;
 
   paidAt?: Date;
 
@@ -115,6 +119,25 @@ const paymentSchema = new Schema<IPayment>(
       default: undefined,
     },
 
+    stripeCheckoutSessionId: {
+      type: String,
+      trim: true,
+      default: undefined,
+      index: true,
+    },
+
+    stripePaymentIntentId: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+
+    stripeCustomerId: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+
     paidAt: {
       type: Date,
       default: undefined,
@@ -190,8 +213,11 @@ paymentSchema.pre("validate", function validatePaymentProvider() {
     this.invalidate("provider", "Cash payments must use the cash provider.");
   }
 
-  if (this.method === "card" && this.provider !== "test_card") {
-    this.invalidate("provider", "Card payments must use the test-card provider.");
+  if (this.method === "card" && this.provider !== "test_card" && this.provider !== "stripe") {
+    this.invalidate(
+      "provider",
+      "Card payments must use the Stripe (or legacy test-card) provider."
+    );
   }
 });
 

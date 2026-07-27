@@ -20,6 +20,8 @@ import Booking from "@/models/Booking";
 import { AppError, NotFoundError, ForbiddenError } from "@/lib/apiError";
 import type { PaymentMethod, PaymentStatus } from "@/types/enums";
 import { createNotification, notifyActiveAdmins } from "@/services/notificationService";
+import { stripe } from "@/lib/stripe";
+import type Stripe from "stripe";
 
 /* ------------------------------------------------------------------ */
 /* Shared helpers                                                       */
@@ -79,7 +81,7 @@ async function getOrCreatePayment(bookingId: string) {
   const booking = await Booking.findById(bookingId);
   if (!booking) throw new NotFoundError("Booking not found");
 
-  const provider = booking.paymentMethod === "cash" ? "cash" : "test_card";
+  const provider = booking.paymentMethod === "cash" ? "cash" : "stripe";
 
   const payment = await Payment.create({
     bookingId: booking._id,
@@ -269,6 +271,138 @@ export async function payBookingWithTestCard(
 }
 
 /* ------------------------------------------------------------------ */
+/* Stripe Checkout                                                      */
+/* ------------------------------------------------------------------ */
+
+const APP_URL = process.env.APP_URL || "http://localhost:3000";
+
+/**
+ * Creates a Stripe Checkout Session for a card booking and returns the
+ * hosted checkout URL. The customer is redirected to Stripe's own page to
+ * enter card details — CleanNest never touches the card number.
+ */
+export async function createStripeCheckoutSession(bookingId: string, customerId: string) {
+  await connectDB();
+
+  const booking = await Booking.findById(bookingId).populate({
+    path: "serviceId",
+    select: "name",
+  });
+  if (!booking) throw new NotFoundError("Booking not found");
+  if (booking.customerId.toString() !== customerId) {
+    throw new ForbiddenError("This booking does not belong to you");
+  }
+  if (booking.paymentMethod !== "card") {
+    throw new AppError("This booking is not set up for card payment", 400);
+  }
+  if (booking.status === "cancelled") {
+    throw new AppError("Cannot pay for a cancelled booking", 400);
+  }
+
+  const payment = await getOrCreatePayment(bookingId);
+
+  if (payment.status === "paid") {
+    throw new AppError("This booking has already been paid", 409);
+  }
+
+  const serviceName =
+    (booking.serviceId as unknown as { name?: string } | null)?.name ?? "CleanNest service";
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: Math.round(payment.amount * 100),
+          product_data: {
+            name: `CleanNest booking ${booking.bookingNumber}`,
+            description: serviceName,
+          },
+        },
+      },
+    ],
+    metadata: {
+      bookingId: booking._id.toString(),
+      paymentId: payment._id.toString(),
+      customerId,
+    },
+    success_url: `${APP_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${APP_URL}/payments/pay/${booking._id.toString()}?canceled=1`,
+  });
+
+  payment.stripeCheckoutSessionId = session.id;
+  payment.status = "pending";
+  await payment.save();
+  await syncBookingPaymentStatus(bookingId, "pending");
+
+  if (!session.url) {
+    throw new AppError("Stripe did not return a checkout URL", 502);
+  }
+
+  return { url: session.url };
+}
+
+/** Applies a completed/paid Stripe Checkout Session to its Payment record.
+ * Used by both the success-page verification call and the webhook handler,
+ * so it's safe to call more than once for the same session. */
+async function applyStripeCheckoutResult(session: Stripe.Checkout.Session) {
+  const payment = await Payment.findOne({
+    stripeCheckoutSessionId: session.id,
+  });
+  if (!payment) return null;
+
+  if (payment.status === "paid") return payment;
+
+  if (session.payment_status === "paid") {
+    payment.status = "paid";
+    payment.transactionReference = session.id;
+    payment.stripePaymentIntentId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : (session.payment_intent?.id ?? undefined);
+    payment.stripeCustomerId = typeof session.customer === "string" ? session.customer : undefined;
+    await payment.save();
+    await syncBookingPaymentStatus(payment.bookingId.toString(), "paid");
+    await notifyCustomerOfPayment(payment.bookingId.toString(), "paid");
+  } else if (session.status === "expired") {
+    payment.status = "failed";
+    payment.failureReason = "Stripe Checkout session expired.";
+    await payment.save();
+    await syncBookingPaymentStatus(payment.bookingId.toString(), "failed");
+    await notifyCustomerOfPayment(payment.bookingId.toString(), "failed");
+  }
+
+  return payment;
+}
+
+/** Called from the /payments/success page right after Stripe redirects the
+ * customer back, to confirm the session and reflect it immediately. */
+export async function confirmStripeCheckoutSession(sessionId: string, customerId: string) {
+  await connectDB();
+
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+  if (session.metadata?.customerId !== customerId) {
+    throw new ForbiddenError("This payment session does not belong to you");
+  }
+
+  const payment = await applyStripeCheckoutResult(session);
+  if (!payment) throw new NotFoundError("Payment not found for this session");
+
+  return payment;
+}
+
+/** Called from the Stripe webhook endpoint — the source of truth, since it
+ * fires even if the customer closes the tab before returning to the app. */
+export async function handleStripeCheckoutWebhook(session: Stripe.Checkout.Session) {
+  await connectDB();
+  return applyStripeCheckoutResult(session);
+}
+
+/* ------------------------------------------------------------------ */
 /* Admin operations                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -431,8 +565,17 @@ export async function refundPayment(
     throw new AppError("Only a paid payment can be refunded", 400);
   }
 
+  const refundAmount = amount ?? payment.amount;
+
+  if (payment.provider === "stripe" && payment.stripePaymentIntentId) {
+    await stripe.refunds.create({
+      payment_intent: payment.stripePaymentIntentId,
+      amount: Math.round(refundAmount * 100),
+    });
+  }
+
   payment.status = "refunded";
-  payment.refundAmount = amount ?? payment.amount;
+  payment.refundAmount = refundAmount;
   payment.refundReason = reason?.trim() || undefined;
   payment.refundReference = `RF-${Date.now().toString(36).toUpperCase()}`;
   await payment.save();
