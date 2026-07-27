@@ -20,9 +20,7 @@ export async function PUT(request: Request) {
   try {
     const currentUser = await requireUser();
     const body = (await request.json()) as Partial<NotificationPreferences>;
-    return successResponse(
-      await updateNotificationPreferences(currentUser.id, body),
-    );
+    return successResponse(await updateNotificationPreferences(currentUser.id, body));
   } catch (error) {
     return errorResponse(error);
   }

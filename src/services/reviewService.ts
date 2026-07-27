@@ -8,6 +8,7 @@ import CleanerAssignment from "@/models/CleanerAssignment";
 import User from "@/models/User";
 import Service from "@/models/Service";
 import { AppError, ForbiddenError, NotFoundError } from "@/lib/apiError";
+import { notifyActiveAdmins } from "@/services/notificationService";
 import type { Review as ReviewDTO } from "@/types/payment";
 import type {
   CreateReviewValues,
@@ -69,6 +70,16 @@ export async function createReview(
     beforeImages: input.beforeImages ?? [],
     afterImages: input.afterImages ?? [],
   });
+
+  await notifyActiveAdmins({
+    type: "review_created",
+    title: "New customer review",
+    message: `A customer submitted a ${doc.rating}-star review for booking ${booking.bookingNumber}.`,
+    href: "/admin/reviews",
+    bookingId: input.bookingId,
+    dedupeKey: `review-created:${doc._id.toString()}`,
+    email: false,
+  }).catch((error) => console.error("[notification:review-created]", error));
 
   return toReviewDTO(doc, true);
 }

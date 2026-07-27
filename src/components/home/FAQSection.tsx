@@ -19,11 +19,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  MotionConfig,
-} from "motion/react";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 
 type FAQ = {
   question: string;
@@ -185,7 +181,7 @@ export default function FAQSection() {
         {/* Animated glow areas */}
         <motion.div
           aria-hidden="true"
-          className="absolute -left-64 top-1/4 h-[42rem] w-[42rem] rounded-full bg-primary/12 blur-3xl"
+          className="bg-primary/12 absolute -left-64 top-1/4 h-[42rem] w-[42rem] rounded-full blur-3xl"
           animate={{
             x: [0, 115, 0],
             y: [0, -55, 0],
@@ -325,7 +321,6 @@ export default function FAQSection() {
               >
                 <HelpCircle className="h-4 w-4" />
               </motion.span>
-
               Frequently Asked Questions
             </motion.div>
 
@@ -337,8 +332,8 @@ export default function FAQSection() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Find clear answers about bookings, payments, scheduling,
-              cancellations, and how CleanNest services work.
+              Find clear answers about bookings, payments, scheduling, cancellations, and how
+              CleanNest services work.
             </p>
           </motion.div>
 
@@ -705,8 +700,8 @@ export default function FAQSection() {
                   </h3>
 
                   <p className="mt-4 leading-7 text-blue-100/75">
-                    Contact CleanNest for help with your account, booking,
-                    payment, or service questions.
+                    Contact CleanNest for help with your account, booking, payment, or service
+                    questions.
                   </p>
 
                   <div className="mt-7 space-y-3">
@@ -736,9 +731,7 @@ export default function FAQSection() {
                           <CheckCircle2 className="h-4 w-4" />
                         </span>
 
-                        <span className="text-sm font-semibold text-blue-50">
-                          {benefit}
-                        </span>
+                        <span className="text-sm font-semibold text-blue-50">{benefit}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -841,7 +834,7 @@ export default function FAQSection() {
           >
             <motion.div
               aria-hidden="true"
-              className="absolute -left-16 -top-20 h-52 w-52 rounded-full bg-primary/12 blur-3xl"
+              className="bg-primary/12 absolute -left-16 -top-20 h-52 w-52 rounded-full blur-3xl"
               animate={{
                 scale: [1, 1.3, 1],
               }}

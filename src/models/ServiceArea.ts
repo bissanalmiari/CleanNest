@@ -13,69 +13,39 @@ const serviceAreaSchema = new Schema(
   {
     city: {
       type: String,
-      required: [
-        true,
-        "City is required.",
-      ],
+      required: [true, "City is required."],
       trim: true,
-      minlength: [
-        2,
-        "City must contain at least 2 characters.",
-      ],
-      maxlength: [
-        80,
-        "City cannot exceed 80 characters.",
-      ],
+      minlength: [2, "City must contain at least 2 characters."],
+      maxlength: [80, "City cannot exceed 80 characters."],
     },
 
     area: {
       type: String,
-      required: [
-        true,
-        "Area is required.",
-      ],
+      required: [true, "Area is required."],
       trim: true,
-      minlength: [
-        2,
-        "Area must contain at least 2 characters.",
-      ],
-      maxlength: [
-        100,
-        "Area cannot exceed 100 characters.",
-      ],
+      minlength: [2, "Area must contain at least 2 characters."],
+      maxlength: [100, "Area cannot exceed 100 characters."],
     },
 
     postalCode: {
       type: String,
       trim: true,
-      maxlength: [
-        20,
-        "Postal code cannot exceed 20 characters.",
-      ],
+      maxlength: [20, "Postal code cannot exceed 20 characters."],
       default: "",
     },
 
     serviceFee: {
       type: Number,
       required: true,
-      min: [
-        0,
-        "Service fee cannot be negative.",
-      ],
+      min: [0, "Service fee cannot be negative."],
       default: 0,
     },
 
     maximumConcurrentBookings: {
       type: Number,
       required: true,
-      min: [
-        1,
-        "Maximum concurrent bookings must be at least one.",
-      ],
-      max: [
-        100,
-        "Maximum concurrent bookings cannot exceed 100.",
-      ],
+      min: [1, "Maximum concurrent bookings must be at least one."],
+      max: [100, "Maximum concurrent bookings cannot exceed 100."],
       default: 3,
     },
 
@@ -89,7 +59,7 @@ const serviceAreaSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
 serviceAreaSchema.index(
@@ -103,7 +73,7 @@ serviceAreaSchema.index(
       locale: "en",
       strength: 2,
     },
-  },
+  }
 );
 
 serviceAreaSchema.index({
@@ -112,21 +82,12 @@ serviceAreaSchema.index({
   area: 1,
 });
 
-export type ServiceArea =
-  InferSchemaType<
-    typeof serviceAreaSchema
-  >;
+export type ServiceArea = InferSchemaType<typeof serviceAreaSchema>;
 
-export type ServiceAreaDocument =
-  HydratedDocument<ServiceArea>;
+export type ServiceAreaDocument = HydratedDocument<ServiceArea>;
 
 const ServiceAreaModel: Model<ServiceArea> =
-  (models.ServiceArea as
-    | Model<ServiceArea>
-    | undefined) ??
-  model<ServiceArea>(
-    "ServiceArea",
-    serviceAreaSchema,
-  );
+  (models.ServiceArea as Model<ServiceArea> | undefined) ??
+  model<ServiceArea>("ServiceArea", serviceAreaSchema);
 
 export default ServiceAreaModel;

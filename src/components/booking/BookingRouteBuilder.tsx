@@ -322,6 +322,8 @@ export default function BookingRouteBuilder({ preferredServiceSlug }: BookingRou
   const [newHomeSaving, setNewHomeSaving] = useState(false);
   const [newHomeError, setNewHomeError] = useState<string | null>(null);
   const [newHomeSuccess, setNewHomeSuccess] = useState<string | null>(null);
+  const [showNewHomeForm, setShowNewHomeForm] = useState(false);
+  const [hasSavedHomes, setHasSavedHomes] = useState(false);
 
   useEffect(() => {
     if (!draft.addressId) {
@@ -490,6 +492,8 @@ export default function BookingRouteBuilder({ preferredServiceSlug }: BookingRou
     setProfileSaveState("idle");
     setNewHomeError(null);
     setNewHomeSuccess(null);
+    setShowNewHomeForm(false);
+    setHasSavedHomes(false);
     setCurrentStepIndex(0);
     setFurthestStepIndex(0);
   }
@@ -701,6 +705,8 @@ export default function BookingRouteBuilder({ preferredServiceSlug }: BookingRou
 
       handleAddressSelection(createdHome);
       setNewHomeSuccess(`${createdHome.label} was saved and selected for this booking.`);
+      setHasSavedHomes(true);
+      setShowNewHomeForm(false);
     } catch (error) {
       setNewHomeError(error instanceof Error ? error.message : "The new home could not be saved.");
     } finally {
@@ -1018,80 +1024,10 @@ export default function BookingRouteBuilder({ preferredServiceSlug }: BookingRou
                             </div>
                           )}
 
-                          <HomeBaseStep
-                            selectedAddressId={draft.addressId}
-                            homeProfile={{
-                              propertyType: draft.propertyType,
-                              bedrooms: draft.bedrooms,
-                              bathrooms: draft.bathrooms,
-                              propertySize: draft.propertySize,
-                            }}
-                            profileSaveState={profileSaveState}
-                            onSelect={(address) => {
-                              setNewHomeError(null);
-                              setNewHomeSuccess(null);
-                              handleAddressSelection(address);
-                            }}
-                          />
-
-                          <section className="border-t border-primary/10 pt-10">
-                            <div className="rounded-[1.7rem] bg-navy p-6 text-white sm:p-8">
-                              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-300">
-                                A different property
-                              </p>
-                              <h3 className="mt-3 font-heading text-3xl font-black">
-                                Or describe and save a new home
-                              </h3>
-                              <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-blue-100/70">
-                                Complete both sections below. The property details and address will
-                                be saved together and reused on your next booking.
-                              </p>
-                            </div>
-
-                            <SpaceScanStep
-                              value={{
-                                propertyType: draft.propertyType,
-
-                                bedrooms: draft.bedrooms,
-
-                                bathrooms: draft.bathrooms,
-
-                                propertySize: draft.propertySize,
-                              }}
-                              onChange={(update) => {
-                                beginNewHome();
-
-                                setDraft((currentDraft) => ({
-                                  ...currentDraft,
-                                  ...update,
-
-                                  /*
-                                   * Property changes invalidate an older
-                                   * personalized plan, duration, and slot.
-                                   */
-                                  serviceId: "",
-                                  serviceName: "Not selected",
-                                  addOns: [],
-                                  baseAmount: 0,
-                                  addOnsAmount: 0,
-                                  addressId: "",
-                                  addressLabel: "No address selected",
-                                  serviceAreaId: "",
-                                  serviceAreaLabel: "Not selected",
-                                  serviceAreaFee: 0,
-                                  totalAmount: 0,
-                                  bookingDate: "",
-
-                                  startTime: "",
-
-                                  endTime: "",
-                                }));
-                              }}
-                            />
-
-                            <div className="mt-10 border-t border-primary/10 pt-10">
+                          {!showNewHomeForm ? (
+                            <>
                               {newHomeSuccess && (
-                                <div className="mb-7 flex items-start gap-4 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-5 text-emerald-800">
+                                <div className="flex items-start gap-4 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-5 text-emerald-800">
                                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
                                   <div>
                                     <p className="font-extrabold">New home ready</p>
@@ -1102,15 +1038,130 @@ export default function BookingRouteBuilder({ preferredServiceSlug }: BookingRou
                                 </div>
                               )}
 
-                              <AddressForm
-                                loading={newHomeSaving}
-                                error={newHomeError}
-                                submitLabel="Save and use this home"
-                                onBeginEditing={beginNewHome}
-                                onSubmit={handleNewHomeSubmit}
+                              <HomeBaseStep
+                                selectedAddressId={draft.addressId}
+                                homeProfile={{
+                                  propertyType: draft.propertyType,
+                                  bedrooms: draft.bedrooms,
+                                  bathrooms: draft.bathrooms,
+                                  propertySize: draft.propertySize,
+                                }}
+                                profileSaveState={profileSaveState}
+                                onAddressesLoaded={(addresses) => {
+                                  const hasAddresses = addresses.length > 0;
+                                  setHasSavedHomes(hasAddresses);
+                                  if (!hasAddresses) {
+                                    setShowNewHomeForm(true);
+                                  }
+                                }}
+                                onSelect={(address) => {
+                                  setNewHomeError(null);
+                                  setNewHomeSuccess(null);
+                                  handleAddressSelection(address);
+                                }}
                               />
-                            </div>
-                          </section>
+
+                              <section className="border-t border-primary/10 pt-8">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    beginNewHome();
+                                    setShowNewHomeForm(true);
+                                  }}
+                                  className="group flex w-full items-center justify-between gap-5 rounded-[1.7rem] border border-dashed border-primary/30 bg-primary-light/35 p-5 text-left transition hover:border-primary hover:bg-primary-light sm:p-6"
+                                >
+                                  <span className="flex items-center gap-4">
+                                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-[0_12px_28px_rgba(30,111,217,0.24)]">
+                                      <Plus className="h-5 w-5" />
+                                    </span>
+                                    <span>
+                                      <span className="block font-heading text-lg font-black text-navy">
+                                        Add new building details
+                                      </span>
+                                      <span className="mt-1 block text-sm font-semibold leading-6 text-slate-500">
+                                        Save another property and use it for this booking.
+                                      </span>
+                                    </span>
+                                  </span>
+                                  <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+                                </button>
+                              </section>
+                            </>
+                          ) : (
+                            <section>
+                              <div className="rounded-[1.7rem] bg-navy p-6 text-white sm:p-8">
+                                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                                  <div>
+                                    <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-300">
+                                      New property
+                                    </p>
+                                    <h3 className="mt-3 font-heading text-3xl font-black">
+                                      Add building and address details
+                                    </h3>
+                                    <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-blue-100/70">
+                                      This complete home profile will be saved and ready for future
+                                      bookings.
+                                    </p>
+                                  </div>
+
+                                  {hasSavedHomes && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setShowNewHomeForm(false);
+                                        setNewHomeError(null);
+                                      }}
+                                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-extrabold text-white transition hover:bg-white/15"
+                                    >
+                                      <ArrowLeft className="h-4 w-4" />
+                                      Use a saved home
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <SpaceScanStep
+                                value={{
+                                  propertyType: draft.propertyType,
+                                  bedrooms: draft.bedrooms,
+                                  bathrooms: draft.bathrooms,
+                                  propertySize: draft.propertySize,
+                                }}
+                                onChange={(update) => {
+                                  beginNewHome();
+                                  setDraft((currentDraft) => ({
+                                    ...currentDraft,
+                                    ...update,
+                                    serviceId: "",
+                                    serviceName: "Not selected",
+                                    addOns: [],
+                                    baseAmount: 0,
+                                    addOnsAmount: 0,
+                                    addressId: "",
+                                    addressLabel: "No address selected",
+                                    serviceAreaId: "",
+                                    serviceAreaLabel: "Not selected",
+                                    serviceAreaFee: 0,
+                                    totalAmount: 0,
+                                    bookingDate: "",
+                                    startTime: "",
+                                    endTime: "",
+                                  }));
+                                }}
+                              />
+
+                              <div className="mt-10 border-t border-primary/10 pt-10">
+                                <AddressForm
+                                  loading={newHomeSaving}
+                                  error={newHomeError}
+                                  submitLabel="Save and use this home"
+                                  onBeginEditing={beginNewHome}
+                                  onSubmit={handleNewHomeSubmit}
+                                  showPropertyProfile={false}
+                                />
+                              </div>
+                            </section>
+                          )}
                         </div>
                       ) : currentStep.id === "plan" ? (
                         <CleaningPlanStep

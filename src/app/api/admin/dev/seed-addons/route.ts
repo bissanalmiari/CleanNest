@@ -13,8 +13,7 @@ export const dynamic = "force-dynamic";
 const ADDON_SEED_DATA = [
   {
     name: "Inside Refrigerator",
-    description:
-      "Clean shelves, drawers, walls, and accessible surfaces inside the refrigerator.",
+    description: "Clean shelves, drawers, walls, and accessible surfaces inside the refrigerator.",
     price: 15,
     extraDurationMinutes: 30,
     maxQuantity: 1,
@@ -22,8 +21,7 @@ const ADDON_SEED_DATA = [
   },
   {
     name: "Inside Oven",
-    description:
-      "Remove grease and residue from accessible surfaces inside the oven.",
+    description: "Remove grease and residue from accessible surfaces inside the oven.",
     price: 18,
     extraDurationMinutes: 40,
     maxQuantity: 1,
@@ -31,8 +29,7 @@ const ADDON_SEED_DATA = [
   },
   {
     name: "Interior Windows",
-    description:
-      "Clean interior glass surfaces, frames, and accessible window edges.",
+    description: "Clean interior glass surfaces, frames, and accessible window edges.",
     price: 6,
     extraDurationMinutes: 15,
     maxQuantity: 12,
@@ -40,8 +37,7 @@ const ADDON_SEED_DATA = [
   },
   {
     name: "Sofa Cleaning",
-    description:
-      "Vacuum and clean accessible fabric surfaces on sofas and upholstered seating.",
+    description: "Vacuum and clean accessible fabric surfaces on sofas and upholstered seating.",
     price: 12,
     extraDurationMinutes: 25,
     maxQuantity: 6,
@@ -49,8 +45,7 @@ const ADDON_SEED_DATA = [
   },
   {
     name: "Kitchen Cabinets",
-    description:
-      "Clean accessible cabinet doors, handles, and exterior kitchen surfaces.",
+    description: "Clean accessible cabinet doors, handles, and exterior kitchen surfaces.",
     price: 20,
     extraDurationMinutes: 35,
     maxQuantity: 1,
@@ -58,8 +53,7 @@ const ADDON_SEED_DATA = [
   },
   {
     name: "Balcony Cleaning",
-    description:
-      "Sweep and clean the accessible balcony floor, railing, and surface areas.",
+    description: "Sweep and clean the accessible balcony floor, railing, and surface areas.",
     price: 14,
     extraDurationMinutes: 30,
     maxQuantity: 3,
@@ -88,12 +82,11 @@ export async function POST() {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "No active cleaning services were found.",
+          error: "No active cleaning services were found.",
         },
         {
           status: 404,
-        },
+        }
       );
     }
 
@@ -103,39 +96,33 @@ export async function POST() {
      * Create each add-on or update the existing one.
      */
     for (const addonData of ADDON_SEED_DATA) {
-      const addon =
-        await AddonModel.findOneAndUpdate(
-          {
-            name: addonData.name,
+      const addon = await AddonModel.findOneAndUpdate(
+        {
+          name: addonData.name,
+        },
+        {
+          $set: {
+            description: addonData.description,
+
+            price: addonData.price,
+
+            extraDurationMinutes: addonData.extraDurationMinutes,
+
+            maxQuantity: addonData.maxQuantity,
+
+            isActive: true,
           },
-          {
-            $set: {
-              description:
-                addonData.description,
-
-              price:
-                addonData.price,
-
-              extraDurationMinutes:
-                addonData.extraDurationMinutes,
-
-              maxQuantity:
-                addonData.maxQuantity,
-
-              isActive: true,
-            },
-          },
-          {
-            new: true,
-            upsert: true,
-            setDefaultsOnInsert: true,
-          },
-        ).exec();
+        },
+        {
+          new: true,
+          upsert: true,
+          setDefaultsOnInsert: true,
+        }
+      ).exec();
 
       seededAddons.push({
         addon,
-        sortOrder:
-          addonData.sortOrder,
+        sortOrder: addonData.sortOrder,
       });
     }
 
@@ -145,17 +132,12 @@ export async function POST() {
      * Connect every seeded add-on to every active service.
      */
     for (const service of services) {
-      for (const {
-        addon,
-        sortOrder,
-      } of seededAddons) {
+      for (const { addon, sortOrder } of seededAddons) {
         await ServiceAddonModel.updateOne(
           {
-            serviceId:
-              service._id,
+            serviceId: service._id,
 
-            addonId:
-              addon._id,
+            addonId: addon._id,
           },
           {
             $set: {
@@ -167,19 +149,16 @@ export async function POST() {
                * The API will use Addon.price and
                * Addon.extraDurationMinutes.
                */
-              overridePrice:
-                undefined,
+              overridePrice: undefined,
 
-              overrideDurationMinutes:
-                undefined,
+              overrideDurationMinutes: undefined,
 
-              maxQuantity:
-                undefined,
+              maxQuantity: undefined,
             },
           },
           {
             upsert: true,
-          },
+          }
         ).exec();
 
         createdOrUpdatedLinks += 1;
@@ -190,54 +169,31 @@ export async function POST() {
       {
         success: true,
 
-        message:
-          "Add-ons were created and linked to all active services.",
+        message: "Add-ons were created and linked to all active services.",
 
         data: {
-          services:
-            services.length,
+          services: services.length,
 
-          addons:
-            seededAddons.length,
+          addons: seededAddons.length,
 
-          serviceAddonLinks:
-            createdOrUpdatedLinks,
+          serviceAddonLinks: createdOrUpdatedLinks,
 
-          serviceNames:
-            services.map(
-              (service) =>
-                service.name,
-            ),
+          serviceNames: services.map((service) => service.name),
 
-          addonNames:
-            seededAddons.map(
-              ({ addon }) =>
-                addon.name,
-            ),
+          addonNames: seededAddons.map(({ addon }) => addon.name),
         },
       },
       {
         status: 200,
-      },
+      }
     );
   } catch (error) {
-    console.error(
-      "POST /api/admin/dev/seed-addons failed:",
-      error,
-    );
+    console.error("POST /api/admin/dev/seed-addons failed:", error);
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to seed service add-ons.";
+    const message = error instanceof Error ? error.message : "Unable to seed service add-ons.";
 
     const status =
-      message
-        .toLowerCase()
-        .includes("authorized") ||
-      message
-        .toLowerCase()
-        .includes("admin")
+      message.toLowerCase().includes("authorized") || message.toLowerCase().includes("admin")
         ? 403
         : 500;
 
@@ -248,7 +204,7 @@ export async function POST() {
       },
       {
         status,
-      },
+      }
     );
   }
 }

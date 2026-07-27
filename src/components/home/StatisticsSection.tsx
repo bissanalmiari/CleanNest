@@ -30,8 +30,7 @@ const statistics = [
     decimals: 0,
     suffix: "+",
     label: "Successful Cleanings",
-    description:
-      "Homes and workplaces refreshed through dependable CleanNest services.",
+    description: "Homes and workplaces refreshed through dependable CleanNest services.",
     icon: Sparkles,
     progress: 92,
     accentClass: "bg-primary text-white",
@@ -46,8 +45,7 @@ const statistics = [
     decimals: 0,
     suffix: "%",
     label: "Satisfied Customers",
-    description:
-      "A customer-focused experience built around care, quality, and convenience.",
+    description: "A customer-focused experience built around care, quality, and convenience.",
     icon: Users,
     progress: 98,
     accentClass: "bg-emerald-500 text-white",
@@ -62,8 +60,7 @@ const statistics = [
     decimals: 1,
     suffix: "/5",
     label: "Average Rating",
-    description:
-      "Excellent feedback for service quality, communication, and professionalism.",
+    description: "Excellent feedback for service quality, communication, and professionalism.",
     icon: Star,
     progress: 98,
     accentClass: "bg-amber-500 text-white",
@@ -78,8 +75,7 @@ const statistics = [
     decimals: 0,
     suffix: "",
     label: "Core Cleaning Services",
-    description:
-      "Flexible options for regular homes, deep cleaning, moving, and offices.",
+    description: "Flexible options for regular homes, deep cleaning, moving, and offices.",
     icon: Home,
     progress: 100,
     accentClass: "bg-cyan-500 text-white",
@@ -175,11 +171,7 @@ type AnimatedCounterProps = {
   suffix: string;
 };
 
-function AnimatedCounter({
-  value,
-  decimals,
-  suffix,
-}: AnimatedCounterProps) {
+function AnimatedCounter({ value, decimals, suffix }: AnimatedCounterProps) {
   const counterRef = useRef<HTMLSpanElement>(null);
   const isInView = useInView(counterRef, {
     once: true,
@@ -452,9 +444,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
             className={`relative flex h-20 w-20 items-center justify-center rounded-[1.5rem] shadow-[0_18px_45px_rgba(11,37,69,0.18)] ${statistic.accentClass}`}
           >
             <Icon
-              className={`h-9 w-9 ${
-                statistic.label === "Average Rating" ? "fill-current" : ""
-              }`}
+              className={`h-9 w-9 ${statistic.label === "Average Rating" ? "fill-current" : ""}`}
             />
           </motion.div>
 
@@ -516,9 +506,7 @@ function StatisticCard({ statistic, index }: StatisticCardProps) {
             />
           </p>
 
-          <h3 className="mt-3 font-heading text-xl font-bold text-navy">
-            {statistic.label}
-          </h3>
+          <h3 className="mt-3 font-heading text-xl font-bold text-navy">{statistic.label}</h3>
 
           <p className="mx-auto mt-3 max-w-[270px] text-sm leading-6 text-slate-600">
             {statistic.description}
@@ -592,7 +580,7 @@ export default function StatisticsSection() {
         {/* Large moving glows */}
         <motion.div
           aria-hidden="true"
-          className="absolute -left-64 top-1/4 h-[42rem] w-[42rem] rounded-full bg-primary/12 blur-3xl"
+          className="bg-primary/12 absolute -left-64 top-1/4 h-[42rem] w-[42rem] rounded-full blur-3xl"
           animate={{
             x: [0, 120, 0],
             y: [0, -65, 0],
@@ -732,7 +720,6 @@ export default function StatisticsSection() {
               >
                 <Award className="h-4 w-4" />
               </motion.span>
-
               CleanNest by the Numbers
             </motion.div>
 
@@ -744,19 +731,15 @@ export default function StatisticsSection() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Every booking, review, and completed cleaning helps CleanNest
-              build a more dependable experience for customers across Lebanon.
+              Every booking, review, and completed cleaning helps CleanNest build a more dependable
+              experience for customers across Lebanon.
             </p>
           </motion.div>
 
           {/* Statistic cards */}
           <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {statistics.map((statistic, index) => (
-              <StatisticCard
-                key={statistic.label}
-                statistic={statistic}
-                index={index}
-              />
+              <StatisticCard key={statistic.label} statistic={statistic} index={index} />
             ))}
           </div>
 
@@ -800,31 +783,29 @@ export default function StatisticsSection() {
                 ease: "linear",
               }}
             >
-              {[...trustMessages, ...trustMessages].map(
-                ({ icon: Icon, text }, index) => (
-                  <div
-                    key={`${text}-${index}`}
-                    className="flex shrink-0 items-center gap-3 text-sm font-semibold text-slate-700"
+              {[...trustMessages, ...trustMessages].map(({ icon: Icon, text }, index) => (
+                <div
+                  key={`${text}-${index}`}
+                  className="flex shrink-0 items-center gap-3 text-sm font-semibold text-slate-700"
+                >
+                  <motion.span
+                    animate={{
+                      rotate: [0, 6, -6, 0],
+                      scale: [1, 1.08, 1],
+                    }}
+                    transition={{
+                      duration: 3,
+                      delay: index * 0.2,
+                      repeat: 0,
+                    }}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary"
                   >
-                    <motion.span
-                      animate={{
-                        rotate: [0, 6, -6, 0],
-                        scale: [1, 1.08, 1],
-                      }}
-                      transition={{
-                        duration: 3,
-                        delay: index * 0.2,
-                        repeat: 0,
-                      }}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary"
-                    >
-                      <Icon className="h-5 w-5" />
-                    </motion.span>
+                    <Icon className="h-5 w-5" />
+                  </motion.span>
 
-                    {text}
-                  </div>
-                )
-              )}
+                  {text}
+                </div>
+              ))}
             </motion.div>
           </motion.div>
 
@@ -898,13 +879,12 @@ export default function StatisticsSection() {
                 </div>
 
                 <h3 className="mt-4 max-w-3xl font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-                  Your next clean and comfortable space is only a few clicks
-                  away.
+                  Your next clean and comfortable space is only a few clicks away.
                 </h3>
 
                 <p className="mt-4 max-w-2xl leading-7 text-blue-100/75">
-                  Create your account, choose your preferred service, and book
-                  a suitable date and time in minutes.
+                  Create your account, choose your preferred service, and book a suitable date and
+                  time in minutes.
                 </p>
               </div>
 

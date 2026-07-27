@@ -3,6 +3,8 @@
 import Link from "next/link";
 
 import {
+  Bath,
+  BedDouble,
   Briefcase,
   Building2,
   CheckCircle2,
@@ -11,6 +13,7 @@ import {
   MapPin,
   Navigation,
   Pencil,
+  Ruler,
   ShieldCheck,
   Star,
   Trash2,
@@ -174,6 +177,24 @@ export function AddressCard({ address, onDelete, onSetDefault, busy }: AddressCa
                   label="Area"
                   value={`${address.area}, ${address.city}`}
                 />
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <span className="rounded-full border border-primary/10 bg-primary-light/60 px-3 py-1.5 text-xs font-extrabold capitalize text-primary">
+                  {address.propertyType}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-bold text-slate-600">
+                  <BedDouble className="h-3.5 w-3.5 text-primary" />
+                  {address.bedrooms} {address.propertyType === "office" ? "rooms" : "bedrooms"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-bold text-slate-600">
+                  <Bath className="h-3.5 w-3.5 text-primary" />
+                  {address.bathrooms} bathrooms
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-bold text-slate-600">
+                  <Ruler className="h-3.5 w-3.5 text-primary" />
+                  {address.propertySize} m²
+                </span>
               </div>
             </div>
           </div>

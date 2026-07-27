@@ -120,15 +120,13 @@ export default function AdminUserDetailPage() {
         setErrorMessage(null);
       } catch (error) {
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Identity profile could not be loaded.",
+          error instanceof Error ? error.message : "Identity profile could not be loaded."
         );
       } finally {
         setLoading(false);
       }
     },
-    [userId],
+    [userId]
   );
 
   useEffect(() => {
@@ -142,7 +140,7 @@ export default function AdminUserDetailPage() {
       !window.confirm(
         action === "block"
           ? `Suspend ${data.user.name}? They will no longer be able to sign in.`
-          : `Restore platform access for ${data.user.name}?`,
+          : `Restore platform access for ${data.user.name}?`
       )
     ) {
       return;
@@ -161,9 +159,7 @@ export default function AdminUserDetailPage() {
       }
       await fetchDetail(true);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
     } finally {
       setWorking(false);
     }
@@ -171,11 +167,7 @@ export default function AdminUserDetailPage() {
 
   async function deleteUser() {
     if (!data) return;
-    if (
-      !window.confirm(
-        `Permanently delete ${data.user.name}? This action cannot be undone.`,
-      )
-    ) {
+    if (!window.confirm(`Permanently delete ${data.user.name}? This action cannot be undone.`)) {
       return;
     }
 
@@ -190,9 +182,7 @@ export default function AdminUserDetailPage() {
       }
       router.replace("/admin/admin-users");
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
       setWorking(false);
     }
   }
@@ -206,9 +196,7 @@ export default function AdminUserDetailPage() {
           <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
             <AlertCircle className="h-7 w-7" />
           </span>
-          <h1 className="mt-5 font-heading text-2xl font-black text-navy">
-            Identity unavailable
-          </h1>
+          <h1 className="mt-5 font-heading text-2xl font-black text-navy">Identity unavailable</h1>
           <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
             {errorMessage ?? "This platform identity could not be found."}
           </p>
@@ -317,9 +305,7 @@ export default function AdminUserDetailPage() {
               ) : (
                 <Ban className="h-4 w-4 text-amber-300" />
               )}
-              {user.status === "suspended"
-                ? "Restore access"
-                : "Suspend account"}
+              {user.status === "suspended" ? "Restore access" : "Suspend account"}
             </button>
           </div>
         </motion.section>
@@ -341,11 +327,7 @@ export default function AdminUserDetailPage() {
 
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
               <InfoCard icon={Mail} label="Email address" value={user.email} />
-              <InfoCard
-                icon={Phone}
-                label="Phone number"
-                value={user.phone || "Not provided"}
-              />
+              <InfoCard icon={Phone} label="Phone number" value={user.phone || "Not provided"} />
               <InfoCard
                 icon={CalendarDays}
                 label="Identity created"
@@ -376,9 +358,7 @@ export default function AdminUserDetailPage() {
               <p className="mt-2 font-heading text-4xl font-black tracking-[-0.05em] text-navy">
                 {activityValue}
               </p>
-              <p className="mt-1 text-sm font-medium text-slate-500">
-                {context.description}
-              </p>
+              <p className="mt-1 text-sm font-medium text-slate-500">{context.description}</p>
               <Link
                 href={context.href}
                 className="group mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-navy text-xs font-extrabold text-white transition hover:bg-violet-700"
@@ -394,15 +374,13 @@ export default function AdminUserDetailPage() {
                   <UserRoundCog className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="font-heading text-sm font-bold text-navy">
-                    Protected actions
-                  </p>
+                  <p className="font-heading text-sm font-bold text-navy">Protected actions</p>
                   <p className="text-xs text-slate-500">Server enforced</p>
                 </div>
               </div>
               <p className="mt-4 text-xs font-medium leading-5 text-slate-500">
-                CleanNest prevents an administrator from suspending or
-                deleting their own active identity.
+                CleanNest prevents an administrator from suspending or deleting their own active
+                identity.
               </p>
             </div>
 
@@ -412,15 +390,13 @@ export default function AdminUserDetailPage() {
                   <ShieldAlert className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="font-heading text-sm font-bold text-navy">
-                    Danger zone
-                  </p>
+                  <p className="font-heading text-sm font-bold text-navy">Danger zone</p>
                   <p className="text-xs text-slate-500">Permanent action</p>
                 </div>
               </div>
               <p className="mt-4 text-xs font-medium leading-5 text-slate-500">
-                Prefer suspension for temporary restrictions. Deletion is
-                permanent and cannot be reversed.
+                Prefer suspension for temporary restrictions. Deletion is permanent and cannot be
+                reversed.
               </p>
               <button
                 type="button"

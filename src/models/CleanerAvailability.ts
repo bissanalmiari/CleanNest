@@ -24,18 +24,10 @@ const cleanerAvailabilitySchema = new Schema<ICleanerAvailability>(
   { timestamps: true }
 );
 
-cleanerAvailabilitySchema.index(
-  { cleanerId: 1, dayOfWeek: 1 },
-  { unique: true }
-);
+cleanerAvailabilitySchema.index({ cleanerId: 1, dayOfWeek: 1 }, { unique: true });
 
 const CleanerAvailability =
-  (mongoose.models.CleanerAvailability as
-    | Model<ICleanerAvailability>
-    | undefined) ??
-  mongoose.model<ICleanerAvailability>(
-    "CleanerAvailability",
-    cleanerAvailabilitySchema,
-  );
+  (mongoose.models.CleanerAvailability as Model<ICleanerAvailability> | undefined) ??
+  mongoose.model<ICleanerAvailability>("CleanerAvailability", cleanerAvailabilitySchema);
 
 export default CleanerAvailability;

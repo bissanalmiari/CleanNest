@@ -31,8 +31,7 @@ const values = [
   {
     icon: HeartHandshake,
     title: "Customer First",
-    description:
-      "Every service is designed around your comfort, schedule, and expectations.",
+    description: "Every service is designed around your comfort, schedule, and expectations.",
   },
 ];
 
@@ -107,11 +106,9 @@ export default function AboutSection() {
           aria-hidden="true"
           className="absolute inset-0 opacity-30"
           style={{
-            backgroundImage:
-              "radial-gradient(rgba(30,111,217,0.18) 1.2px, transparent 1.2px)",
+            backgroundImage: "radial-gradient(rgba(30,111,217,0.18) 1.2px, transparent 1.2px)",
             backgroundSize: "34px 34px",
-            maskImage:
-              "linear-gradient(to bottom, transparent, black 18%, black 82%, transparent)",
+            maskImage: "linear-gradient(to bottom, transparent, black 18%, black 82%, transparent)",
           }}
         />
 
@@ -155,7 +152,6 @@ export default function AboutSection() {
               >
                 <Sparkles className="h-4 w-4" />
               </motion.span>
-
               About CleanNest
             </motion.div>
 
@@ -167,9 +163,8 @@ export default function AboutSection() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              CleanNest makes professional cleaning simple, reliable, and
-              accessible. Enjoy cleaner spaces without complicated booking or
-              unclear pricing.
+              CleanNest makes professional cleaning simple, reliable, and accessible. Enjoy cleaner
+              spaces without complicated booking or unclear pricing.
             </p>
           </motion.div>
 
@@ -332,13 +327,9 @@ export default function AboutSection() {
                   </span>
 
                   <div>
-                    <p className="font-heading text-lg font-bold text-navy">
-                      Quality First
-                    </p>
+                    <p className="font-heading text-lg font-bold text-navy">Quality First</p>
 
-                    <p className="text-xs text-slate-500">
-                      Service you can trust
-                    </p>
+                    <p className="text-xs text-slate-500">Service you can trust</p>
                   </div>
                 </div>
               </motion.div>
@@ -371,13 +362,9 @@ export default function AboutSection() {
                   </span>
 
                   <div>
-                    <p className="font-heading text-lg font-bold text-navy">
-                      Customer Focused
-                    </p>
+                    <p className="font-heading text-lg font-bold text-navy">Customer Focused</p>
 
-                    <p className="text-xs text-slate-500">
-                      Your comfort matters
-                    </p>
+                    <p className="text-xs text-slate-500">Your comfort matters</p>
                   </div>
                 </div>
               </motion.div>
@@ -411,16 +398,15 @@ export default function AboutSection() {
               </h3>
 
               <p className="mt-6 text-base leading-8 text-slate-600 sm:text-lg">
-                CleanNest connects customers with dependable cleaning services
-                through one simple platform. From choosing a service to
-                selecting a convenient appointment, every step is designed to
-                be fast and clear.
+                CleanNest connects customers with dependable cleaning services through one simple
+                platform. From choosing a service to selecting a convenient appointment, every step
+                is designed to be fast and clear.
               </p>
 
               <p className="mt-4 text-base leading-8 text-slate-600">
-                Whether you need regular home cleaning, deep cleaning, or help
-                for a special occasion, our goal is to provide consistent
-                quality and a smooth customer experience.
+                Whether you need regular home cleaning, deep cleaning, or help for a special
+                occasion, our goal is to provide consistent quality and a smooth customer
+                experience.
               </p>
 
               {/* Promises */}
@@ -464,9 +450,7 @@ export default function AboutSection() {
                       <CheckCircle2 className="h-4 w-4" />
                     </span>
 
-                    <span className="text-sm font-medium leading-6 text-slate-700">
-                      {promise}
-                    </span>
+                    <span className="text-sm font-medium leading-6 text-slate-700">{promise}</span>
                   </motion.div>
                 ))}
               </motion.div>
@@ -525,13 +509,9 @@ export default function AboutSection() {
                     </motion.span>
 
                     <div>
-                      <h4 className="font-heading text-lg font-bold text-navy">
-                        {title}
-                      </h4>
+                      <h4 className="font-heading text-lg font-bold text-navy">{title}</h4>
 
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {description}
-                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
                     </div>
                   </motion.article>
                 ))}
@@ -571,7 +551,6 @@ export default function AboutSection() {
                     className="group inline-flex min-h-14 items-center justify-center gap-3 rounded-xl bg-primary px-7 py-4 font-semibold text-white shadow-[0_15px_35px_rgba(30,111,217,0.28)] transition-shadow hover:shadow-[0_20px_45px_rgba(30,111,217,0.40)]"
                   >
                     Discover Our Story
-
                     <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                   </Link>
                 </motion.div>
@@ -654,9 +633,7 @@ export default function AboutSection() {
                     {statistic.value}
                   </p>
 
-                  <p className="mt-2 text-sm font-medium text-blue-100">
-                    {statistic.label}
-                  </p>
+                  <p className="mt-2 text-sm font-medium text-blue-100">{statistic.label}</p>
                 </motion.div>
               ))}
             </div>

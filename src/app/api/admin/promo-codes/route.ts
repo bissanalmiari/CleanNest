@@ -7,10 +7,7 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
-import {
-  getAllPromoCodes,
-  createPromoCode,
-} from "@/services/promoCodeManagementService";
+import { getAllPromoCodes, createPromoCode } from "@/services/promoCodeManagementService";
 import { createPromoCodeSchema } from "@/validators/promoCodeValidator";
 
 async function requireAdmin() {
@@ -30,8 +27,7 @@ export async function GET(request: NextRequest) {
 
     const codes = await getAllPromoCodes({
       search: searchParams.get("search") ?? undefined,
-      isActive:
-        isActiveParam === null ? undefined : isActiveParam === "true",
+      isActive: isActiveParam === null ? undefined : isActiveParam === "true",
     });
 
     return successResponse({ promoCodes: codes, total: codes.length });

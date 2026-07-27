@@ -189,10 +189,7 @@ export async function updateService(id: string, input: UpdateServiceInput) {
   if (input.price !== undefined && !(input.price > 0)) {
     throw new AppError("Price must be a positive number", 422);
   }
-  if (
-    input.durationMinutes !== undefined &&
-    !(input.durationMinutes > 0)
-  ) {
+  if (input.durationMinutes !== undefined && !(input.durationMinutes > 0)) {
     throw new AppError("Duration must be a positive number of minutes", 422);
   }
 
@@ -208,12 +205,10 @@ export async function updateService(id: string, input: UpdateServiceInput) {
   if (input.name !== undefined) service.name = input.name.trim();
   if (input.shortDescription !== undefined)
     service.shortDescription = input.shortDescription.trim();
-  if (input.description !== undefined)
-    service.description = input.description.trim();
+  if (input.description !== undefined) service.description = input.description.trim();
   if (input.category !== undefined) service.category = input.category.trim();
   if (input.price !== undefined) service.price = input.price;
-  if (input.durationMinutes !== undefined)
-    service.durationMinutes = input.durationMinutes;
+  if (input.durationMinutes !== undefined) service.durationMinutes = input.durationMinutes;
   if (input.includedSquareMeters !== undefined)
     service.includedSquareMeters = input.includedSquareMeters;
   if (input.pricePerAdditionalSquareMeter !== undefined)

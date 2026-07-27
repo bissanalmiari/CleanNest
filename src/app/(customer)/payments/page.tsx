@@ -163,11 +163,7 @@ export default function CustomerPaymentsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchPayments = useCallback(
-    async (
-      currentStatus: "" | PaymentStatus,
-      currentPage: number,
-      isRefresh = false,
-    ) => {
+    async (currentStatus: "" | PaymentStatus, currentPage: number, isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
@@ -178,10 +174,9 @@ export default function CustomerPaymentsPage() {
         });
         if (currentStatus) params.set("status", currentStatus);
 
-        const response = await fetch(
-          `/api/customer/payments?${params.toString()}`,
-          { cache: "no-store" },
-        );
+        const response = await fetch(`/api/customer/payments?${params.toString()}`, {
+          cache: "no-store",
+        });
         const json: ApiEnvelope<PaymentListData> = await response.json();
 
         if (!response.ok || !json.success) {
@@ -192,16 +187,14 @@ export default function CustomerPaymentsPage() {
         setErrorMessage(null);
       } catch (error) {
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "We could not load your payments.",
+          error instanceof Error ? error.message : "We could not load your payments."
         );
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -211,38 +204,22 @@ export default function CustomerPaymentsPage() {
   const metrics = useMemo(() => {
     const summary = data?.summary ?? [];
     const byStatus = new Map(
-      summary.map((item) => [
-        item._id,
-        { count: item.count, total: item.total },
-      ]),
+      summary.map((item) => [item._id, { count: item.count, total: item.total }])
     );
-    const get = (value: PaymentStatus) =>
-      byStatus.get(value) ?? { count: 0, total: 0 };
+    const get = (value: PaymentStatus) => byStatus.get(value) ?? { count: 0, total: 0 };
     const attentionStatuses: PaymentStatus[] = ["unpaid", "failed"];
-    const outstandingStatuses: PaymentStatus[] = [
-      "unpaid",
-      "pending",
-      "failed",
-    ];
+    const outstandingStatuses: PaymentStatus[] = ["unpaid", "pending", "failed"];
 
     return {
       byStatus,
       totalCount: summary.reduce((sum, item) => sum + item.count, 0),
       paidTotal: get("paid").total,
-      attentionCount: attentionStatuses.reduce(
-        (sum, value) => sum + get(value).count,
-        0,
-      ),
-      outstandingTotal: outstandingStatuses.reduce(
-        (sum, value) => sum + get(value).total,
-        0,
-      ),
+      attentionCount: attentionStatuses.reduce((sum, value) => sum + get(value).count, 0),
+      outstandingTotal: outstandingStatuses.reduce((sum, value) => sum + get(value).total, 0),
     };
   }, [data]);
 
-  const totalPages = data
-    ? Math.max(1, Math.ceil(data.total / data.limit))
-    : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
 
   function changeStatus(nextStatus: "" | PaymentStatus) {
     setStatus(nextStatus);
@@ -296,8 +273,8 @@ export default function CustomerPaymentsPage() {
               </h1>
 
               <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                Review receipts, follow payment progress, and securely complete
-                anything that still needs your attention.
+                Review receipts, follow payment progress, and securely complete anything that still
+                needs your attention.
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3 text-xs font-bold text-blue-100/70">
@@ -332,11 +309,7 @@ export default function CustomerPaymentsPage() {
                   icon={AlertCircle}
                   label="Needs attention"
                   value={String(metrics.attentionCount)}
-                  note={
-                    metrics.attentionCount === 1
-                      ? "Payment to review"
-                      : "Payments to review"
-                  }
+                  note={metrics.attentionCount === 1 ? "Payment to review" : "Payments to review"}
                   accent="amber"
                 />
               </div>
@@ -362,11 +335,7 @@ export default function CustomerPaymentsPage() {
                 disabled={refreshing}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-extrabold text-navy transition hover:border-primary/30 hover:bg-primary-light disabled:cursor-wait disabled:opacity-60"
               >
-                <RefreshCw
-                  className={`h-4 w-4 text-primary ${
-                    refreshing ? "animate-spin" : ""
-                  }`}
-                />
+                <RefreshCw className={`h-4 w-4 text-primary ${refreshing ? "animate-spin" : ""}`} />
                 Refresh
               </button>
             </div>
@@ -399,9 +368,7 @@ export default function CustomerPaymentsPage() {
                     {tab.label}
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] ${
-                        active
-                          ? "bg-white/15 text-cyan-100"
-                          : "bg-white text-slate-400"
+                        active ? "bg-white/15 text-cyan-100" : "bg-white text-slate-400"
                       }`}
                     >
                       {count}
@@ -420,9 +387,7 @@ export default function CustomerPaymentsPage() {
                   <h3 className="mt-5 font-heading text-lg font-bold text-navy">
                     Payments could not be loaded
                   </h3>
-                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                    {errorMessage}
-                  </p>
+                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{errorMessage}</p>
                   <button
                     type="button"
                     onClick={() => void fetchPayments(status, page)}
@@ -454,9 +419,7 @@ export default function CustomerPaymentsPage() {
                         reduceMotion={Boolean(reduceMotion)}
                         onPay={() => {
                           if (payment.bookingId) {
-                            router.push(
-                              `/payments/pay/${payment.bookingId._id}`,
-                            );
+                            router.push(`/payments/pay/${payment.bookingId._id}`);
                           }
                         }}
                       />
@@ -469,9 +432,7 @@ export default function CustomerPaymentsPage() {
             {data && totalPages > 1 && !loading && !errorMessage && (
               <div className="mt-6 flex flex-col gap-4 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs font-semibold text-slate-500">
-                  Showing page{" "}
-                  <span className="font-extrabold text-navy">{data.page}</span>{" "}
-                  of{" "}
+                  Showing page <span className="font-extrabold text-navy">{data.page}</span> of{" "}
                   <span className="font-extrabold text-navy">{totalPages}</span>
                   <span className="mx-2 text-slate-300">•</span>
                   {data.total} payments
@@ -510,8 +471,8 @@ export default function CustomerPaymentsPage() {
                 Simple, secure billing
               </h2>
               <p className="mt-3 text-sm font-medium leading-6 text-blue-100/70">
-                Each payment is connected to its booking, so your service and
-                transaction history always stay together.
+                Each payment is connected to its booking, so your service and transaction history
+                always stay together.
               </p>
               <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
                 <TrustItem icon={LockKeyhole} text="Secure payment workflow" />
@@ -526,9 +487,7 @@ export default function CustomerPaymentsPage() {
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="font-heading text-sm font-bold text-navy">
-                    Need another clean?
-                  </p>
+                  <p className="font-heading text-sm font-bold text-navy">Need another clean?</p>
                   <p className="text-xs text-slate-400">Build a new route</p>
                 </div>
               </div>
@@ -555,13 +514,7 @@ interface SummaryCardProps {
   accent: "emerald" | "cyan" | "amber";
 }
 
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  note,
-  accent,
-}: SummaryCardProps) {
+function SummaryCard({ icon: Icon, label, value, note, accent }: SummaryCardProps) {
   const accents = {
     emerald: "bg-emerald-300 text-navy",
     cyan: "bg-cyan-300 text-navy",
@@ -571,18 +524,14 @@ function SummaryCard({
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-sm">
       <div className="flex items-center gap-2.5">
-        <span
-          className={`flex h-8 w-8 items-center justify-center rounded-xl ${accents[accent]}`}
-        >
+        <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${accents[accent]}`}>
           <Icon className="h-4 w-4" />
         </span>
         <p className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-blue-100/60">
           {label}
         </p>
       </div>
-      <p className="mt-4 font-heading text-xl font-black tracking-[-0.03em] text-white">
-        {value}
-      </p>
+      <p className="mt-4 font-heading text-xl font-black tracking-[-0.03em] text-white">{value}</p>
       <p className="mt-1 text-[10px] font-bold text-blue-100/50">{note}</p>
     </div>
   );
@@ -595,12 +544,7 @@ interface PaymentCardProps {
   onPay: () => void;
 }
 
-function PaymentCard({
-  payment,
-  index,
-  reduceMotion,
-  onPay,
-}: PaymentCardProps) {
+function PaymentCard({ payment, index, reduceMotion, onPay }: PaymentCardProps) {
   const booking = payment.bookingId;
   const canPayNow =
     payment.method === "card" &&
@@ -723,13 +667,7 @@ function EmptyPaymentsState({ filtered }: { filtered: boolean }) {
   );
 }
 
-function TrustItem({
-  icon: Icon,
-  text,
-}: {
-  icon: typeof ShieldCheck;
-  text: string;
-}) {
+function TrustItem({ icon: Icon, text }: { icon: typeof ShieldCheck; text: string }) {
   return (
     <div className="flex items-center gap-3 text-xs font-bold text-blue-100/70">
       <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.08] text-cyan-300">

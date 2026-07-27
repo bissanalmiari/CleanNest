@@ -158,11 +158,7 @@ export default function AdminUsersPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchUsers = useCallback(
-    async (
-      currentFilters: FiltersState,
-      currentPage: number,
-      isRefresh = false,
-    ) => {
+    async (currentFilters: FiltersState, currentPage: number, isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
@@ -175,10 +171,9 @@ export default function AdminUsersPage() {
         if (currentFilters.status) params.set("status", currentFilters.status);
         if (currentFilters.search) params.set("search", currentFilters.search);
 
-        const response = await fetch(
-          `/api/admin/users?${params.toString()}`,
-          { cache: "no-store" },
-        );
+        const response = await fetch(`/api/admin/users?${params.toString()}`, {
+          cache: "no-store",
+        });
         const json: ApiEnvelope<UserListData> = await response.json();
 
         if (!response.ok || !json.success) {
@@ -189,16 +184,14 @@ export default function AdminUsersPage() {
         setErrorMessage(null);
       } catch (error) {
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Account directory could not be loaded.",
+          error instanceof Error ? error.message : "Account directory could not be loaded."
         );
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -209,9 +202,7 @@ export default function AdminUsersPage() {
     const timeout = window.setTimeout(() => {
       const search = searchInput.trim();
       setPage(1);
-      setFilters((current) =>
-        current.search === search ? current : { ...current, search },
-      );
+      setFilters((current) => (current.search === search ? current : { ...current, search }));
     }, 350);
     return () => window.clearTimeout(timeout);
   }, [searchInput]);
@@ -224,11 +215,9 @@ export default function AdminUsersPage() {
       customer: summary.customers,
       cleaner: summary.cleaners,
     }),
-    [summary],
+    [summary]
   );
-  const totalPages = data
-    ? Math.max(1, Math.ceil(data.total / data.limit))
-    : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
   const hasFilters = Boolean(filters.role || filters.status || filters.search);
 
   function updateFilters(patch: Partial<FiltersState>) {
@@ -275,13 +264,11 @@ export default function AdminUsersPage() {
               </div>
               <h1 className="mt-6 max-w-xl font-heading text-4xl font-black leading-[1.04] tracking-[-0.045em] sm:text-5xl">
                 Every account.
-                <span className="block text-violet-200">
-                  One secure directory.
-                </span>
+                <span className="block text-violet-200">One secure directory.</span>
               </h1>
               <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                Review platform identities, understand access state, and
-                manage customers, cleaners, and administrators responsibly.
+                Review platform identities, understand access state, and manage customers, cleaners,
+                and administrators responsibly.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-4 text-xs font-bold text-blue-100/65">
                 <span className="inline-flex items-center gap-2">
@@ -363,9 +350,7 @@ export default function AdminUsersPage() {
                   className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 text-xs font-extrabold text-navy transition hover:border-violet-300 hover:bg-violet-50 disabled:cursor-wait disabled:opacity-60"
                 >
                   <RefreshCw
-                    className={`h-4 w-4 text-violet-600 ${
-                      refreshing ? "animate-spin" : ""
-                    }`}
+                    className={`h-4 w-4 text-violet-600 ${refreshing ? "animate-spin" : ""}`}
                   />
                   Refresh
                 </button>
@@ -397,9 +382,7 @@ export default function AdminUsersPage() {
                     {option.label}
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] ${
-                        active
-                          ? "bg-white/15 text-violet-100"
-                          : "bg-white text-slate-400"
+                        active ? "bg-white/15 text-violet-100" : "bg-white text-slate-400"
                       }`}
                     >
                       {roleCounts[option.value]}
@@ -452,10 +435,7 @@ export default function AdminUsersPage() {
 
           <div aria-live="polite">
             {errorMessage ? (
-              <ErrorState
-                message={errorMessage}
-                onRetry={() => void fetchUsers(filters, page)}
-              />
+              <ErrorState message={errorMessage} onRetry={() => void fetchUsers(filters, page)} />
             ) : loading ? (
               <DirectorySkeleton />
             ) : !data || data.users.length === 0 ? (
@@ -482,11 +462,7 @@ export default function AdminUsersPage() {
                             user={user}
                             index={index}
                             reduceMotion={Boolean(reduceMotion)}
-                            onOpen={() =>
-                              router.push(
-                                `/admin/admin-users/${user._id}`,
-                              )
-                            }
+                            onOpen={() => router.push(`/admin/admin-users/${user._id}`)}
                           />
                         ))}
                       </AnimatePresence>
@@ -499,9 +475,7 @@ export default function AdminUsersPage() {
                     <UserMobileCard
                       key={user._id}
                       user={user}
-                      onOpen={() =>
-                        router.push(`/admin/admin-users/${user._id}`)
-                      }
+                      onOpen={() => router.push(`/admin/admin-users/${user._id}`)}
                     />
                   ))}
                 </div>
@@ -512,8 +486,7 @@ export default function AdminUsersPage() {
           {data && totalPages > 1 && !loading && !errorMessage && (
             <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <p className="text-xs font-semibold text-slate-500">
-                Page <span className="font-extrabold text-navy">{data.page}</span>{" "}
-                of{" "}
+                Page <span className="font-extrabold text-navy">{data.page}</span> of{" "}
                 <span className="font-extrabold text-navy">{totalPages}</span>
                 <span className="mx-2 text-slate-300">•</span>
                 {data.total} matching identities
@@ -570,9 +543,7 @@ function AccessMetric({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-sm">
-      <span
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}
-      >
+      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}>
         <Icon className="h-4 w-4" />
       </span>
       {loading ? (
@@ -679,13 +650,7 @@ function UserTableRow({
   );
 }
 
-function UserMobileCard({
-  user,
-  onOpen,
-}: {
-  user: UserRow;
-  onOpen: () => void;
-}) {
+function UserMobileCard({ user, onOpen }: { user: UserRow; onOpen: () => void }) {
   return (
     <article
       onClick={onOpen}
@@ -694,12 +659,8 @@ function UserMobileCard({
       <div className="flex items-start gap-3">
         <UserAvatar user={user} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-heading text-sm font-bold text-navy">
-            {user.name}
-          </p>
-          <p className="mt-1 truncate text-xs font-medium text-slate-500">
-            {user.email}
-          </p>
+          <p className="truncate font-heading text-sm font-bold text-navy">{user.name}</p>
+          <p className="mt-1 truncate text-xs font-medium text-slate-500">{user.email}</p>
         </div>
         <ChevronRight className="h-4 w-4 text-violet-500" />
       </div>
@@ -721,13 +682,7 @@ function UserMobileCard({
   );
 }
 
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
       <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
@@ -736,9 +691,7 @@ function ErrorState({
       <h3 className="mt-5 font-heading text-lg font-bold text-navy">
         Identity directory unavailable
       </h3>
-      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-        {message}
-      </p>
+      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{message}</p>
       <button
         type="button"
         onClick={onRetry}
@@ -751,13 +704,7 @@ function ErrorState({
   );
 }
 
-function EmptyState({
-  hasFilters,
-  onClear,
-}: {
-  hasFilters: boolean;
-  onClear: () => void;
-}) {
+function EmptyState({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
   return (
     <div className="flex min-h-[390px] flex-col items-center justify-center p-8 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 shadow-[0_14px_35px_rgba(11,37,69,0.08)]">

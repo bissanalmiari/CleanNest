@@ -17,10 +17,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import {
-  loginSchema,
-  type LoginValues,
-} from "@/validators/authValidator";
+import { loginSchema, type LoginValues } from "@/validators/authValidator";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
@@ -46,11 +43,9 @@ function LoginForm() {
 
   const searchParams = useSearchParams();
 
-  const redirectTo =
-    searchParams.get("redirectTo") ?? undefined;
+  const redirectTo = searchParams.get("redirectTo") ?? undefined;
 
-  const justVerified =
-    searchParams.get("verified") === "1";
+  const justVerified = searchParams.get("verified") === "1";
 
   const {
     register,
@@ -119,9 +114,7 @@ function LoginForm() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-slate-500">
-          Sign in to manage your bookings, saved
-          addresses, account details, and cleaning
-          services.
+          Sign in to manage your bookings, saved addresses, account details, and cleaning services.
         </p>
       </div>
 
@@ -140,10 +133,7 @@ function LoginForm() {
               scale: 1,
             }}
           >
-            <Alert variant="success">
-              Your email is verified — you can log in
-              now.
-            </Alert>
+            <Alert variant="success">Your email is verified — you can log in now.</Alert>
           </motion.div>
         )}
 
@@ -166,10 +156,7 @@ function LoginForm() {
       </div>
 
       {/* Login form */}
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-7 space-y-5"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-5">
         {/* Email */}
         <motion.div
           initial={{
@@ -235,7 +222,6 @@ function LoginForm() {
               className="group inline-flex items-center gap-1.5 text-xs font-bold text-primary transition-colors hover:text-primary-dark"
             >
               Forgot password?
-
               <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
@@ -269,16 +255,10 @@ function LoginForm() {
                 }
           }
         >
-          <Button
-            type="submit"
-            className="min-h-[54px] w-full"
-            isLoading={loading}
-          >
+          <Button type="submit" className="min-h-[54px] w-full" isLoading={loading}>
             <span className="inline-flex items-center justify-center gap-2">
               Log in to CleanNest
-              {!loading && (
-                <ArrowRight className="h-5 w-5" />
-              )}
+              {!loading && <ArrowRight className="h-5 w-5" />}
             </span>
           </Button>
         </motion.div>
@@ -304,48 +284,40 @@ function LoginForm() {
         </span>
 
         <div>
-          <p className="text-sm font-bold text-emerald-800">
-            Your account is protected
-          </p>
+          <p className="text-sm font-bold text-emerald-800">Your account is protected</p>
 
           <p className="mt-1 text-xs leading-5 text-emerald-700/70">
-            CleanNest uses secure authentication to
-            protect your personal and booking
-            information.
+            CleanNest uses secure authentication to protect your personal and booking information.
           </p>
         </div>
       </motion.div>
 
       {/* Benefits */}
       <div className="mt-6 grid gap-2 sm:grid-cols-3">
-        {benefits.map(
-          ({ icon: Icon, text }, index) => (
-            <motion.div
-              key={text}
-              initial={{
-                opacity: 0,
-                y: 15,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                delay: 0.42 + index * 0.08,
-              }}
-              whileHover={{
-                y: -3,
-              }}
-              className="rounded-xl border border-primary/10 bg-white px-3 py-3 text-center shadow-sm"
-            >
-              <Icon className="mx-auto h-4 w-4 text-primary" />
+        {benefits.map(({ icon: Icon, text }, index) => (
+          <motion.div
+            key={text}
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              delay: 0.42 + index * 0.08,
+            }}
+            whileHover={{
+              y: -3,
+            }}
+            className="rounded-xl border border-primary/10 bg-white px-3 py-3 text-center shadow-sm"
+          >
+            <Icon className="mx-auto h-4 w-4 text-primary" />
 
-              <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-500">
-                {text}
-              </p>
-            </motion.div>
-          ),
-        )}
+            <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-500">{text}</p>
+          </motion.div>
+        ))}
       </div>
 
       {/* Signup link */}
@@ -357,7 +329,6 @@ function LoginForm() {
             className="group inline-flex items-center gap-1 font-bold text-primary transition-colors hover:text-primary-dark"
           >
             Create an account
-
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </p>

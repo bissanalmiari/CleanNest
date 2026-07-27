@@ -2,10 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
-import mongoose, {
-  Types,
-  type ClientSession,
-} from "mongoose";
+import mongoose, { Types, type ClientSession } from "mongoose";
 
 import { AppError } from "@/lib/apiError";
 import { connectDB } from "@/lib/db";
@@ -21,10 +18,7 @@ import {
   notifyActiveAdmins,
 } from "@/services/notificationService";
 
-import {
-  checkBookingChangeWindow,
-  type CancelBookingInput,
-} from "@/validators/bookingValidator";
+import { checkBookingChangeWindow, type CancelBookingInput } from "@/validators/bookingValidator";
 
 interface CancelCustomerBookingOptions {
   customerId: string;
@@ -85,69 +79,43 @@ interface HandleCancellationPaymentOptions {
   session: ClientSession;
 }
 
-function validateObjectId(
-  value: string,
-  fieldName: string,
-) {
+function validateObjectId(value: string, fieldName: string) {
   if (!Types.ObjectId.isValid(value)) {
-    throw new AppError(
-      `${fieldName} is invalid.`,
-      422,
-    );
+    throw new AppError(`${fieldName} is invalid.`, 422);
   }
 
   return new Types.ObjectId(value);
 }
 
 function roundMoney(value: number) {
-  return (
-    Math.round(
-      (value + Number.EPSILON) * 100,
-    ) / 100
-  );
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 function formatDateInBeirut(date: Date) {
-  const formatter =
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Beirut",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Beirut",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 
-  const parts =
-    formatter.formatToParts(date);
+  const parts = formatter.formatToParts(date);
 
-  const year = parts.find(
-    (part) => part.type === "year",
-  )?.value;
+  const year = parts.find((part) => part.type === "year")?.value;
 
-  const month = parts.find(
-    (part) => part.type === "month",
-  )?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
 
-  const day = parts.find(
-    (part) => part.type === "day",
-  )?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
 
   if (!year || !month || !day) {
-    throw new AppError(
-      "Unable to determine the booking date.",
-      500,
-    );
+    throw new AppError("Unable to determine the booking date.", 500);
   }
 
   return `${year}-${month}-${day}`;
 }
 
-function createRefundReference(
-  bookingNumber: string,
-) {
-  const randomPart = randomUUID()
-    .replaceAll("-", "")
-    .slice(0, 10)
-    .toUpperCase();
+function createRefundReference(bookingNumber: string) {
+  const randomPart = randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase();
 
   return `RF-${bookingNumber}-${randomPart}`;
 }
@@ -170,32 +138,28 @@ async function restorePromoCodeUsage({
     return false;
   }
 
-  const updateResult =
-    await PromoCodeModel.updateOne(
-      {
-        _id: promoCodeId,
+  const updateResult = await PromoCodeModel.updateOne(
+    {
+      _id: promoCodeId,
 
-        $expr: {
-          $gt: [
-            {
-              $ifNull: [
-                "$usageCount",
-                0,
-              ],
-            },
-            0,
-          ],
-        },
+      $expr: {
+        $gt: [
+          {
+            $ifNull: ["$usageCount", 0],
+          },
+          0,
+        ],
       },
-      {
-        $inc: {
-          usageCount: -1,
-        },
+    },
+    {
+      $inc: {
+        usageCount: -1,
       },
-      {
-        session,
-      },
-    );
+    },
+    {
+      session,
+    }
+  );
 
   return updateResult.modifiedCount === 1;
 }
@@ -214,12 +178,11 @@ async function handleCancellationPayment({
   now,
   session,
 }: HandleCancellationPaymentOptions): Promise<CancellationPaymentResult> {
-  const payment =
-    await PaymentModel.findOne({
-      bookingId,
-    })
-      .session(session)
-      .exec();
+  const payment = await PaymentModel.findOne({
+    bookingId,
+  })
+    .session(session)
+    .exec();
 
   /*
    * Cash is collected after the cleaning service.
@@ -228,36 +191,26 @@ async function handleCancellationPayment({
    * automatic refunds for card payments.
    */
   if (paymentMethod === "cash") {
-    const currentStatus =
-      payment?.status ??
-      bookingPaymentStatus;
+    const currentStatus = payment?.status ?? bookingPaymentStatus;
 
-    if (
-      currentStatus === "paid" ||
-      currentStatus === "refunded"
-    ) {
+    if (currentStatus === "paid" || currentStatus === "refunded") {
       throw new AppError(
         "This cash booking has already been paid. Please contact CleanNest support to cancel it.",
-        409,
+        409
       );
     }
 
-    if (
-      payment &&
-      payment.status === "pending"
-    ) {
+    if (payment && payment.status === "pending") {
       payment.status = "failed";
 
-      payment.failureReason =
-        "Booking cancelled before cash collection.";
+      payment.failureReason = "Booking cancelled before cash collection.";
 
       payment.failedAt = now;
 
       payment.metadata = {
         ...(payment.metadata ?? {}),
         cancellationReason,
-        cancelledAt:
-          now.toISOString(),
+        cancelledAt: now.toISOString(),
       };
 
       await payment.save({
@@ -265,16 +218,13 @@ async function handleCancellationPayment({
       });
 
       return {
-        action:
-          "cash_payment_cancelled",
+        action: "cash_payment_cancelled",
 
         method: "cash",
 
-        previousStatus:
-          "pending",
+        previousStatus: "pending",
 
-        newStatus:
-          "failed",
+        newStatus: "failed",
 
         refundAmount: 0,
 
@@ -283,18 +233,13 @@ async function handleCancellationPayment({
     }
 
     return {
-      action:
-        "no_payment_required",
+      action: "no_payment_required",
 
       method: "cash",
 
-      previousStatus:
-        currentStatus,
+      previousStatus: currentStatus,
 
-      newStatus:
-        currentStatus === "failed"
-          ? "failed"
-          : "unpaid",
+      newStatus: currentStatus === "failed" ? "failed" : "unpaid",
 
       refundAmount: 0,
 
@@ -307,15 +252,10 @@ async function handleCancellationPayment({
    * payment record. Otherwise, the financial information
    * is inconsistent and should not be silently changed.
    */
-  if (
-    !payment &&
-    (bookingPaymentStatus === "paid" ||
-      bookingPaymentStatus ===
-        "refunded")
-  ) {
+  if (!payment && (bookingPaymentStatus === "paid" || bookingPaymentStatus === "refunded")) {
     throw new AppError(
       "The payment record for this booking could not be found. Please contact CleanNest support.",
-      409,
+      409
     );
   }
 
@@ -324,58 +264,48 @@ async function handleCancellationPayment({
    * record to preserve the cancellation audit trail.
    */
   if (!payment) {
-    const paymentDocuments =
-      await PaymentModel.create(
-        [
-          {
-            bookingId,
-
-            amount:
-              roundMoney(totalAmount),
-
-            currency: "USD",
-
-            method: "card",
-
-            provider: "test_card",
-
-            status: "failed",
-
-            failureReason:
-              "Booking cancelled before card payment completion.",
-
-            failedAt: now,
-
-            metadata: {
-              cancellationReason,
-              cancelledAt:
-                now.toISOString(),
-            },
-          },
-        ],
+    const paymentDocuments = await PaymentModel.create(
+      [
         {
-          session,
-        },
-      );
+          bookingId,
 
-    const createdPayment =
-      paymentDocuments.at(0);
+          amount: roundMoney(totalAmount),
+
+          currency: "USD",
+
+          method: "card",
+
+          provider: "test_card",
+
+          status: "failed",
+
+          failureReason: "Booking cancelled before card payment completion.",
+
+          failedAt: now,
+
+          metadata: {
+            cancellationReason,
+            cancelledAt: now.toISOString(),
+          },
+        },
+      ],
+      {
+        session,
+      }
+    );
+
+    const createdPayment = paymentDocuments.at(0);
 
     if (!createdPayment) {
-      throw new AppError(
-        "The cancelled payment record could not be created.",
-        500,
-      );
+      throw new AppError("The cancelled payment record could not be created.", 500);
     }
 
     return {
-      action:
-        "card_payment_cancelled",
+      action: "card_payment_cancelled",
 
       method: "card",
 
-      previousStatus:
-        bookingPaymentStatus,
+      previousStatus: bookingPaymentStatus,
 
       newStatus: "failed",
 
@@ -385,46 +315,31 @@ async function handleCancellationPayment({
     };
   }
 
-  const previousPaymentStatus =
-    payment.status;
+  const previousPaymentStatus = payment.status;
 
-  if (
-    payment.status === "refunded"
-  ) {
+  if (payment.status === "refunded") {
     return {
-      action:
-        "payment_already_refunded",
+      action: "payment_already_refunded",
 
       method: "card",
 
-      previousStatus:
-        previousPaymentStatus,
+      previousStatus: previousPaymentStatus,
 
       newStatus: "refunded",
 
-      refundAmount:
-        roundMoney(
-          payment.refundAmount ??
-            payment.amount,
-        ),
+      refundAmount: roundMoney(payment.refundAmount ?? payment.amount),
 
-      refundReference:
-        payment.refundReference ??
-        null,
+      refundReference: payment.refundReference ?? null,
     };
   }
 
-  if (
-    payment.status === "failed"
-  ) {
+  if (payment.status === "failed") {
     return {
-      action:
-        "payment_already_failed",
+      action: "payment_already_failed",
 
       method: "card",
 
-      previousStatus:
-        previousPaymentStatus,
+      previousStatus: previousPaymentStatus,
 
       newStatus: "failed",
 
@@ -439,32 +354,24 @@ async function handleCancellationPayment({
    * full automatic refund.
    */
   if (payment.status === "paid") {
-    const refundAmount =
-      roundMoney(payment.amount);
+    const refundAmount = roundMoney(payment.amount);
 
-    const refundReference =
-      createRefundReference(
-        bookingNumber,
-      );
+    const refundReference = createRefundReference(bookingNumber);
 
     payment.status = "refunded";
 
-    payment.refundAmount =
-      refundAmount;
+    payment.refundAmount = refundAmount;
 
-    payment.refundReason =
-      `Booking cancelled by customer: ${cancellationReason}`;
+    payment.refundReason = `Booking cancelled by customer: ${cancellationReason}`;
 
-    payment.refundReference =
-      refundReference;
+    payment.refundReference = refundReference;
 
     payment.refundedAt = now;
 
     payment.metadata = {
       ...(payment.metadata ?? {}),
       cancellationReason,
-      cancelledAt:
-        now.toISOString(),
+      cancelledAt: now.toISOString(),
       refundType: "full",
     };
 
@@ -473,13 +380,11 @@ async function handleCancellationPayment({
     });
 
     return {
-      action:
-        "card_payment_refunded",
+      action: "card_payment_refunded",
 
       method: "card",
 
-      previousStatus:
-        previousPaymentStatus,
+      previousStatus: previousPaymentStatus,
 
       newStatus: "refunded",
 
@@ -495,16 +400,14 @@ async function handleCancellationPayment({
    */
   payment.status = "failed";
 
-  payment.failureReason =
-    "Booking cancelled before card payment completion.";
+  payment.failureReason = "Booking cancelled before card payment completion.";
 
   payment.failedAt = now;
 
   payment.metadata = {
     ...(payment.metadata ?? {}),
     cancellationReason,
-    cancelledAt:
-      now.toISOString(),
+    cancelledAt: now.toISOString(),
   };
 
   await payment.save({
@@ -512,13 +415,11 @@ async function handleCancellationPayment({
   });
 
   return {
-    action:
-      "card_payment_cancelled",
+    action: "card_payment_cancelled",
 
     method: "card",
 
-    previousStatus:
-      previousPaymentStatus,
+    previousStatus: previousPaymentStatus,
 
     newStatus: "failed",
 
@@ -548,226 +449,150 @@ export async function cancelCustomerBooking({
 }: CancelCustomerBookingOptions): Promise<CancelledBookingResult> {
   await connectDB();
 
-  const customerObjectId =
-    validateObjectId(
-      customerId,
-      "Customer ID",
-    );
+  const customerObjectId = validateObjectId(customerId, "Customer ID");
 
-  const bookingObjectId =
-    validateObjectId(
-      bookingId,
-      "Booking ID",
-    );
+  const bookingObjectId = validateObjectId(bookingId, "Booking ID");
 
-  const cancellationReason =
-    input.reason.trim();
+  const cancellationReason = input.reason.trim();
 
-  const session =
-    await mongoose.startSession();
+  const session = await mongoose.startSession();
 
   try {
-    const transactionResult =
-      await session.withTransaction(
-        async () => {
-          /*
-           * Read the booking inside the transaction so a
-           * simultaneous update or cancellation is not
-           * ignored.
-           */
-          const booking =
-            await BookingModel.findOne({
-              _id: bookingObjectId,
-              customerId:
-                customerObjectId,
-            })
-              .session(session)
-              .exec();
+    const transactionResult = await session.withTransaction(async () => {
+      /*
+       * Read the booking inside the transaction so a
+       * simultaneous update or cancellation is not
+       * ignored.
+       */
+      const booking = await BookingModel.findOne({
+        _id: bookingObjectId,
+        customerId: customerObjectId,
+      })
+        .session(session)
+        .exec();
 
-          if (!booking) {
-            throw new AppError(
-              "The booking could not be found.",
-              404,
-            );
-          }
+      if (!booking) {
+        throw new AppError("The booking could not be found.", 404);
+      }
 
-          const previousStatus =
-            booking.status;
+      const previousStatus = booking.status;
 
-          const changeWindow =
-            checkBookingChangeWindow({
-              bookingDate:
-                booking.bookingDate,
+      const changeWindow = checkBookingChangeWindow({
+        bookingDate: booking.bookingDate,
 
-              startTime:
-                booking.startTime,
+        startTime: booking.startTime,
 
-              status:
-                booking.status,
+        status: booking.status,
 
-              now,
-            });
+        now,
+      });
 
-          if (!changeWindow.allowed) {
-            throw new AppError(
-              changeWindow.reason ??
-                "This booking can no longer be cancelled.",
-              409,
-            );
-          }
+      if (!changeWindow.allowed) {
+        throw new AppError(changeWindow.reason ?? "This booking can no longer be cancelled.", 409);
+      }
 
-          const paymentResult =
-            await handleCancellationPayment({
-              bookingId:
-                bookingObjectId,
+      const paymentResult = await handleCancellationPayment({
+        bookingId: bookingObjectId,
 
-              bookingNumber:
-                booking.bookingNumber,
+        bookingNumber: booking.bookingNumber,
 
-              paymentMethod:
-                booking.paymentMethod,
+        paymentMethod: booking.paymentMethod,
 
-              bookingPaymentStatus:
-                booking.paymentStatus,
+        bookingPaymentStatus: booking.paymentStatus,
 
-              totalAmount:
-                booking.totalAmount,
+        totalAmount: booking.totalAmount,
+
+        cancellationReason,
+
+        now,
+
+        session,
+      });
+
+      /*
+       * Synchronize the booking payment status with
+       * the payment result.
+       */
+      if (paymentResult.newStatus === "refunded") {
+        booking.paymentStatus = "refunded";
+      } else if (paymentResult.newStatus === "failed") {
+        booking.paymentStatus = "failed";
+      } else if (paymentResult.newStatus === "unpaid") {
+        booking.paymentStatus = "unpaid";
+      }
+
+      booking.status = "cancelled";
+
+      booking.cancellationReason = cancellationReason;
+
+      booking.cancelledAt = now;
+
+      booking.cancelledByUserId = customerObjectId;
+
+      await booking.save({
+        session,
+      });
+
+      const promoCodeUsageRestored = await restorePromoCodeUsage({
+        promoCodeId: booking.promoCodeId,
+
+        session,
+      });
+
+      await BookingStatusHistoryModel.create(
+        [
+          {
+            bookingId: bookingObjectId,
+
+            previousStatus,
+
+            newStatus: "cancelled",
+
+            changedByUserId: customerObjectId,
+
+            reason: "Booking cancelled by customer.",
+
+            metadata: {
+              source: "customer",
 
               cancellationReason,
 
-              now,
+              cancelledAt: now.toISOString(),
 
-              session,
-            });
+              hoursBeforeBooking: changeWindow.hoursUntilBooking,
 
-          /*
-           * Synchronize the booking payment status with
-           * the payment result.
-           */
-          if (
-            paymentResult.newStatus ===
-            "refunded"
-          ) {
-            booking.paymentStatus =
-              "refunded";
-          } else if (
-            paymentResult.newStatus ===
-            "failed"
-          ) {
-            booking.paymentStatus =
-              "failed";
-          } else if (
-            paymentResult.newStatus ===
-            "unpaid"
-          ) {
-            booking.paymentStatus =
-              "unpaid";
-          }
+              paymentAction: paymentResult.action,
 
-          booking.status =
-            "cancelled";
+              paymentPreviousStatus: paymentResult.previousStatus,
 
-          booking.cancellationReason =
-            cancellationReason;
+              paymentNewStatus: paymentResult.newStatus,
 
-          booking.cancelledAt =
-            now;
+              refundAmount: paymentResult.refundAmount,
 
-          booking.cancelledByUserId =
-            customerObjectId;
+              refundReference: paymentResult.refundReference,
 
-          await booking.save({
-            session,
-          });
-
-          const promoCodeUsageRestored =
-            await restorePromoCodeUsage({
-              promoCodeId:
-                booking.promoCodeId,
-
-              session,
-            });
-
-          await BookingStatusHistoryModel.create(
-            [
-              {
-                bookingId:
-                  bookingObjectId,
-
-                previousStatus,
-
-                newStatus:
-                  "cancelled",
-
-                changedByUserId:
-                  customerObjectId,
-
-                reason:
-                  "Booking cancelled by customer.",
-
-                metadata: {
-                  source:
-                    "customer",
-
-                  cancellationReason,
-
-                  cancelledAt:
-                    now.toISOString(),
-
-                  hoursBeforeBooking:
-                    changeWindow
-                      .hoursUntilBooking,
-
-                  paymentAction:
-                    paymentResult.action,
-
-                  paymentPreviousStatus:
-                    paymentResult
-                      .previousStatus,
-
-                  paymentNewStatus:
-                    paymentResult
-                      .newStatus,
-
-                  refundAmount:
-                    paymentResult
-                      .refundAmount,
-
-                  refundReference:
-                    paymentResult
-                      .refundReference,
-
-                  promoCodeUsageRestored,
-                },
-              },
-            ],
-            {
-              session,
+              promoCodeUsageRestored,
             },
-          );
-
-          return {
-            booking,
-            previousStatus,
-            paymentResult,
-            promoCodeUsageRestored,
-          };
-        },
+          },
+        ],
+        {
+          session,
+        }
       );
+
+      return {
+        booking,
+        previousStatus,
+        paymentResult,
+        promoCodeUsageRestored,
+      };
+    });
 
     if (!transactionResult) {
-      throw new AppError(
-        "The cancellation transaction did not return a booking.",
-        500,
-      );
+      throw new AppError("The cancellation transaction did not return a booking.", 500);
     }
 
-    const {
-      booking,
-      previousStatus,
-      paymentResult,
-      promoCodeUsageRestored,
-    } = transactionResult;
+    const { booking, previousStatus, paymentResult, promoCodeUsageRestored } = transactionResult;
 
     const assignedCleaners = await CleanerAssignment.find({
       bookingId: booking._id,
@@ -796,7 +621,7 @@ export async function cancelCustomerBooking({
           bookingId,
           dedupeKey: `booking-cancelled:${bookingId}:${assignment.cleanerId.toString()}`,
           email: true,
-        })),
+        }))
       ),
       notifyActiveAdmins({
         type: "booking_cancelled",
@@ -811,11 +636,9 @@ export async function cancelCustomerBooking({
 
     return {
       booking: {
-        id:
-          booking._id.toString(),
+        id: booking._id.toString(),
 
-        bookingNumber:
-          booking.bookingNumber,
+        bookingNumber: booking.bookingNumber,
 
         previousStatus,
 
@@ -823,35 +646,21 @@ export async function cancelCustomerBooking({
 
         cancellationReason,
 
-        cancelledAt:
-          (
-            booking.cancelledAt ??
-            now
-          ).toISOString(),
+        cancelledAt: (booking.cancelledAt ?? now).toISOString(),
 
-        bookingDate:
-          formatDateInBeirut(
-            booking.bookingDate,
-          ),
+        bookingDate: formatDateInBeirut(booking.bookingDate),
 
-        startTime:
-          booking.startTime,
+        startTime: booking.startTime,
 
-        endTime:
-          booking.endTime,
+        endTime: booking.endTime,
 
-        payment:
-          paymentResult,
+        payment: paymentResult,
 
         promoCodeUsageRestored,
 
-        assignedCleanerName:
-          booking
-            .assignedCleanerName ??
-          null,
+        assignedCleanerName: booking.assignedCleanerName ?? null,
 
-        updatedAt:
-          booking.updatedAt.toISOString(),
+        updatedAt: booking.updatedAt.toISOString(),
       },
     };
   } finally {

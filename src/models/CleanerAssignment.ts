@@ -24,10 +24,7 @@ const cleanerAssignmentSchema = new Schema<ICleanerAssignment>(
   { timestamps: true }
 );
 
-cleanerAssignmentSchema.index(
-  { bookingId: 1, cleanerId: 1 },
-  { unique: true }
-);
+cleanerAssignmentSchema.index({ bookingId: 1, cleanerId: 1 }, { unique: true });
 cleanerAssignmentSchema.index({ bookingId: 1, status: 1 });
 
 const CleanerAssignment: Model<ICleanerAssignment> =

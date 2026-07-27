@@ -8,10 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
 import { createServiceSchema } from "@/validators/serviceValidator";
-import {
-  getAllServices,
-  createService,
-} from "@/services/serviceManagementService";
+import { getAllServices, createService } from "@/services/serviceManagementService";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -31,8 +28,7 @@ export async function GET(request: NextRequest) {
     const result = await getAllServices({
       search: searchParams.get("search") ?? undefined,
       category: searchParams.get("category") ?? undefined,
-      isActive:
-        isActiveParam === null ? undefined : isActiveParam === "true",
+      isActive: isActiveParam === null ? undefined : isActiveParam === "true",
       page: Number(searchParams.get("page") ?? "1"),
       limit: Number(searchParams.get("limit") ?? "50"),
     });

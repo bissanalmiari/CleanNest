@@ -106,8 +106,7 @@ function validate(settings: SettingsData | null): ValidationErrors {
     settings.bookingLeadTimeHours < 0 ||
     settings.bookingLeadTimeHours > 168
   ) {
-    errors.bookingLeadTimeHours =
-      "Booking notice must be a whole number from 0 to 168.";
+    errors.bookingLeadTimeHours = "Booking notice must be a whole number from 0 to 168.";
   }
 
   if (
@@ -115,8 +114,7 @@ function validate(settings: SettingsData | null): ValidationErrors {
     settings.cancellationWindowHours < 0 ||
     settings.cancellationWindowHours > 168
   ) {
-    errors.cancellationWindowHours =
-      "Cancellation window must be a whole number from 0 to 168.";
+    errors.cancellationWindowHours = "Cancellation window must be a whole number from 0 to 168.";
   }
 
   return errors;
@@ -171,8 +169,7 @@ export default function AdminSettingsPage() {
       const response = await fetch("/api/admin/settings", {
         cache: "no-store",
       });
-      const json: ApiEnvelope<{ settings: SettingsData }> =
-        await response.json();
+      const json: ApiEnvelope<{ settings: SettingsData }> = await response.json();
 
       if (!response.ok || !json.success || !json.data?.settings) {
         throw new Error(json.error ?? "Settings could not be loaded.");
@@ -182,11 +179,7 @@ export default function AdminSettingsPage() {
       setBaseline(json.data.settings);
       setError(null);
     } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Settings could not be loaded.",
-      );
+      setError(loadError instanceof Error ? loadError.message : "Settings could not be loaded.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -200,10 +193,8 @@ export default function AdminSettingsPage() {
   const validationErrors = useMemo(() => validate(settings), [settings]);
   const isValid = Object.keys(validationErrors).length === 0;
   const isDirty = useMemo(
-    () =>
-      JSON.stringify(editableSnapshot(settings)) !==
-      JSON.stringify(editableSnapshot(baseline)),
-    [baseline, settings],
+    () => JSON.stringify(editableSnapshot(settings)) !== JSON.stringify(editableSnapshot(baseline)),
+    [baseline, settings]
   );
 
   useEffect(() => {
@@ -254,8 +245,7 @@ export default function AdminSettingsPage() {
           smsNotificationsEnabled: settings.smsNotificationsEnabled,
         }),
       });
-      const json: ApiEnvelope<{ settings: SettingsData }> =
-        await response.json();
+      const json: ApiEnvelope<{ settings: SettingsData }> = await response.json();
 
       if (!response.ok || !json.success || !json.data?.settings) {
         throw new Error(json.error ?? "Settings could not be saved.");
@@ -265,11 +255,7 @@ export default function AdminSettingsPage() {
       setBaseline(json.data.settings);
       setSaved(true);
     } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Settings could not be saved.",
-      );
+      setError(saveError instanceof Error ? saveError.message : "Settings could not be saved.");
     } finally {
       setSaving(false);
     }
@@ -284,9 +270,7 @@ export default function AdminSettingsPage() {
           <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
             <AlertCircle className="h-7 w-7" />
           </span>
-          <h1 className="mt-5 font-heading text-2xl font-black text-navy">
-            Settings unavailable
-          </h1>
+          <h1 className="mt-5 font-heading text-2xl font-black text-navy">Settings unavailable</h1>
           <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
             {error ?? "The platform settings could not be loaded."}
           </p>
@@ -304,8 +288,7 @@ export default function AdminSettingsPage() {
   }
 
   const enabledChannels =
-    Number(settings.emailNotificationsEnabled) +
-    Number(settings.smsNotificationsEnabled);
+    Number(settings.emailNotificationsEnabled) + Number(settings.smsNotificationsEnabled);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f3f7fc] px-4 py-6 pb-32 sm:px-6 lg:px-8 lg:py-8 lg:pb-32">
@@ -340,13 +323,11 @@ export default function AdminSettingsPage() {
               </div>
               <h1 className="mt-6 max-w-xl font-heading text-4xl font-black leading-[1.04] tracking-[-0.045em] sm:text-5xl">
                 Configure with clarity.
-                <span className="block text-cyan-300">
-                  Operate with confidence.
-                </span>
+                <span className="block text-cyan-300">Operate with confidence.</span>
               </h1>
               <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                Manage your business identity, booking policies, customer
-                communications, and platform availability.
+                Manage your business identity, booking policies, customer communications, and
+                platform availability.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-4 text-xs font-bold text-blue-100/65">
                 <span className="inline-flex items-center gap-2">
@@ -363,11 +344,7 @@ export default function AdminSettingsPage() {
                 icon={Globe2}
                 label="Platform"
                 value={settings.maintenanceMode ? "Paused" : "Live"}
-                note={
-                  settings.maintenanceMode
-                    ? "Maintenance enabled"
-                    : "Accepting bookings"
-                }
+                note={settings.maintenanceMode ? "Maintenance enabled" : "Accepting bookings"}
                 accent={settings.maintenanceMode ? "amber" : "emerald"}
               />
               <ControlMetric
@@ -435,9 +412,7 @@ export default function AdminSettingsPage() {
             >
               <span
                 className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white ${
-                  settings.maintenanceMode
-                    ? "text-amber-600"
-                    : "text-emerald-600"
+                  settings.maintenanceMode ? "text-amber-600" : "text-emerald-600"
                 }`}
               >
                 {settings.maintenanceMode ? (
@@ -447,9 +422,7 @@ export default function AdminSettingsPage() {
                 )}
               </span>
               <p className="mt-4 font-heading text-sm font-bold text-navy">
-                {settings.maintenanceMode
-                  ? "Maintenance scheduled"
-                  : "Platform operational"}
+                {settings.maintenanceMode ? "Maintenance scheduled" : "Platform operational"}
               </p>
               <p className="mt-2 text-xs font-medium leading-5 text-slate-500">
                 {settings.maintenanceMode
@@ -462,18 +435,10 @@ export default function AdminSettingsPage() {
               type="button"
               onClick={() => void load(true)}
               disabled={refreshing || isDirty}
-              title={
-                isDirty
-                  ? "Reset or save your changes before refreshing"
-                  : "Reload settings"
-              }
+              title={isDirty ? "Reset or save your changes before refreshing" : "Reload settings"}
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-extrabold text-navy shadow-sm transition hover:border-primary/30 hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <RefreshCw
-                className={`h-4 w-4 text-primary ${
-                  refreshing ? "animate-spin" : ""
-                }`}
-              />
+              <RefreshCw className={`h-4 w-4 text-primary ${refreshing ? "animate-spin" : ""}`} />
               Refresh configuration
             </button>
           </aside>
@@ -498,9 +463,7 @@ export default function AdminSettingsPage() {
                     className={inputClass(Boolean(validationErrors.businessName))}
                     value={settings.businessName}
                     maxLength={120}
-                    onChange={(event) =>
-                      patch({ businessName: event.target.value })
-                    }
+                    onChange={(event) => patch({ businessName: event.target.value })}
                   />
                 </Field>
 
@@ -515,9 +478,7 @@ export default function AdminSettingsPage() {
                       type="email"
                       className={inputClass(Boolean(validationErrors.supportEmail))}
                       value={settings.supportEmail}
-                      onChange={(event) =>
-                        patch({ supportEmail: event.target.value })
-                      }
+                      onChange={(event) => patch({ supportEmail: event.target.value })}
                     />
                   </Field>
                   <Field
@@ -530,9 +491,7 @@ export default function AdminSettingsPage() {
                       maxLength={30}
                       className={inputClass(false)}
                       value={settings.supportPhone ?? ""}
-                      onChange={(event) =>
-                        patch({ supportPhone: event.target.value })
-                      }
+                      onChange={(event) => patch({ supportPhone: event.target.value })}
                       placeholder="+961 ..."
                     />
                   </Field>
@@ -548,9 +507,7 @@ export default function AdminSettingsPage() {
                     maxLength={300}
                     className={`${inputClass(false)} resize-none`}
                     value={settings.businessAddress ?? ""}
-                    onChange={(event) =>
-                      patch({ businessAddress: event.target.value })
-                    }
+                    onChange={(event) => patch({ businessAddress: event.target.value })}
                     placeholder="Street, area, city, country"
                   />
                 </Field>
@@ -576,9 +533,7 @@ export default function AdminSettingsPage() {
                     value={settings.bookingLeadTimeHours}
                     unit="hours"
                     error={Boolean(validationErrors.bookingLeadTimeHours)}
-                    onChange={(value) =>
-                      patch({ bookingLeadTimeHours: value })
-                    }
+                    onChange={(value) => patch({ bookingLeadTimeHours: value })}
                   />
                 </Field>
                 <Field
@@ -591,9 +546,7 @@ export default function AdminSettingsPage() {
                     value={settings.cancellationWindowHours}
                     unit="hours"
                     error={Boolean(validationErrors.cancellationWindowHours)}
-                    onChange={(value) =>
-                      patch({ cancellationWindowHours: value })
-                    }
+                    onChange={(value) => patch({ cancellationWindowHours: value })}
                   />
                 </Field>
               </div>
@@ -634,9 +587,7 @@ export default function AdminSettingsPage() {
                   title="Email notifications"
                   description="Booking confirmations, schedule reminders, and payment receipts."
                   checked={settings.emailNotificationsEnabled}
-                  onChange={(value) =>
-                    patch({ emailNotificationsEnabled: value })
-                  }
+                  onChange={(value) => patch({ emailNotificationsEnabled: value })}
                   tone="blue"
                 />
                 <ToggleCard
@@ -644,9 +595,7 @@ export default function AdminSettingsPage() {
                   title="SMS notifications"
                   description="Short appointment reminders delivered to customer phone numbers."
                   checked={settings.smsNotificationsEnabled}
-                  onChange={(value) =>
-                    patch({ smsNotificationsEnabled: value })
-                  }
+                  onChange={(value) => patch({ smsNotificationsEnabled: value })}
                   tone="emerald"
                 />
               </div>
@@ -655,8 +604,8 @@ export default function AdminSettingsPage() {
                 <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                   <p className="text-xs font-medium leading-5 text-amber-800">
-                    Both notification channels are disabled. Customers may not
-                    receive automated booking updates.
+                    Both notification channels are disabled. Customers may not receive automated
+                    booking updates.
                   </p>
                 </div>
               )}
@@ -693,8 +642,8 @@ export default function AdminSettingsPage() {
                         Booking availability will be paused
                       </p>
                       <p className="mt-1 text-xs font-medium leading-5 text-red-600/80">
-                        Save these changes only when you intend to place the
-                        booking experience into maintenance mode.
+                        Save these changes only when you intend to place the booking experience into
+                        maintenance mode.
                       </p>
                     </div>
                   </div>
@@ -710,16 +659,10 @@ export default function AdminSettingsPage() {
           <div className="flex items-center gap-3">
             <span
               className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                isDirty
-                  ? "bg-amber-50 text-amber-600"
-                  : "bg-emerald-50 text-emerald-600"
+                isDirty ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
               }`}
             >
-              {isDirty ? (
-                <AlertCircle className="h-4 w-4" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
+              {isDirty ? <AlertCircle className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             </span>
             <div>
               <p className="text-xs font-extrabold text-navy">
@@ -811,9 +754,7 @@ function ControlMetric({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-sm">
-      <span
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}
-      >
+      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}>
         <Icon className="h-4 w-4" />
       </span>
       <p className="mt-4 truncate font-heading text-xl font-black tracking-[-0.04em] text-white">
@@ -1011,9 +952,7 @@ function ToggleCard({
           </p>
           <span
             className={`mt-2 inline-flex rounded-lg px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.1em] ${
-              checked
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-slate-100 text-slate-400"
+              checked ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-400"
             }`}
           >
             {checked ? "Enabled" : "Disabled"}

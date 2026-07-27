@@ -88,16 +88,14 @@ export function useCustomerDashboard() {
 
     try {
       const { data } = await callApi<CustomerDashboardOverview>(
-        "/api/customer/dashboard?section=overview&upcomingLimit=5&historyPage=1&historyLimit=10",
+        "/api/customer/dashboard?section=overview&upcomingLimit=5&historyPage=1&historyLimit=10"
       );
 
       setStats(data?.stats ?? null);
       setUpcoming(data?.upcoming ?? []);
       setHistory(data?.history ?? null);
     } catch (err) {
-      setStatsError(
-        err instanceof Error ? err.message : "Failed to load the dashboard",
-      );
+      setStatsError(err instanceof Error ? err.message : "Failed to load the dashboard");
     } finally {
       setStatsLoading(false);
       setUpcomingLoading(false);
@@ -129,9 +127,7 @@ export function useCustomerDashboard() {
       );
       setUpcoming(data?.bookings ?? []);
     } catch (err) {
-      setUpcomingError(
-        err instanceof Error ? err.message : "Failed to load upcoming bookings"
-      );
+      setUpcomingError(err instanceof Error ? err.message : "Failed to load upcoming bookings");
     } finally {
       setUpcomingLoading(false);
     }
@@ -153,9 +149,7 @@ export function useCustomerDashboard() {
       );
       setHistory(data ?? null);
     } catch (err) {
-      setHistoryError(
-        err instanceof Error ? err.message : "Failed to load booking history"
-      );
+      setHistoryError(err instanceof Error ? err.message : "Failed to load booking history");
     } finally {
       setHistoryLoading(false);
     }

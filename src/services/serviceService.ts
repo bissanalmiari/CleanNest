@@ -1,22 +1,12 @@
 import "server-only";
 
-import type {
-  FilterQuery,
-  SortOrder,
-} from "mongoose";
+import type { FilterQuery, SortOrder } from "mongoose";
 
 import { connectDB } from "@/lib/db";
-import ServiceModel, {
-  type Service,
-} from "@/models/Service";
+import ServiceModel, { type Service } from "@/models/Service";
 
 export type ServiceSort =
-  | "newest"
-  | "oldest"
-  | "price-asc"
-  | "price-desc"
-  | "name-asc"
-  | "name-desc";
+  "newest" | "oldest" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
 export type GetServicesOptions = {
   search?: string;
@@ -28,10 +18,7 @@ export type GetServicesOptions = {
   limit?: number;
 };
 
-const sortOptions: Record<
-  ServiceSort,
-  Record<string, SortOrder>
-> = {
+const sortOptions: Record<ServiceSort, Record<string, SortOrder>> = {
   newest: {
     createdAt: -1,
   },
@@ -57,29 +44,16 @@ const sortOptions: Record<
   },
 };
 
-function escapeRegularExpression(
-  value: string,
-) {
-  return value.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&",
-  );
+function escapeRegularExpression(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export async function getServices(
-  options: GetServicesOptions = {},
-) {
+export async function getServices(options: GetServicesOptions = {}) {
   await connectDB();
 
-  const page = Math.max(
-    1,
-    options.page ?? 1,
-  );
+  const page = Math.max(1, options.page ?? 1);
 
-  const limit = Math.min(
-    50,
-    Math.max(1, options.limit ?? 9),
-  );
+  const limit = Math.min(50, Math.max(1, options.limit ?? 9));
 
   const skip = (page - 1) * limit;
 
@@ -91,10 +65,7 @@ export async function getServices(
   const category = options.category?.trim();
 
   if (search) {
-    const searchExpression = new RegExp(
-      escapeRegularExpression(search),
-      "i",
-    );
+    const searchExpression = new RegExp(escapeRegularExpression(search), "i");
 
     filter.$or = [
       {
@@ -113,47 +84,30 @@ export async function getServices(
   }
 
   if (category) {
-    filter.category = new RegExp(
-      `^${escapeRegularExpression(category)}$`,
-      "i",
-    );
+    filter.category = new RegExp(`^${escapeRegularExpression(category)}$`, "i");
   }
 
-  if (
-    options.minPrice !== undefined ||
-    options.maxPrice !== undefined
-  ) {
+  if (options.minPrice !== undefined || options.maxPrice !== undefined) {
     const priceFilter: {
       $gte?: number;
       $lte?: number;
     } = {};
 
     if (options.minPrice !== undefined) {
-      priceFilter.$gte =
-        options.minPrice;
+      priceFilter.$gte = options.minPrice;
     }
 
     if (options.maxPrice !== undefined) {
-      priceFilter.$lte =
-        options.maxPrice;
+      priceFilter.$lte = options.maxPrice;
     }
 
     filter.price = priceFilter;
   }
 
-  const selectedSort =
-    options.sort ?? "newest";
+  const selectedSort = options.sort ?? "newest";
 
-  const [
-    services,
-    totalServices,
-    availableCategories,
-  ] = await Promise.all([
-    ServiceModel.find(filter)
-      .sort(sortOptions[selectedSort])
-      .skip(skip)
-      .limit(limit)
-      .lean(),
+  const [services, totalServices, availableCategories] = await Promise.all([
+    ServiceModel.find(filter).sort(sortOptions[selectedSort]).skip(skip).limit(limit).lean(),
 
     ServiceModel.countDocuments(filter),
 
@@ -162,41 +116,20 @@ export async function getServices(
     }),
   ]);
 
-  const serializedServices = services.map(
-    (service) => {
-      const {
-        _id,
-        ...serviceData
-      } = service;
+  const serializedServices = services.map((service) => {
+    const { _id, ...serviceData } = service;
 
-      return {
-        id: String(_id),
-        ...serviceData,
-      };
-    },
-  );
+    return {
+      id: String(_id),
+      ...serviceData,
+    };
+  });
 
   const categories = availableCategories
-    .filter(
-      (
-        categoryName,
-      ): categoryName is string =>
-        typeof categoryName === "string",
-    )
-    .sort(
-      (
-        firstCategory,
-        secondCategory,
-      ) =>
-        firstCategory.localeCompare(
-          secondCategory,
-        ),
-    );
+    .filter((categoryName): categoryName is string => typeof categoryName === "string")
+    .sort((firstCategory, secondCategory) => firstCategory.localeCompare(secondCategory));
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalServices / limit),
-  );
+  const totalPages = Math.max(1, Math.ceil(totalServices / limit));
 
   return {
     services: serializedServices,
@@ -214,14 +147,10 @@ export async function getServices(
   };
 }
 
-export async function getServiceBySlug(
-  slug: string,
-) {
+export async function getServiceBySlug(slug: string) {
   await connectDB();
 
-  const normalizedSlug = slug
-    .trim()
-    .toLowerCase();
+  const normalizedSlug = slug.trim().toLowerCase();
 
   const service = await ServiceModel.findOne({
     slug: normalizedSlug,
@@ -232,10 +161,7 @@ export async function getServiceBySlug(
     return null;
   }
 
-  const {
-    _id,
-    ...serviceData
-  } = service;
+  const { _id, ...serviceData } = service;
 
   return {
     id: String(_id),

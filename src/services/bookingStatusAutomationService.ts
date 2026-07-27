@@ -4,10 +4,9 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import CleanerAssignment from "@/models/CleanerAssignment";
 import BookingStatusHistory from "@/models/BookingStatusHistory";
-import { createNotification } from "@/services/notificationService";
+import { createNotification, notifyActiveAdmins } from "@/services/notificationService";
 
-const BUSINESS_TIME_ZONE =
-  process.env.BUSINESS_TIME_ZONE?.trim() || "Asia/Beirut";
+const BUSINESS_TIME_ZONE = process.env.BUSINESS_TIME_ZONE?.trim() || "Asia/Beirut";
 
 const RECONCILIATION_THROTTLE_MS = 30_000;
 
@@ -51,9 +50,7 @@ function localDateTimeKey(date: Date, timeZone: string) {
   const value = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((part) => part.type === type)?.value ?? "";
 
-  return `${value("year")}-${value("month")}-${value("day")}T${value(
-    "hour"
-  )}:${value("minute")}`;
+  return `${value("year")}-${value("month")}-${value("day")}T${value("hour")}:${value("minute")}`;
 }
 
 function scheduledEndKey(bookingDate: Date, endTime: string) {
@@ -127,9 +124,16 @@ async function performElapsedBookingReconciliation(now = new Date()) {
           bookingId: booking._id.toString(),
           dedupeKey: `service-completed:${booking._id.toString()}`,
           email: true,
-        }).catch((error) =>
-          console.error("[notification:auto-completion]", error),
-        ),
+        }).catch((error) => console.error("[notification:auto-completion]", error)),
+        notifyActiveAdmins({
+          type: "service_completed",
+          title: "Cleaning service auto-completed",
+          message: `Booking ${booking.bookingNumber} reached its scheduled completion time.`,
+          href: `/admin/bookings/${booking._id.toString()}`,
+          bookingId: booking._id.toString(),
+          dedupeKey: `admin-service-completed:${booking._id.toString()}`,
+          email: false,
+        }).catch((error) => console.error("[notification:admin-auto-completion]", error)),
       ]);
     })
   );
@@ -152,7 +156,7 @@ export async function reconcileElapsedBookings(
   now = new Date(),
   options: {
     force?: boolean;
-  } = {},
+  } = {}
 ): Promise<ReconciliationResult> {
   if (reconciliationCache.pending) {
     return reconciliationCache.pending;

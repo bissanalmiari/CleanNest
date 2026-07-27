@@ -91,16 +91,12 @@ export default function AdminCleanerDetailPage() {
         setData(json.data);
         setErrorMessage(null);
       } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Cleaner could not be loaded.",
-        );
+        setErrorMessage(error instanceof Error ? error.message : "Cleaner could not be loaded.");
       } finally {
         setLoading(false);
       }
     },
-    [cleanerId],
+    [cleanerId]
   );
 
   useEffect(() => {
@@ -135,7 +131,7 @@ export default function AdminCleanerDetailPage() {
       !window.confirm(
         action === "block"
           ? `Suspend ${data.user.name}? They will not be able to access cleaner assignments.`
-          : `Restore team access for ${data.user.name}?`,
+          : `Restore team access for ${data.user.name}?`
       )
     ) {
       return;
@@ -155,9 +151,7 @@ export default function AdminCleanerDetailPage() {
       }
       await fetchCleaner(true);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
     } finally {
       setWorking(false);
     }
@@ -165,11 +159,7 @@ export default function AdminCleanerDetailPage() {
 
   async function deleteCleaner() {
     if (!data) return;
-    if (
-      !window.confirm(
-        `Permanently delete ${data.user.name}? This action cannot be undone.`,
-      )
-    ) {
+    if (!window.confirm(`Permanently delete ${data.user.name}? This action cannot be undone.`)) {
       return;
     }
 
@@ -184,9 +174,7 @@ export default function AdminCleanerDetailPage() {
       }
       router.replace("/admin/cleaners");
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
       setWorking(false);
     }
   }
@@ -200,9 +188,7 @@ export default function AdminCleanerDetailPage() {
           <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
             <AlertCircle className="h-7 w-7" />
           </span>
-          <h1 className="mt-5 font-heading text-2xl font-black text-navy">
-            Cleaner unavailable
-          </h1>
+          <h1 className="mt-5 font-heading text-2xl font-black text-navy">Cleaner unavailable</h1>
           <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
             {errorMessage ?? "This cleaner could not be found."}
           </p>
@@ -264,9 +250,7 @@ export default function AdminCleanerDetailPage() {
                 {initials(cleaner.name) || "CL"}
                 <span
                   className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-4 border-[#0b315d] ${
-                    cleaner.status === "active"
-                      ? "bg-emerald-400"
-                      : "bg-red-400"
+                    cleaner.status === "active" ? "bg-emerald-400" : "bg-red-400"
                   }`}
                 />
               </span>
@@ -306,9 +290,7 @@ export default function AdminCleanerDetailPage() {
                 ) : (
                   <Ban className="h-4 w-4 text-amber-300" />
                 )}
-                {cleaner.status === "suspended"
-                  ? "Restore access"
-                  : "Suspend account"}
+                {cleaner.status === "suspended" ? "Restore access" : "Suspend account"}
               </button>
             </div>
           </div>
@@ -330,16 +312,8 @@ export default function AdminCleanerDetailPage() {
             </h2>
 
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              <InfoCard
-                icon={Mail}
-                label="Work email"
-                value={cleaner.email}
-              />
-              <InfoCard
-                icon={Phone}
-                label="Phone number"
-                value={cleaner.phone || "Not provided"}
-              />
+              <InfoCard icon={Mail} label="Work email" value={cleaner.email} />
+              <InfoCard icon={Phone} label="Phone number" value={cleaner.phone || "Not provided"} />
               <InfoCard
                 icon={CalendarDays}
                 label="Team member since"
@@ -386,15 +360,13 @@ export default function AdminCleanerDetailPage() {
                   <Trash2 className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="font-heading text-sm font-bold text-navy">
-                    Danger zone
-                  </p>
+                  <p className="font-heading text-sm font-bold text-navy">Danger zone</p>
                   <p className="text-xs text-slate-500">Permanent action</p>
                 </div>
               </div>
               <p className="mt-4 text-xs font-medium leading-5 text-slate-500">
-                Suspend access for temporary restrictions. Deletion is
-                permanent and should only be used when required.
+                Suspend access for temporary restrictions. Deletion is permanent and should only be
+                used when required.
               </p>
               <button
                 type="button"

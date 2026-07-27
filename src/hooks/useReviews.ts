@@ -45,7 +45,7 @@ export function useReviews() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const run = useCallback(async <T,>(fn: () => Promise<T>): Promise<T | null> => {
+  const run = useCallback(async <T>(fn: () => Promise<T>): Promise<T | null> => {
     setLoading(true);
     setError(null);
     try {
@@ -119,10 +119,11 @@ export function useReviews() {
         formData.append("file", file);
         formData.append("bookingId", bookingId);
         formData.append("slot", slot);
-        const { data } = await callApi<{ url: string; slot: string }>(
-          "/api/reviews/upload-image",
-          { method: "POST", body: formData, isFormData: true }
-        );
+        const { data } = await callApi<{ url: string; slot: string }>("/api/reviews/upload-image", {
+          method: "POST",
+          body: formData,
+          isFormData: true,
+        });
         return data?.url ?? null;
       }),
     [run]

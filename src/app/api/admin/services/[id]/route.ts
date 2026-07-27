@@ -9,11 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
 import { updateServiceSchema } from "@/validators/serviceValidator";
-import {
-  getServiceById,
-  updateService,
-  deleteService,
-} from "@/services/serviceManagementService";
+import { getServiceById, updateService, deleteService } from "@/services/serviceManagementService";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -23,10 +19,7 @@ async function requireAdmin() {
   return user;
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -38,10 +31,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;

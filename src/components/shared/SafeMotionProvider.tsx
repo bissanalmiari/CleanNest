@@ -9,14 +9,6 @@ import { MotionConfig } from "motion/react";
  * colour, hover, and focus feedback remain available while expensive transform
  * and layout animation is avoided on laptops with limited graphics resources.
  */
-export default function SafeMotionProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <MotionConfig reducedMotion="always">
-      {children}
-    </MotionConfig>
-  );
+export default function SafeMotionProvider({ children }: { children: React.ReactNode }) {
+  return <MotionConfig reducedMotion="always">{children}</MotionConfig>;
 }

@@ -54,7 +54,10 @@ export class TooManyRequestsError extends AppError {
 export function errorResponse(error: unknown) {
   // Our own deliberate throws (AppError and its subclasses).
   if (error instanceof AppError) {
-    return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: error.statusCode }
+    );
   }
 
   // Zod input-validation failures (request body/query didn't match a schema).

@@ -19,7 +19,11 @@ import "@/models/AddOn";
 import { AppError, NotFoundError } from "@/lib/apiError";
 import { reconcileElapsedBookings } from "@/services/bookingStatusAutomationService";
 import type { BookingStatus } from "@/types/enums";
-import { createNotification, createNotifications } from "@/services/notificationService";
+import {
+  createNotification,
+  createNotifications,
+  notifyActiveAdmins,
+} from "@/services/notificationService";
 
 /* ------------------------------------------------------------------ */
 /* Allowed status transitions                                          */
@@ -241,7 +245,7 @@ export async function assignCleaners(
       userId: cleanerId,
       type: "assignment_new" as const,
       title: "New cleaning assignment",
-      message: `You were assigned to booking ${booking.bookingNumber}. Review the job and respond.`,
+      message: `You were assigned to booking ${booking.bookingNumber}. Review the details and acknowledge that you have seen it.`,
       href: `/cleaner/jobs/${bookingId}`,
       bookingId,
       dedupeKey: `assignment-new:${bookingId}:${cleanerId}`,
@@ -355,6 +359,15 @@ export async function changeBookingStatus(
       dedupeKey: `service-completed:${bookingId}`,
       email: true,
     }).catch((error) => console.error("[notification:service-completed]", error));
+    await notifyActiveAdmins({
+      type: "service_completed",
+      title: "Cleaning service completed",
+      message: `Booking ${booking.bookingNumber} was marked complete.`,
+      href: `/admin/bookings/${bookingId}`,
+      bookingId,
+      dedupeKey: `admin-service-completed:${bookingId}`,
+      email: false,
+    }).catch((error) => console.error("[notification:admin-service-completed]", error));
   }
 
   return booking.toObject();

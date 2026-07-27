@@ -60,19 +60,14 @@ export async function getAllCleaners(filters: CleanerListFilters = {}) {
       .lean()
       .exec(),
     User.countDocuments(match),
-    User.aggregate([
-      { $match: cleanerMatch },
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]),
+    User.aggregate([{ $match: cleanerMatch }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
     User.countDocuments({
       ...cleanerMatch,
       createdAt: { $gte: startOfMonth },
     }),
   ]);
 
-  const statusCounts = new Map(
-    statusSummary.map((item) => [String(item._id), Number(item.count)])
-  );
+  const statusCounts = new Map(statusSummary.map((item) => [String(item._id), Number(item.count)]));
 
   return {
     users: cleaners,
@@ -80,10 +75,7 @@ export async function getAllCleaners(filters: CleanerListFilters = {}) {
     page: safePage,
     limit: safeLimit,
     summary: {
-      totalCleaners: statusSummary.reduce(
-        (sum, item) => sum + Number(item.count),
-        0
-      ),
+      totalCleaners: statusSummary.reduce((sum, item) => sum + Number(item.count), 0),
       activeCleaners: statusCounts.get("active") ?? 0,
       suspendedCleaners: statusCounts.get("suspended") ?? 0,
       newThisMonth,
@@ -98,10 +90,7 @@ export async function getAllCleaners(filters: CleanerListFilters = {}) {
 export async function getCleanerById(id: string) {
   await connectDB();
 
-  const user = await User.findOne({ _id: id, role: ROLE })
-    .select("-passwordHash")
-    .lean()
-    .exec();
+  const user = await User.findOne({ _id: id, role: ROLE }).select("-passwordHash").lean().exec();
 
   if (!user) {
     throw new NotFoundError("Cleaner not found");

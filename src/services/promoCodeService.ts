@@ -53,10 +53,7 @@ export async function validatePromoCodeForCustomer({
     serviceIds.length > 0 &&
     !serviceIds.some((id) => id.toString() === input.serviceId)
   ) {
-    throw new AppError(
-      "This promo code does not apply to the selected cleaning service.",
-      409,
-    );
+    throw new AppError("This promo code does not apply to the selected cleaning service.", 409);
   }
 
   const customerObjectId = new Types.ObjectId(customerId);
@@ -73,24 +70,18 @@ export async function validatePromoCodeForCustomer({
   const customerUses = Math.max(trackedUses, historicalBookingUses);
 
   if (customerUses >= promoCode.perCustomerLimit) {
-    throw new AppError(
-      "You have already used this promo code the maximum number of times.",
-      409,
-    );
+    throw new AppError("You have already used this promo code the maximum number of times.", 409);
   }
 
   const bookingAmount = input.bookingAmount;
   const minimumBookingAmount = promoCode.minimumBookingAmount ?? 0;
 
-  if (
-    bookingAmount !== undefined &&
-    bookingAmount < minimumBookingAmount
-  ) {
+  if (bookingAmount !== undefined && bookingAmount < minimumBookingAmount) {
     throw new AppError(
-      `This code requires a minimum booking subtotal of $${money(
-        minimumBookingAmount,
-      ).toFixed(2)}.`,
-      409,
+      `This code requires a minimum booking subtotal of $${money(minimumBookingAmount).toFixed(
+        2
+      )}.`,
+      409
     );
   }
 
@@ -101,19 +92,11 @@ export async function validatePromoCodeForCustomer({
         ? bookingAmount * (promoCode.discountValue / 100)
         : promoCode.discountValue;
 
-    if (
-      promoCode.discountType === "percentage" &&
-      promoCode.maximumDiscountAmount != null
-    ) {
-      estimatedDiscount = Math.min(
-        estimatedDiscount,
-        promoCode.maximumDiscountAmount,
-      );
+    if (promoCode.discountType === "percentage" && promoCode.maximumDiscountAmount != null) {
+      estimatedDiscount = Math.min(estimatedDiscount, promoCode.maximumDiscountAmount);
     }
 
-    estimatedDiscount = money(
-      Math.min(Math.max(estimatedDiscount, 0), bookingAmount),
-    );
+    estimatedDiscount = money(Math.min(Math.max(estimatedDiscount, 0), bookingAmount));
   }
 
   return {
@@ -126,9 +109,6 @@ export async function validatePromoCodeForCustomer({
     minimumBookingAmount,
     maximumDiscountAmount: promoCode.maximumDiscountAmount ?? null,
     expiryDate: new Date(promoCode.expiryDate).toISOString(),
-    usesRemaining: Math.max(
-      0,
-      promoCode.maximumUses - (promoCode.usageCount ?? 0),
-    ),
+    usesRemaining: Math.max(0, promoCode.maximumUses - (promoCode.usageCount ?? 0)),
   };
 }

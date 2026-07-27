@@ -14,20 +14,14 @@ const serviceAddonSchema = new Schema(
     serviceId: {
       type: Schema.Types.ObjectId,
       ref: "Service",
-      required: [
-        true,
-        "Service is required.",
-      ],
+      required: [true, "Service is required."],
       index: true,
     },
 
     addonId: {
       type: Schema.Types.ObjectId,
       ref: "Addon",
-      required: [
-        true,
-        "Add-on is required.",
-      ],
+      required: [true, "Add-on is required."],
       index: true,
     },
 
@@ -39,10 +33,7 @@ const serviceAddonSchema = new Schema(
      */
     overridePrice: {
       type: Number,
-      min: [
-        0,
-        "Override price cannot be negative.",
-      ],
+      min: [0, "Override price cannot be negative."],
       default: undefined,
     },
 
@@ -52,14 +43,8 @@ const serviceAddonSchema = new Schema(
      */
     overrideDurationMinutes: {
       type: Number,
-      min: [
-        0,
-        "Override duration cannot be negative.",
-      ],
-      max: [
-        1440,
-        "Override duration cannot exceed 24 hours.",
-      ],
+      min: [0, "Override duration cannot be negative."],
+      max: [1440, "Override duration cannot exceed 24 hours."],
       default: undefined,
     },
 
@@ -69,23 +54,14 @@ const serviceAddonSchema = new Schema(
      */
     maxQuantity: {
       type: Number,
-      min: [
-        1,
-        "Maximum quantity must be at least one.",
-      ],
-      max: [
-        50,
-        "Maximum quantity cannot exceed 50.",
-      ],
+      min: [1, "Maximum quantity must be at least one."],
+      max: [50, "Maximum quantity cannot exceed 50."],
       default: undefined,
     },
 
     sortOrder: {
       type: Number,
-      min: [
-        0,
-        "Sort order cannot be negative.",
-      ],
+      min: [0, "Sort order cannot be negative."],
       default: 0,
     },
 
@@ -98,7 +74,7 @@ const serviceAddonSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
 /*
@@ -112,7 +88,7 @@ serviceAddonSchema.index(
   },
   {
     unique: true,
-  },
+  }
 );
 
 serviceAddonSchema.index({
@@ -121,21 +97,12 @@ serviceAddonSchema.index({
   sortOrder: 1,
 });
 
-export type ServiceAddon =
-  InferSchemaType<
-    typeof serviceAddonSchema
-  >;
+export type ServiceAddon = InferSchemaType<typeof serviceAddonSchema>;
 
-export type ServiceAddonDocument =
-  HydratedDocument<ServiceAddon>;
+export type ServiceAddonDocument = HydratedDocument<ServiceAddon>;
 
 const ServiceAddonModel =
-  (models.ServiceAddon as
-    | Model<ServiceAddon>
-    | undefined) ??
-  model<ServiceAddon>(
-    "ServiceAddon",
-    serviceAddonSchema,
-  );
+  (models.ServiceAddon as Model<ServiceAddon> | undefined) ??
+  model<ServiceAddon>("ServiceAddon", serviceAddonSchema);
 
 export default ServiceAddonModel;

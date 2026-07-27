@@ -16,7 +16,10 @@ export const createServiceSchema = z.object({
     .toLowerCase()
     .min(2)
     .max(120)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug may only contain lowercase letters, numbers, and hyphens"),
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Slug may only contain lowercase letters, numbers, and hyphens"
+    ),
   shortDescription: z
     .string()
     .trim()

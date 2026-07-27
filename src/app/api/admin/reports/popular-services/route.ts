@@ -6,10 +6,7 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
-import {
-  getPopularServicesReport,
-  type ReportRange,
-} from "@/services/reportsService";
+import { getPopularServicesReport, type ReportRange } from "@/services/reportsService";
 
 const VALID_RANGES: ReportRange[] = ["week", "month", "year", "all"];
 

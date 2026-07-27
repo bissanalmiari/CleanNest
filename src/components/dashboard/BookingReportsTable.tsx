@@ -72,32 +72,24 @@ export default function BookingReportsTable({
   return (
     <div className="rounded-card bg-surface p-5 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-heading text-lg font-semibold text-navy">
-          Booking Reports
-        </h3>
+        <h3 className="font-heading text-lg font-semibold text-navy">Booking Reports</h3>
 
         <div className="flex flex-wrap gap-2">
           <input
             type="date"
             value={filters.from}
-            onChange={(e) =>
-              onFiltersChange({ ...filters, from: e.target.value })
-            }
+            onChange={(e) => onFiltersChange({ ...filters, from: e.target.value })}
             className="rounded-md border border-navy/10 px-2 py-1 text-sm text-navy"
           />
           <input
             type="date"
             value={filters.to}
-            onChange={(e) =>
-              onFiltersChange({ ...filters, to: e.target.value })
-            }
+            onChange={(e) => onFiltersChange({ ...filters, to: e.target.value })}
             className="rounded-md border border-navy/10 px-2 py-1 text-sm text-navy"
           />
           <select
             value={filters.status}
-            onChange={(e) =>
-              onFiltersChange({ ...filters, status: e.target.value })
-            }
+            onChange={(e) => onFiltersChange({ ...filters, status: e.target.value })}
             className="rounded-md border border-navy/10 px-2 py-1 text-sm text-navy"
           >
             {STATUS_OPTIONS.map((opt) => (
@@ -132,22 +124,14 @@ export default function BookingReportsTable({
               ))
             ) : bookings.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="py-8 text-center text-navy/40"
-                >
+                <td colSpan={6} className="py-8 text-center text-navy/40">
                   No bookings match these filters
                 </td>
               </tr>
             ) : (
               bookings.map((booking) => (
-                <tr
-                  key={booking._id}
-                  className="border-b border-navy/5 text-navy"
-                >
-                  <td className="py-3 font-medium">
-                    {booking.bookingNumber}
-                  </td>
+                <tr key={booking._id} className="border-b border-navy/5 text-navy">
+                  <td className="py-3 font-medium">{booking.bookingNumber}</td>
                   <td className="py-3">{customerLabel(booking.customerId)}</td>
                   <td className="py-3">{serviceLabel(booking.serviceId)}</td>
                   <td className="py-3 text-navy/60">
@@ -156,8 +140,7 @@ export default function BookingReportsTable({
                   <td className="py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        STATUS_STYLES[booking.status] ??
-                        "bg-navy/10 text-navy/60"
+                        STATUS_STYLES[booking.status] ?? "bg-navy/10 text-navy/60"
                       }`}
                     >
                       {booking.status.replace("_", " ")}

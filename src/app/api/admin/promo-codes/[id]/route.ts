@@ -13,10 +13,7 @@ import {
   updatePromoCode,
   deletePromoCode,
 } from "@/services/promoCodeManagementService";
-import {
-  promoCodeIdParamSchema,
-  updatePromoCodeSchema,
-} from "@/validators/promoCodeValidator";
+import { promoCodeIdParamSchema, updatePromoCodeSchema } from "@/validators/promoCodeValidator";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -26,10 +23,7 @@ async function requireAdmin() {
   return user;
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = promoCodeIdParamSchema.parse(await params);
@@ -41,10 +35,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = promoCodeIdParamSchema.parse(await params);

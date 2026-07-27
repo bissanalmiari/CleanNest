@@ -1,10 +1,5 @@
 export type ServiceSort =
-  | "newest"
-  | "oldest"
-  | "price-asc"
-  | "price-desc"
-  | "name-asc"
-  | "name-desc";
+  "newest" | "oldest" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
 export type Service = {
   id: string;

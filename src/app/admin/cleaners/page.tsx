@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type MouseEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -146,11 +140,7 @@ export default function AdminCleanersPage() {
   const [editingCleaner, setEditingCleaner] = useState<CleanerRow | null>(null);
 
   const fetchCleaners = useCallback(
-    async (
-      currentFilters: FiltersState,
-      currentPage: number,
-      isRefresh = false,
-    ) => {
+    async (currentFilters: FiltersState, currentPage: number, isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
@@ -162,10 +152,9 @@ export default function AdminCleanersPage() {
         if (currentFilters.status) params.set("status", currentFilters.status);
         if (currentFilters.search) params.set("search", currentFilters.search);
 
-        const response = await fetch(
-          `/api/admin/cleaners?${params.toString()}`,
-          { cache: "no-store" },
-        );
+        const response = await fetch(`/api/admin/cleaners?${params.toString()}`, {
+          cache: "no-store",
+        });
         const json: ApiEnvelope<CleanerListData> = await response.json();
 
         if (!response.ok || !json.success) {
@@ -176,16 +165,14 @@ export default function AdminCleanersPage() {
         setErrorMessage(null);
       } catch (error) {
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to load the cleaner team.",
+          error instanceof Error ? error.message : "Failed to load the cleaner team."
         );
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -196,18 +183,14 @@ export default function AdminCleanersPage() {
     const timeout = window.setTimeout(() => {
       const search = searchInput.trim();
       setPage(1);
-      setFilters((current) =>
-        current.search === search ? current : { ...current, search },
-      );
+      setFilters((current) => (current.search === search ? current : { ...current, search }));
     }, 350);
 
     return () => window.clearTimeout(timeout);
   }, [searchInput]);
 
   const summary = useMemo(() => data?.summary ?? EMPTY_SUMMARY, [data]);
-  const totalPages = data
-    ? Math.max(1, Math.ceil(data.total / data.limit))
-    : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
   const hasFilters = Boolean(filters.status || filters.search);
   const statusCounts = useMemo(
     () => ({
@@ -215,7 +198,7 @@ export default function AdminCleanersPage() {
       active: summary.activeCleaners,
       suspended: summary.suspendedCleaners,
     }),
-    [summary],
+    [summary]
   );
 
   function setStatus(status: StatusFilter) {
@@ -234,10 +217,7 @@ export default function AdminCleanersPage() {
     setModalOpen(true);
   }
 
-  function openEditModal(
-    event: MouseEvent<HTMLButtonElement>,
-    cleaner: CleanerListRow,
-  ) {
+  function openEditModal(event: MouseEvent<HTMLButtonElement>, cleaner: CleanerListRow) {
     event.stopPropagation();
     setEditingCleaner(cleaner);
     setModalOpen(true);
@@ -245,9 +225,7 @@ export default function AdminCleanersPage() {
 
   async function handleFormSubmit(values: CleanerFormValues) {
     const isEdit = editingCleaner !== null;
-    const url = isEdit
-      ? `/api/admin/cleaners/${editingCleaner._id}`
-      : "/api/admin/cleaners";
+    const url = isEdit ? `/api/admin/cleaners/${editingCleaner._id}` : "/api/admin/cleaners";
     const response = await fetch(url, {
       method: isEdit ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -263,7 +241,7 @@ export default function AdminCleanersPage() {
               email: values.email,
               phone: values.phone || undefined,
               password: values.password,
-            },
+            }
       ),
     });
     const json: ApiEnvelope<unknown> = await response.json();
@@ -277,17 +255,14 @@ export default function AdminCleanersPage() {
     await fetchCleaners(filters, page, true);
   }
 
-  async function toggleAccess(
-    event: MouseEvent<HTMLButtonElement>,
-    cleaner: CleanerListRow,
-  ) {
+  async function toggleAccess(event: MouseEvent<HTMLButtonElement>, cleaner: CleanerListRow) {
     event.stopPropagation();
     const action = cleaner.status === "suspended" ? "unblock" : "block";
     if (
       !window.confirm(
         action === "block"
           ? `Suspend ${cleaner.name}? They will not be able to sign in or access assignments.`
-          : `Restore team access for ${cleaner.name}?`,
+          : `Restore team access for ${cleaner.name}?`
       )
     ) {
       return;
@@ -295,14 +270,11 @@ export default function AdminCleanersPage() {
 
     setActionId(cleaner._id);
     try {
-      const response = await fetch(
-        `/api/admin/cleaners/${cleaner._id}/block`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action }),
-        },
-      );
+      const response = await fetch(`/api/admin/cleaners/${cleaner._id}/block`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
       const json: ApiEnvelope<unknown> = await response.json();
 
       if (!response.ok || !json.success) {
@@ -310,24 +282,15 @@ export default function AdminCleanersPage() {
       }
       await fetchCleaners(filters, page, true);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
     } finally {
       setActionId(null);
     }
   }
 
-  async function deleteCleaner(
-    event: MouseEvent<HTMLButtonElement>,
-    cleaner: CleanerListRow,
-  ) {
+  async function deleteCleaner(event: MouseEvent<HTMLButtonElement>, cleaner: CleanerListRow) {
     event.stopPropagation();
-    if (
-      !window.confirm(
-        `Permanently delete ${cleaner.name}? This cannot be undone.`,
-      )
-    ) {
+    if (!window.confirm(`Permanently delete ${cleaner.name}? This cannot be undone.`)) {
       return;
     }
 
@@ -348,9 +311,7 @@ export default function AdminCleanersPage() {
         await fetchCleaners(filters, page, true);
       }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
     } finally {
       setActionId(null);
     }
@@ -389,13 +350,11 @@ export default function AdminCleanersPage() {
               </div>
               <h1 className="mt-6 max-w-xl font-heading text-4xl font-black leading-[1.04] tracking-[-0.045em] sm:text-5xl">
                 Build a trusted team.
-                <span className="block text-emerald-300">
-                  Deliver brilliant work.
-                </span>
+                <span className="block text-emerald-300">Deliver brilliant work.</span>
               </h1>
               <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                Organize cleaner accounts, control team access, and keep your
-                field operations ready for every scheduled home.
+                Organize cleaner accounts, control team access, and keep your field operations ready
+                for every scheduled home.
               </p>
               <button
                 type="button"
@@ -474,9 +433,7 @@ export default function AdminCleanersPage() {
                   className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 text-xs font-extrabold text-navy transition hover:border-emerald-300 hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-60"
                 >
                   <RefreshCw
-                    className={`h-4 w-4 text-emerald-600 ${
-                      refreshing ? "animate-spin" : ""
-                    }`}
+                    className={`h-4 w-4 text-emerald-600 ${refreshing ? "animate-spin" : ""}`}
                   />
                   Refresh
                 </button>
@@ -506,9 +463,7 @@ export default function AdminCleanersPage() {
                     {option.label}
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] ${
-                        active
-                          ? "bg-white/15 text-emerald-100"
-                          : "bg-white text-slate-400"
+                        active ? "bg-white/15 text-emerald-100" : "bg-white text-slate-400"
                       }`}
                     >
                       {statusCounts[option.value]}
@@ -551,18 +506,10 @@ export default function AdminCleanersPage() {
                             index={index}
                             reduceMotion={Boolean(reduceMotion)}
                             busy={actionId === cleaner._id}
-                            onOpen={() =>
-                              router.push(`/admin/cleaners/${cleaner._id}`)
-                            }
-                            onEdit={(event) =>
-                              openEditModal(event, cleaner)
-                            }
-                            onToggle={(event) =>
-                              void toggleAccess(event, cleaner)
-                            }
-                            onDelete={(event) =>
-                              void deleteCleaner(event, cleaner)
-                            }
+                            onOpen={() => router.push(`/admin/cleaners/${cleaner._id}`)}
+                            onEdit={(event) => openEditModal(event, cleaner)}
+                            onToggle={(event) => void toggleAccess(event, cleaner)}
+                            onDelete={(event) => void deleteCleaner(event, cleaner)}
                           />
                         ))}
                       </AnimatePresence>
@@ -576,16 +523,10 @@ export default function AdminCleanersPage() {
                       key={cleaner._id}
                       cleaner={cleaner}
                       busy={actionId === cleaner._id}
-                      onOpen={() =>
-                        router.push(`/admin/cleaners/${cleaner._id}`)
-                      }
+                      onOpen={() => router.push(`/admin/cleaners/${cleaner._id}`)}
                       onEdit={(event) => openEditModal(event, cleaner)}
-                      onToggle={(event) =>
-                        void toggleAccess(event, cleaner)
-                      }
-                      onDelete={(event) =>
-                        void deleteCleaner(event, cleaner)
-                      }
+                      onToggle={(event) => void toggleAccess(event, cleaner)}
+                      onDelete={(event) => void deleteCleaner(event, cleaner)}
                     />
                   ))}
                 </div>
@@ -596,8 +537,7 @@ export default function AdminCleanersPage() {
           {data && totalPages > 1 && !loading && !errorMessage && (
             <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <p className="text-xs font-semibold text-slate-500">
-                Page <span className="font-extrabold text-navy">{data.page}</span>{" "}
-                of{" "}
+                Page <span className="font-extrabold text-navy">{data.page}</span> of{" "}
                 <span className="font-extrabold text-navy">{totalPages}</span>
                 <span className="mx-2 text-slate-300">•</span>
                 {data.total} matching team members
@@ -662,9 +602,7 @@ function MetricCard({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-sm">
-      <span
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}
-      >
+      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}>
         <Icon className="h-4 w-4" />
       </span>
       {loading ? (
@@ -742,18 +680,9 @@ function CleanerTableRow({
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center justify-end gap-1.5">
+          <ActionButton label="Edit cleaner" icon={Pencil} onClick={onEdit} disabled={busy} />
           <ActionButton
-            label="Edit cleaner"
-            icon={Pencil}
-            onClick={onEdit}
-            disabled={busy}
-          />
-          <ActionButton
-            label={
-              cleaner.status === "suspended"
-                ? "Restore cleaner"
-                : "Suspend cleaner"
-            }
+            label={cleaner.status === "suspended" ? "Restore cleaner" : "Suspend cleaner"}
             icon={cleaner.status === "suspended" ? CheckCircle2 : Ban}
             tone="warning"
             onClick={onToggle}
@@ -773,14 +702,7 @@ function CleanerTableRow({
   );
 }
 
-function CleanerMobileCard({
-  cleaner,
-  busy,
-  onOpen,
-  onEdit,
-  onToggle,
-  onDelete,
-}: CleanerActions) {
+function CleanerMobileCard({ cleaner, busy, onOpen, onEdit, onToggle, onDelete }: CleanerActions) {
   return (
     <article
       onClick={onOpen}
@@ -789,12 +711,8 @@ function CleanerMobileCard({
       <div className="flex items-start gap-3">
         <CleanerAvatar cleaner={cleaner} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-heading text-sm font-bold text-navy">
-            {cleaner.name}
-          </p>
-          <p className="mt-1 truncate text-xs font-medium text-slate-500">
-            {cleaner.email}
-          </p>
+          <p className="truncate font-heading text-sm font-bold text-navy">{cleaner.name}</p>
+          <p className="mt-1 truncate text-xs font-medium text-slate-500">{cleaner.email}</p>
         </div>
         <AccountStatusBadge status={cleaner.status} />
       </div>
@@ -813,18 +731,9 @@ function CleanerMobileCard({
           View team profile
         </span>
         <div className="flex gap-1.5">
+          <ActionButton label="Edit cleaner" icon={Pencil} onClick={onEdit} disabled={busy} />
           <ActionButton
-            label="Edit cleaner"
-            icon={Pencil}
-            onClick={onEdit}
-            disabled={busy}
-          />
-          <ActionButton
-            label={
-              cleaner.status === "suspended"
-                ? "Restore cleaner"
-                : "Suspend cleaner"
-            }
+            label={cleaner.status === "suspended" ? "Restore cleaner" : "Suspend cleaner"}
             icon={cleaner.status === "suspended" ? CheckCircle2 : Ban}
             tone="warning"
             onClick={onToggle}
@@ -889,13 +798,7 @@ function ActionButton({
   );
 }
 
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
       <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
@@ -904,9 +807,7 @@ function ErrorState({
       <h3 className="mt-5 font-heading text-lg font-bold text-navy">
         Cleaner directory unavailable
       </h3>
-      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-        {message}
-      </p>
+      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{message}</p>
       <button
         type="button"
         onClick={onRetry}
@@ -919,13 +820,7 @@ function ErrorState({
   );
 }
 
-function EmptyState({
-  hasFilters,
-  onClear,
-}: {
-  hasFilters: boolean;
-  onClear: () => void;
-}) {
+function EmptyState({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
   return (
     <div className="flex min-h-[390px] flex-col items-center justify-center p-8 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 shadow-[0_14px_35px_rgba(11,37,69,0.08)]">

@@ -233,9 +233,7 @@ export default function AdminBookingDetailPage() {
         setData(json.data ?? null);
         setErrorMessage(null);
       } catch (error) {
-        setErrorMessage(
-          error instanceof Error ? error.message : "Failed to load booking"
-        );
+        setErrorMessage(error instanceof Error ? error.message : "Failed to load booking");
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -296,14 +294,10 @@ export default function AdminBookingDetailPage() {
       }
       const count = selectedCleanerIds.length;
       setSelectedCleanerIds([]);
-      setSuccessMessage(
-        `${count} ${count === 1 ? "cleaner" : "cleaners"} added to the team.`
-      );
+      setSuccessMessage(`${count} ${count === 1 ? "cleaner" : "cleaners"} added to the team.`);
       await fetchDetail(true);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to assign cleaners"
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Failed to assign cleaners");
     } finally {
       setAssigning(false);
     }
@@ -332,9 +326,7 @@ export default function AdminBookingDetailPage() {
       );
       await fetchDetail(true);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to update status"
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update status");
     } finally {
       setUpdatingStatus(null);
     }
@@ -377,9 +369,7 @@ export default function AdminBookingDetailPage() {
   }
 
   const { booking, addons, assignments, statusHistory } = data;
-  const currentStep = WORKFLOW_STEPS.findIndex(
-    (step) => step.status === booking.status
-  );
+  const currentStep = WORKFLOW_STEPS.findIndex((step) => step.status === booking.status);
   const address = [
     booking.addressId?.street,
     booking.addressId?.building,
@@ -407,9 +397,7 @@ export default function AdminBookingDetailPage() {
       <motion.div
         aria-hidden
         className="pointer-events-none absolute -right-32 top-40 h-96 w-96 rounded-full bg-primary/15 blur-[110px]"
-        animate={
-          reduceMotion ? undefined : { x: [0, -45, 0], y: [0, 35, 0] }
-        }
+        animate={reduceMotion ? undefined : { x: [0, -45, 0], y: [0, 35, 0] }}
         transition={{ duration: 15, repeat: 0, ease: "easeInOut" }}
       />
 
@@ -457,9 +445,7 @@ export default function AdminBookingDetailPage() {
               }`}
             >
               {errorMessage ? <CircleAlert size={18} /> : <CheckCircle2 size={18} />}
-              <span className="flex-1 font-medium">
-                {errorMessage ?? successMessage}
-              </span>
+              <span className="flex-1 font-medium">{errorMessage ?? successMessage}</span>
               <button
                 type="button"
                 aria-label="Dismiss message"
@@ -623,15 +609,9 @@ export default function AdminBookingDetailPage() {
                       : ""}
                   </p>
                   <p className="mt-2 text-xs text-navy/50">
-                    {booking.propertySize
-                      ? `${booking.propertySize} m²`
-                      : "Size unavailable"}
-                    {booking.bedrooms !== undefined
-                      ? ` · ${booking.bedrooms} bedrooms`
-                      : ""}
-                    {booking.bathrooms !== undefined
-                      ? ` · ${booking.bathrooms} bathrooms`
-                      : ""}
+                    {booking.propertySize ? `${booking.propertySize} m²` : "Size unavailable"}
+                    {booking.bedrooms !== undefined ? ` · ${booking.bedrooms} bedrooms` : ""}
+                    {booking.bathrooms !== undefined ? ` · ${booking.bathrooms} bathrooms` : ""}
                   </p>
                 </InfoPanel>
 
@@ -641,11 +621,7 @@ export default function AdminBookingDetailPage() {
               </div>
             </SectionCard>
 
-            <SectionCard
-              icon={Banknote}
-              eyebrow="Financial summary"
-              title="Price breakdown"
-            >
+            <SectionCard icon={Banknote} eyebrow="Financial summary" title="Price breakdown">
               <div className="divide-y divide-navy/[0.06]">
                 <PriceLine
                   label="Service base price"
@@ -661,9 +637,7 @@ export default function AdminBookingDetailPage() {
                 <PriceLine label="Service-area fee" value={booking.serviceAreaFee} />
                 {(booking.discountAmount ?? 0) > 0 && (
                   <PriceLine
-                    label={`Discount${
-                      booking.promoCodeId ? ` · ${booking.promoCodeId.code}` : ""
-                    }`}
+                    label={`Discount${booking.promoCodeId ? ` · ${booking.promoCodeId.code}` : ""}`}
                     value={-(booking.discountAmount ?? 0)}
                     discount
                   />
@@ -672,8 +646,7 @@ export default function AdminBookingDetailPage() {
                   <div>
                     <p className="font-heading text-lg font-semibold text-navy">Total</p>
                     <p className="mt-0.5 text-xs capitalize text-navy/45">
-                      {booking.paymentMethod ?? "Payment"} ·{" "}
-                      {booking.paymentStatus ?? "unpaid"}
+                      {booking.paymentMethod ?? "Payment"} · {booking.paymentStatus ?? "unpaid"}
                     </p>
                   </div>
                   <p className="font-heading text-2xl font-semibold text-navy">
@@ -689,10 +662,7 @@ export default function AdminBookingDetailPage() {
                   </p>
                   <div className="space-y-2">
                     {addons.map((addon) => (
-                      <div
-                        key={addon._id}
-                        className="flex items-center justify-between text-sm"
-                      >
+                      <div key={addon._id} className="flex items-center justify-between text-sm">
                         <span className="text-navy/65">
                           {addon.addonId?.name ?? "Add-on"} × {addon.quantity}
                         </span>
@@ -711,38 +681,23 @@ export default function AdminBookingDetailPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   {booking.customerNotes && (
                     <InfoPanel icon={UserRound} label="Customer note">
-                      <p className="text-sm leading-6 text-navy/65">
-                        {booking.customerNotes}
-                      </p>
+                      <p className="text-sm leading-6 text-navy/65">{booking.customerNotes}</p>
                     </InfoPanel>
                   )}
                   {booking.adminNotes && (
                     <InfoPanel icon={ShieldCheck} label="Internal admin note">
-                      <p className="text-sm leading-6 text-navy/65">
-                        {booking.adminNotes}
-                      </p>
+                      <p className="text-sm leading-6 text-navy/65">{booking.adminNotes}</p>
                     </InfoPanel>
                   )}
                 </div>
               </SectionCard>
             )}
 
-            <SectionCard
-              icon={BadgeCheck}
-              eyebrow="Quality assurance"
-              title="Proof of service"
-            >
-              <ServiceProofReportPanel
-                bookingId={booking._id}
-                audience="admin"
-              />
+            <SectionCard icon={BadgeCheck} eyebrow="Quality assurance" title="Proof of service">
+              <ServiceProofReportPanel bookingId={booking._id} audience="admin" />
             </SectionCard>
 
-            <SectionCard
-              icon={Zap}
-              eyebrow="Audit trail"
-              title="Booking activity"
-            >
+            <SectionCard icon={Zap} eyebrow="Audit trail" title="Booking activity">
               {statusHistory.length === 0 ? (
                 <p className="rounded-2xl bg-surface-soft p-5 text-sm text-navy/45">
                   No status changes have been recorded yet.
@@ -780,7 +735,7 @@ export default function AdminBookingDetailPage() {
                         by{" "}
                         {entry.metadata?.actor === "system"
                           ? "CleanNest automation"
-                          : entry.changedByUserId?.name ?? "System"}
+                          : (entry.changedByUserId?.name ?? "System")}
                       </p>
                     </motion.li>
                   ))}
@@ -872,9 +827,7 @@ export default function AdminBookingDetailPage() {
                                 <p className="truncate text-sm font-semibold text-navy">
                                   {cleaner.name}
                                 </p>
-                                <p className="truncate text-xs text-navy/40">
-                                  {cleaner.email}
-                                </p>
+                                <p className="truncate text-xs text-navy/40">{cleaner.email}</p>
                               </div>
                               <span
                                 className={`flex h-5 w-5 items-center justify-center rounded-md border ${
@@ -898,10 +851,7 @@ export default function AdminBookingDetailPage() {
                       className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-navy px-4 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(11,37,69,0.18)] transition-all hover:-translate-y-0.5 hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                     >
                       {assigning ? (
-                        <RotateCcw
-                          size={16}
-                          className="animate-spin motion-reduce:animate-none"
-                        />
+                        <RotateCcw size={16} className="animate-spin motion-reduce:animate-none" />
                       ) : (
                         <Plus size={16} />
                       )}
@@ -1016,9 +966,9 @@ export default function AdminBookingDetailPage() {
                     <div className="mt-5 flex gap-3 rounded-2xl border border-cyan-200/30 bg-cyan-50/70 p-3.5 text-xs leading-5 text-navy/55">
                       <Clock3 size={17} className="mt-0.5 shrink-0 text-primary" />
                       <p>
-                        After approval, CleanNest automatically closes this booking
-                        after <strong className="text-navy">{booking.endTime}</strong>{" "}
-                        on {formatDate(booking.bookingDate, false)}.
+                        After approval, CleanNest automatically closes this booking after{" "}
+                        <strong className="text-navy">{booking.endTime}</strong> on{" "}
+                        {formatDate(booking.bookingDate, false)}.
                       </p>
                     </div>
                   </>
@@ -1051,9 +1001,7 @@ function HeroMetric({
       <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/45">
         <Icon size={13} className="text-cyan-300" /> {label}
       </p>
-      <p className="mt-2 truncate font-heading text-sm font-semibold text-white">
-        {value}
-      </p>
+      <p className="mt-2 truncate font-heading text-sm font-semibold text-white">{value}</p>
     </motion.div>
   );
 }
@@ -1128,11 +1076,7 @@ function PriceLine({
   return (
     <div className="flex items-center justify-between py-3 text-sm">
       <span className="text-navy/55">{label}</span>
-      <span
-        className={`font-semibold ${
-          discount ? "text-status-confirmed" : "text-navy"
-        }`}
-      >
+      <span className={`font-semibold ${discount ? "text-status-confirmed" : "text-navy"}`}>
         {formatMoney(value)}
       </span>
     </div>

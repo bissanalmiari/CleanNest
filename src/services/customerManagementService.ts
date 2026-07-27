@@ -60,19 +60,14 @@ export async function getAllCustomers(filters: CustomerListFilters = {}) {
       .lean()
       .exec(),
     User.countDocuments(match),
-    User.aggregate([
-      { $match: customerMatch },
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]),
+    User.aggregate([{ $match: customerMatch }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
     User.countDocuments({
       ...customerMatch,
       createdAt: { $gte: startOfMonth },
     }),
   ]);
 
-  const statusCounts = new Map(
-    statusSummary.map((item) => [String(item._id), Number(item.count)])
-  );
+  const statusCounts = new Map(statusSummary.map((item) => [String(item._id), Number(item.count)]));
 
   return {
     users: customers,
@@ -80,10 +75,7 @@ export async function getAllCustomers(filters: CustomerListFilters = {}) {
     page: safePage,
     limit: safeLimit,
     summary: {
-      totalCustomers: statusSummary.reduce(
-        (sum, item) => sum + Number(item.count),
-        0
-      ),
+      totalCustomers: statusSummary.reduce((sum, item) => sum + Number(item.count), 0),
       activeCustomers: statusCounts.get("active") ?? 0,
       suspendedCustomers: statusCounts.get("suspended") ?? 0,
       newThisMonth,
@@ -98,10 +90,7 @@ export async function getAllCustomers(filters: CustomerListFilters = {}) {
 export async function getCustomerById(id: string) {
   await connectDB();
 
-  const user = await User.findOne({ _id: id, role: ROLE })
-    .select("-passwordHash")
-    .lean()
-    .exec();
+  const user = await User.findOne({ _id: id, role: ROLE }).select("-passwordHash").lean().exec();
 
   if (!user) {
     throw new NotFoundError("Customer not found");

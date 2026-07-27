@@ -75,9 +75,7 @@ export interface RevenueReport {
   series: RevenuePoint[];
 }
 
-export async function getRevenueReport(
-  range: ReportRange = "month"
-): Promise<RevenueReport> {
+export async function getRevenueReport(range: ReportRange = "month"): Promise<RevenueReport> {
   await connectDB();
 
   const rangeStart = getRangeStart(range);
@@ -118,9 +116,7 @@ export async function getRevenueReport(
     totalRevenue,
     transactionCount,
     averageTransactionValue:
-      transactionCount > 0
-        ? Math.round((totalRevenue / transactionCount) * 100) / 100
-        : 0,
+      transactionCount > 0 ? Math.round((totalRevenue / transactionCount) * 100) / 100 : 0,
     series: series.map((s: { _id: string; revenue: number; count: number }) => ({
       date: s._id,
       revenue: s.revenue,
@@ -141,9 +137,7 @@ export interface BookingReport {
   series: { date: string; count: number }[];
 }
 
-export async function getBookingReport(
-  range: ReportRange = "month"
-): Promise<BookingReport> {
+export async function getBookingReport(range: ReportRange = "month"): Promise<BookingReport> {
   await connectDB();
 
   const rangeStart = getRangeStart(range);
@@ -153,10 +147,7 @@ export async function getBookingReport(
   if (rangeStart) match.bookingDate = { $gte: rangeStart };
 
   const [statusAgg, series] = await Promise.all([
-    Booking.aggregate([
-      { $match: match },
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]),
+    Booking.aggregate([{ $match: match }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
     Booking.aggregate([
       { $match: match },
       {
@@ -171,10 +162,13 @@ export async function getBookingReport(
 
   // Ensure every status is present, even at zero, so the UI never has to
   // guess whether a missing key means "0" or "not loaded yet".
-  const statusBreakdown = ALL_BOOKING_STATUSES.reduce((acc, status) => {
-    acc[status] = 0;
-    return acc;
-  }, {} as Record<BookingStatus, number>);
+  const statusBreakdown = ALL_BOOKING_STATUSES.reduce(
+    (acc, status) => {
+      acc[status] = 0;
+      return acc;
+    },
+    {} as Record<BookingStatus, number>
+  );
 
   let totalBookings = 0;
   for (const row of statusAgg as { _id: BookingStatus; count: number }[]) {

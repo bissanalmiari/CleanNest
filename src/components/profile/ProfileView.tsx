@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentType,
-} from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 
 import {
   BadgeCheck,
@@ -41,11 +36,7 @@ import NotificationPreferencesCard from "@/components/notifications/Notification
 
 import type { PublicUser } from "@/types/user";
 
-type ProfileTab =
-  | "overview"
-  | "edit"
-  | "security"
-  | "notifications";
+type ProfileTab = "overview" | "edit" | "security" | "notifications";
 
 interface ProfileTabItem {
   id: ProfileTab;
@@ -84,126 +75,72 @@ const PROFILE_TABS: ProfileTabItem[] = [
   },
 ];
 
-const GENDER_LABELS: Record<
-  string,
-  string
-> = {
+const GENDER_LABELS: Record<string, string> = {
   male: "Male",
   female: "Female",
 };
 
-const LANGUAGE_LABELS: Record<
-  string,
-  string
-> = {
+const LANGUAGE_LABELS: Record<string, string> = {
   en: "English",
   ar: "Arabic",
   fr: "French",
 };
 
-function formatDateOnly(
-  value: string | null,
-): string {
+function formatDateOnly(value: string | null): string {
   if (!value) {
     return "Not provided";
   }
 
-  const dateValue =
-    value.slice(0, 10);
+  const dateValue = value.slice(0, 10);
 
-  const [year, month, day] =
-    dateValue
-      .split("-")
-      .map(Number);
+  const [year, month, day] = dateValue.split("-").map(Number);
 
-  if (
-    !year ||
-    !month ||
-    !day
-  ) {
+  if (!year || !month || !day) {
     return value;
   }
 
-  const date = new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-      12,
-    ),
-  );
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
-function formatMemberSince(
-  value: string,
-): string {
-  const date =
-    new Date(value);
+function formatMemberSince(value: string): string {
+  const date = new Date(value);
 
-  if (
-    Number.isNaN(
-      date.getTime(),
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return "CleanNest member";
   }
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      month: "long",
-      year: "numeric",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
 }
 
-function formatLastUpdated(
-  value: string,
-): string {
-  const date =
-    new Date(value);
+function formatLastUpdated(value: string): string {
+  const date = new Date(value);
 
-  if (
-    Number.isNaN(
-      date.getTime(),
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return "Recently";
   }
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
 
-function humanizeValue(
-  value: string,
-): string {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) =>
-      letter.toUpperCase(),
-    );
+function humanizeValue(value: string): string {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function calculateProfileCompletion(
-  user: PublicUser,
-): {
+function calculateProfileCompletion(user: PublicUser): {
   percentage: number;
   completed: number;
   total: number;
@@ -211,120 +148,67 @@ function calculateProfileCompletion(
 } {
   const fields = [
     {
-      complete:
-        Boolean(
-          user.name.trim(),
-        ),
+      complete: Boolean(user.name.trim()),
 
       label: "Full name",
     },
     {
-      complete:
-        Boolean(
-          user.email.trim(),
-        ),
+      complete: Boolean(user.email.trim()),
 
       label: "Email address",
     },
     {
-      complete:
-        Boolean(user.phone),
+      complete: Boolean(user.phone),
 
       label: "Phone number",
     },
     {
-      complete:
-        Boolean(
-          user.avatarUrl,
-        ),
+      complete: Boolean(user.avatarUrl),
 
       label: "Profile photo",
     },
     {
-      complete:
-        Boolean(
-          user.dateOfBirth,
-        ),
+      complete: Boolean(user.dateOfBirth),
 
       label: "Date of birth",
     },
     {
-      complete:
-        Boolean(user.gender),
+      complete: Boolean(user.gender),
 
       label: "Gender",
     },
     {
-      complete:
-        Boolean(user.bio),
+      complete: Boolean(user.bio),
 
       label: "Personal bio",
     },
     {
-      complete:
-        Boolean(
-          user.preferredLanguage,
-        ),
+      complete: Boolean(user.preferredLanguage),
 
-      label:
-        "Preferred language",
+      label: "Preferred language",
     },
   ];
 
-  const completed =
-    fields.filter(
-      (field) =>
-        field.complete,
-    ).length;
+  const completed = fields.filter((field) => field.complete).length;
 
-  const missingItems =
-    fields
-      .filter(
-        (field) =>
-          !field.complete,
-      )
-      .map(
-        (field) =>
-          field.label,
-      );
+  const missingItems = fields.filter((field) => !field.complete).map((field) => field.label);
 
   return {
     completed,
     total: fields.length,
 
-    percentage:
-      Math.round(
-        (completed /
-          fields.length) *
-          100,
-      ),
+    percentage: Math.round((completed / fields.length) * 100),
 
     missingItems,
   };
 }
 
 export function ProfileView() {
-  const {
-    user,
-    loading,
-    error,
-    fetchProfile,
-  } = useProfile();
+  const { user, loading, error, fetchProfile } = useProfile();
 
-  const [
-    displayUser,
-    setDisplayUser,
-  ] = useState<
-    PublicUser | null
-  >(null);
+  const [displayUser, setDisplayUser] = useState<PublicUser | null>(null);
 
-  const [
-    activeTab,
-    setActiveTab,
-  ] =
-    useState<ProfileTab>(
-      "overview",
-    );
+  const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
 
   useEffect(() => {
     void fetchProfile();
@@ -338,29 +222,21 @@ export function ProfileView() {
     }
   }, [user]);
 
-  const profileCompletion =
-    useMemo(() => {
-      if (!displayUser) {
-        return {
-          percentage: 0,
-          completed: 0,
-          total: 0,
-          missingItems: [],
-        };
-      }
+  const profileCompletion = useMemo(() => {
+    if (!displayUser) {
+      return {
+        percentage: 0,
+        completed: 0,
+        total: 0,
+        missingItems: [],
+      };
+    }
 
-      return calculateProfileCompletion(
-        displayUser,
-      );
-    }, [displayUser]);
+    return calculateProfileCompletion(displayUser);
+  }, [displayUser]);
 
-  if (
-    loading &&
-    !displayUser
-  ) {
-    return (
-      <ProfileLoadingState />
-    );
+  if (loading && !displayUser) {
+    return <ProfileLoadingState />;
   }
 
   if (!displayUser) {
@@ -373,8 +249,7 @@ export function ProfileView() {
             backgroundImage:
               "linear-gradient(rgba(30,111,217,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(30,111,217,0.05) 1px, transparent 1px)",
 
-            backgroundSize:
-              "42px 42px",
+            backgroundSize: "42px 42px",
           }}
         />
 
@@ -384,20 +259,15 @@ export function ProfileView() {
               <CircleUserRound className="h-9 w-9" />
             </span>
 
-            <h1 className="mt-6 font-heading text-3xl font-black text-navy">
-              Profile unavailable
-            </h1>
+            <h1 className="mt-6 font-heading text-3xl font-black text-navy">Profile unavailable</h1>
 
             <p className="mx-auto mt-4 max-w-md text-base font-medium leading-7 text-slate-500">
-              CleanNest could not load
-              your account information.
+              CleanNest could not load your account information.
             </p>
 
             {error && (
               <div className="mt-6 text-left">
-                <Alert variant="error">
-                  {error}
-                </Alert>
+                <Alert variant="error">{error}</Alert>
               </div>
             )}
 
@@ -409,7 +279,6 @@ export function ProfileView() {
               className="mt-7 inline-flex min-h-[50px] items-center justify-center gap-3 rounded-2xl bg-primary px-6 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(30,111,217,0.25)] transition hover:-translate-y-0.5 hover:bg-navy"
             >
               <RefreshCw className="h-4 w-4" />
-
               Try again
             </button>
           </div>
@@ -418,18 +287,11 @@ export function ProfileView() {
     );
   }
 
-  const status =
-    String(
-      displayUser.status,
-    ).toLowerCase();
+  const status = String(displayUser.status).toLowerCase();
 
-  const isActive =
-    status === "active";
+  const isActive = status === "active";
 
-  const memberSince =
-    formatMemberSince(
-      displayUser.createdAt,
-    );
+  const memberSince = formatMemberSince(displayUser.createdAt);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f3f7fc] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -441,8 +303,7 @@ export function ProfileView() {
           backgroundImage:
             "linear-gradient(rgba(30,111,217,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(30,111,217,0.05) 1px, transparent 1px)",
 
-          backgroundSize:
-            "48px 48px",
+          backgroundSize: "48px 48px",
         }}
       />
 
@@ -481,11 +342,8 @@ export function ProfileView() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-slate-500">
-              Manage the information
-              that helps CleanNest
-              deliver a more personal,
-              secure, and reliable
-              cleaning experience.
+              Manage the information that helps CleanNest deliver a more personal, secure, and
+              reliable cleaning experience.
             </p>
           </div>
 
@@ -497,9 +355,7 @@ export function ProfileView() {
                 Account protection
               </p>
 
-              <p className="mt-1 text-sm font-extrabold text-emerald-800">
-                Secure profile access
-              </p>
+              <p className="mt-1 text-sm font-extrabold text-emerald-800">Secure profile access</p>
             </div>
           </div>
         </header>
@@ -526,12 +382,8 @@ export function ProfileView() {
               <div className="shrink-0 rounded-[2rem] border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-md">
                 <AvatarUpload
                   user={displayUser}
-                  onUploaded={(
-                    updatedUser,
-                  ) => {
-                    setDisplayUser(
-                      updatedUser,
-                    );
+                  onUploaded={(updatedUser) => {
+                    setDisplayUser(updatedUser);
                   }}
                 />
               </div>
@@ -540,7 +392,6 @@ export function ProfileView() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.13em] text-cyan-200">
                     <BadgeCheck className="h-4 w-4" />
-
                     Verified account
                   </span>
 
@@ -551,11 +402,7 @@ export function ProfileView() {
                         : "border-amber-300/20 bg-amber-300/10 text-amber-200"
                     }`}
                   >
-                    {humanizeValue(
-                      String(
-                        displayUser.status,
-                      ),
-                    )}
+                    {humanizeValue(String(displayUser.status))}
                   </span>
                 </div>
 
@@ -574,9 +421,7 @@ export function ProfileView() {
                     <span className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-cyan-300" />
 
-                      {
-                        displayUser.phone
-                      }
+                      {displayUser.phone}
                     </span>
                   )}
                 </div>
@@ -588,9 +433,7 @@ export function ProfileView() {
 
                   <span className="flex items-center gap-2 text-xs font-semibold text-blue-100/60">
                     <CalendarDays className="h-4 w-4" />
-
-                    Member since{" "}
-                    {memberSince}
+                    Member since {memberSince}
                   </span>
                 </div>
               </div>
@@ -607,10 +450,7 @@ export function ProfileView() {
                 >
                   <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-navy">
                     <span className="font-heading text-2xl font-black">
-                      {
-                        profileCompletion.percentage
-                      }
-                      %
+                      {profileCompletion.percentage}%
                     </span>
 
                     <span className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-cyan-300">
@@ -625,21 +465,11 @@ export function ProfileView() {
                   </p>
 
                   <p className="mt-2 font-heading text-xl font-black">
-                    {profileCompletion.percentage ===
-                    100
-                      ? "Profile perfected"
-                      : "Almost there"}
+                    {profileCompletion.percentage === 100 ? "Profile perfected" : "Almost there"}
                   </p>
 
                   <p className="mt-2 text-sm font-medium leading-6 text-blue-100/65">
-                    {
-                      profileCompletion.completed
-                    }{" "}
-                    of{" "}
-                    {
-                      profileCompletion.total
-                    }{" "}
-                    details completed
+                    {profileCompletion.completed} of {profileCompletion.total} details completed
                   </p>
                 </div>
               </div>
@@ -652,7 +482,6 @@ export function ProfileView() {
                 className="mt-6 flex min-h-[50px] w-full items-center justify-between rounded-2xl bg-white px-5 text-sm font-extrabold text-navy transition hover:-translate-y-0.5 hover:bg-cyan-50"
               >
                 Complete your profile
-
                 <ChevronRight className="h-5 w-5 text-primary" />
               </button>
             </div>
@@ -662,67 +491,51 @@ export function ProfileView() {
         {/* Profile navigation */}
         <section className="mt-7 overflow-x-auto rounded-[1.7rem] border border-white bg-white/85 p-2 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-md">
           <div className="flex min-w-[650px] gap-2">
-            {PROFILE_TABS.map(
-              (tab) => {
-                const Icon =
-                  tab.icon;
+            {PROFILE_TABS.map((tab) => {
+              const Icon = tab.icon;
 
-                const isSelected =
-                  activeTab ===
-                  tab.id;
+              const isSelected = activeTab === tab.id;
 
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveTab(
-                        tab.id,
-                      );
-                    }}
-                    className={`flex min-h-[72px] flex-1 items-center gap-4 rounded-[1.3rem] px-5 text-left transition ${
-                      isSelected
-                        ? "bg-navy text-white shadow-[0_14px_30px_rgba(11,37,69,0.18)]"
-                        : "text-slate-500 hover:bg-primary-light/60 hover:text-navy"
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                  }}
+                  className={`flex min-h-[72px] flex-1 items-center gap-4 rounded-[1.3rem] px-5 text-left transition ${
+                    isSelected
+                      ? "bg-navy text-white shadow-[0_14px_30px_rgba(11,37,69,0.18)]"
+                      : "text-slate-500 hover:bg-primary-light/60 hover:text-navy"
+                  }`}
+                >
+                  <span
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                      isSelected ? "bg-white/10 text-cyan-300" : "bg-primary-light text-primary"
                     }`}
                   >
+                    <Icon className="h-5 w-5" />
+                  </span>
+
+                  <span>
+                    <span className="block text-sm font-extrabold">{tab.label}</span>
+
                     <span
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                        isSelected
-                          ? "bg-white/10 text-cyan-300"
-                          : "bg-primary-light text-primary"
+                      className={`mt-1 block text-xs font-semibold ${
+                        isSelected ? "text-blue-100/60" : "text-slate-400"
                       }`}
                     >
-                      <Icon className="h-5 w-5" />
+                      {tab.description}
                     </span>
-
-                    <span>
-                      <span className="block text-sm font-extrabold">
-                        {tab.label}
-                      </span>
-
-                      <span
-                        className={`mt-1 block text-xs font-semibold ${
-                          isSelected
-                            ? "text-blue-100/60"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {
-                          tab.description
-                        }
-                      </span>
-                    </span>
-                  </button>
-                );
-              },
-            )}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
         {/* Overview */}
-        {activeTab ===
-          "overview" && (
+        {activeTab === "overview" && (
           <div className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_370px]">
             <div className="space-y-7">
               {/* Personal information */}
@@ -736,92 +549,57 @@ export function ProfileView() {
                     <button
                       type="button"
                       onClick={() => {
-                        setActiveTab(
-                          "edit",
-                        );
+                        setActiveTab("edit");
                       }}
                       className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/15 bg-primary-light px-4 text-sm font-extrabold text-primary transition hover:bg-primary hover:text-white"
                     >
                       <Edit3 className="h-4 w-4" />
-
                       Edit
                     </button>
                   }
                 />
 
                 <div className="mt-7 grid gap-4 sm:grid-cols-2">
-                  <InformationCard
-                    icon={UserRound}
-                    label="Full name"
-                    value={
-                      displayUser.name
-                    }
-                  />
+                  <InformationCard icon={UserRound} label="Full name" value={displayUser.name} />
 
                   <InformationCard
                     icon={Mail}
                     label="Email address"
-                    value={
-                      displayUser.email
-                    }
+                    value={displayUser.email}
                     verified
                   />
 
                   <InformationCard
                     icon={Phone}
                     label="Phone number"
-                    value={
-                      displayUser.phone ??
-                      "Not provided"
-                    }
-                    muted={
-                      !displayUser.phone
-                    }
+                    value={displayUser.phone ?? "Not provided"}
+                    muted={!displayUser.phone}
                   />
 
                   <InformationCard
                     icon={Cake}
                     label="Date of birth"
-                    value={formatDateOnly(
-                      displayUser.dateOfBirth,
-                    )}
-                    muted={
-                      !displayUser.dateOfBirth
-                    }
+                    value={formatDateOnly(displayUser.dateOfBirth)}
+                    muted={!displayUser.dateOfBirth}
                   />
 
                   <InformationCard
-                    icon={
-                      CircleUserRound
-                    }
+                    icon={CircleUserRound}
                     label="Gender"
                     value={
                       displayUser.gender
-                        ? GENDER_LABELS[
-                            displayUser.gender
-                          ] ??
-                          humanizeValue(
-                            displayUser.gender,
-                          )
+                        ? (GENDER_LABELS[displayUser.gender] ?? humanizeValue(displayUser.gender))
                         : "Not provided"
                     }
-                    muted={
-                      !displayUser.gender
-                    }
+                    muted={!displayUser.gender}
                   />
 
                   <InformationCard
                     icon={Languages}
                     label="Preferred language"
                     value={
-                      LANGUAGE_LABELS[
-                        displayUser
-                          .preferredLanguage
-                      ] ??
-                      humanizeValue(
-                        displayUser
-                          .preferredLanguage,
-                      )
+                      LANGUAGE_LABELS[displayUser.preferredLanguage] ??
+                      humanizeValue(displayUser.preferredLanguage)
                     }
                   />
                 </div>
@@ -851,30 +629,22 @@ export function ProfileView() {
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="font-heading text-xl font-black text-navy">
-                            Your story is
-                            still empty.
+                            Your story is still empty.
                           </p>
 
                           <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                            Add a short
-                            introduction to
-                            make your
-                            profile feel
-                            more personal.
+                            Add a short introduction to make your profile feel more personal.
                           </p>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => {
-                            setActiveTab(
-                              "edit",
-                            );
+                            setActiveTab("edit");
                           }}
                           className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-extrabold text-white transition hover:bg-navy"
                         >
                           Add bio
-
                           <ChevronRight className="h-4 w-4" />
                         </button>
                       </div>
@@ -895,9 +665,7 @@ export function ProfileView() {
                         Profile checklist
                       </p>
 
-                      <h3 className="mt-2 font-heading text-2xl font-black">
-                        Build trust
-                      </h3>
+                      <h3 className="mt-2 font-heading text-2xl font-black">Build trust</h3>
                     </div>
 
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-cyan-300">
@@ -915,66 +683,50 @@ export function ProfileView() {
                   </div>
 
                   <p className="mt-3 text-xs font-semibold text-blue-100/65">
-                    {
-                      profileCompletion.percentage
-                    }
-                    % complete
+                    {profileCompletion.percentage}% complete
                   </p>
                 </div>
 
                 <div className="p-6">
-                  {profileCompletion
-                    .missingItems
-                    .length === 0 ? (
+                  {profileCompletion.missingItems.length === 0 ? (
                     <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-center">
                       <BadgeCheck className="mx-auto h-8 w-8 text-emerald-600" />
 
                       <p className="mt-3 font-extrabold text-emerald-800">
-                        Everything looks
-                        perfect
+                        Everything looks perfect
                       </p>
 
                       <p className="mt-2 text-sm font-medium leading-6 text-emerald-700">
-                        Your profile is
-                        fully completed.
+                        Your profile is fully completed.
                       </p>
                     </div>
                   ) : (
                     <>
                       <p className="text-sm font-semibold leading-6 text-slate-500">
-                        Complete these
-                        details to reach
-                        100%:
+                        Complete these details to reach 100%:
                       </p>
 
                       <div className="mt-5 space-y-3">
-                        {profileCompletion.missingItems.map(
-                          (item) => (
-                            <div
-                              key={item}
-                              className="flex items-center gap-3 rounded-xl bg-surface-soft px-4 py-3"
-                            >
-                              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                        {profileCompletion.missingItems.map((item) => (
+                          <div
+                            key={item}
+                            className="flex items-center gap-3 rounded-xl bg-surface-soft px-4 py-3"
+                          >
+                            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
 
-                              <span className="text-sm font-bold text-slate-600">
-                                {item}
-                              </span>
-                            </div>
-                          ),
-                        )}
+                            <span className="text-sm font-bold text-slate-600">{item}</span>
+                          </div>
+                        ))}
                       </div>
 
                       <button
                         type="button"
                         onClick={() => {
-                          setActiveTab(
-                            "edit",
-                          );
+                          setActiveTab("edit");
                         }}
                         className="mt-5 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-extrabold text-white transition hover:bg-navy"
                       >
                         Complete profile
-
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </>
@@ -984,44 +736,25 @@ export function ProfileView() {
 
               {/* Account information */}
               <section className="rounded-[2rem] border border-white bg-white/90 p-6 shadow-[0_22px_65px_rgba(11,37,69,0.09)] backdrop-blur-md">
-                <SectionHeading
-                  icon={Clock3}
-                  eyebrow="Account record"
-                  title="Account details"
-                />
+                <SectionHeading icon={Clock3} eyebrow="Account record" title="Account details" />
 
                 <div className="mt-6 space-y-5">
-                  <AccountDetail
-                    label="Member since"
-                    value={memberSince}
-                  />
+                  <AccountDetail label="Member since" value={memberSince} />
 
                   <AccountDetail
                     label="Last updated"
-                    value={formatLastUpdated(
-                      displayUser.updatedAt,
-                    )}
+                    value={formatLastUpdated(displayUser.updatedAt)}
                   />
 
                   <AccountDetail
                     label="Account type"
-                    value={humanizeValue(
-                      String(
-                        displayUser.role,
-                      ),
-                    )}
+                    value={humanizeValue(String(displayUser.role))}
                   />
 
                   <AccountDetail
                     label="Account status"
-                    value={humanizeValue(
-                      String(
-                        displayUser.status,
-                      ),
-                    )}
-                    positive={
-                      isActive
-                    }
+                    value={humanizeValue(String(displayUser.status))}
+                    positive={isActive}
                   />
                 </div>
               </section>
@@ -1030,9 +763,7 @@ export function ProfileView() {
               <button
                 type="button"
                 onClick={() => {
-                  setActiveTab(
-                    "security",
-                  );
+                  setActiveTab("security");
                 }}
                 className="group w-full overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary to-navy p-6 text-left text-white shadow-[0_22px_65px_rgba(30,111,217,0.24)] transition hover:-translate-y-1"
               >
@@ -1048,14 +779,10 @@ export function ProfileView() {
                   Account security
                 </p>
 
-                <p className="mt-2 font-heading text-2xl font-black">
-                  Protect your account
-                </p>
+                <p className="mt-2 font-heading text-2xl font-black">Protect your account</p>
 
                 <p className="mt-3 text-sm font-medium leading-6 text-blue-100/70">
-                  Update your password
-                  and keep your CleanNest
-                  account secure.
+                  Update your password and keep your CleanNest account secure.
                 </p>
               </button>
             </aside>
@@ -1076,16 +803,10 @@ export function ProfileView() {
               <div className="mt-8">
                 <EditProfileForm
                   user={displayUser}
-                  onSaved={(
-                    updatedUser,
-                  ) => {
-                    setDisplayUser(
-                      updatedUser,
-                    );
+                  onSaved={(updatedUser) => {
+                    setDisplayUser(updatedUser);
 
-                    setActiveTab(
-                      "overview",
-                    );
+                    setActiveTab("overview");
                   }}
                 />
               </div>
@@ -1106,10 +827,8 @@ export function ProfileView() {
                 </h3>
 
                 <p className="mt-4 text-sm font-medium leading-7 text-blue-100/70">
-                  Your profile details
-                  are used only for your
-                  account and CleanNest
-                  service communication.
+                  Your profile details are used only for your account and CleanNest service
+                  communication.
                 </p>
               </div>
 
@@ -1121,10 +840,8 @@ export function ProfileView() {
                 </h3>
 
                 <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
-                  Your selected language
-                  can be used for future
-                  notifications and
-                  personalized content.
+                  Your selected language can be used for future notifications and personalized
+                  content.
                 </p>
               </div>
             </aside>
@@ -1132,8 +849,7 @@ export function ProfileView() {
         )}
 
         {/* Security */}
-        {activeTab ===
-          "security" && (
+        {activeTab === "security" && (
           <section className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="rounded-[2rem] border border-white bg-white/90 p-5 shadow-[0_25px_75px_rgba(11,37,69,0.1)] backdrop-blur-md sm:p-8">
               <SectionHeading
@@ -1146,9 +862,7 @@ export function ProfileView() {
               <div className="mt-8">
                 <ChangePasswordForm
                   onDone={() => {
-                    setActiveTab(
-                      "overview",
-                    );
+                    setActiveTab("overview");
                   }}
                 />
               </div>
@@ -1189,14 +903,8 @@ export function ProfileView() {
                 </h3>
 
                 <p className="mt-3 text-sm font-medium leading-6 text-emerald-700">
-                  Your account is linked
-                  to{" "}
-                  <span className="font-extrabold">
-                    {
-                      displayUser.email
-                    }
-                  </span>
-                  .
+                  Your account is linked to{" "}
+                  <span className="font-extrabold">{displayUser.email}</span>.
                 </p>
               </div>
             </aside>
@@ -1224,13 +932,7 @@ interface SectionHeadingProps {
   action?: React.ReactNode;
 }
 
-function SectionHeading({
-  icon: Icon,
-  eyebrow,
-  title,
-  description,
-  action,
-}: SectionHeadingProps) {
+function SectionHeading({ icon: Icon, eyebrow, title, description, action }: SectionHeadingProps) {
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex items-start gap-4">
@@ -1289,7 +991,6 @@ function InformationCard({
         {verified && (
           <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-emerald-600">
             <BadgeCheck className="h-3.5 w-3.5" />
-
             Verified
           </span>
         )}
@@ -1301,9 +1002,7 @@ function InformationCard({
 
       <p
         className={`mt-2 break-words text-sm font-extrabold leading-6 ${
-          muted
-            ? "text-slate-400"
-            : "text-navy"
+          muted ? "text-slate-400" : "text-navy"
         }`}
       >
         {value}
@@ -1318,22 +1017,14 @@ interface AccountDetailProps {
   positive?: boolean;
 }
 
-function AccountDetail({
-  label,
-  value,
-  positive = false,
-}: AccountDetailProps) {
+function AccountDetail({ label, value, positive = false }: AccountDetailProps) {
   return (
     <div className="flex items-center justify-between gap-5 border-b border-primary/10 pb-4 last:border-b-0 last:pb-0">
-      <span className="text-sm font-semibold text-slate-500">
-        {label}
-      </span>
+      <span className="text-sm font-semibold text-slate-500">{label}</span>
 
       <span
         className={`text-right text-sm font-extrabold ${
-          positive
-            ? "text-emerald-600"
-            : "text-navy"
+          positive ? "text-emerald-600" : "text-navy"
         }`}
       >
         {value}
@@ -1342,20 +1033,14 @@ function AccountDetail({
   );
 }
 
-function SecurityTip({
-  text,
-}: {
-  text: string;
-}) {
+function SecurityTip({ text }: { text: string }) {
   return (
     <div className="mb-4 flex items-start gap-3 last:mb-0">
       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-navy">
         <Check className="h-3 w-3" />
       </span>
 
-      <p className="text-sm font-medium leading-6 text-blue-100/75">
-        {text}
-      </p>
+      <p className="text-sm font-medium leading-6 text-blue-100/75">{text}</p>
     </div>
   );
 }
@@ -1370,8 +1055,7 @@ function ProfileLoadingState() {
           backgroundImage:
             "linear-gradient(rgba(30,111,217,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(30,111,217,0.05) 1px, transparent 1px)",
 
-          backgroundSize:
-            "48px 48px",
+          backgroundSize: "48px 48px",
         }}
       />
 
@@ -1386,8 +1070,7 @@ function ProfileLoadingState() {
           </h1>
 
           <p className="mt-4 text-base font-medium text-slate-500">
-            Loading your personal
-            CleanNest account experience.
+            Loading your personal CleanNest account experience.
           </p>
 
           <div className="mx-auto mt-7 h-2 max-w-sm overflow-hidden rounded-full bg-primary-light">

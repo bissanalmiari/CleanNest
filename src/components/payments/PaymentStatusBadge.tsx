@@ -1,4 +1,3 @@
-
 const STATUS_STYLES: Record<string, string> = {
   paid: "bg-status-confirmed/10 text-status-confirmed",
   pending: "bg-status-pending/10 text-status-pending",
@@ -27,20 +26,14 @@ interface PaymentStatusBadgeProps {
   status: string;
 }
 
-export default function PaymentStatusBadge({
-  status,
-}: PaymentStatusBadgeProps) {
+export default function PaymentStatusBadge({ status }: PaymentStatusBadgeProps) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
         STATUS_STYLES[status] ?? "bg-navy/10 text-navy/60"
       }`}
     >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          DOT_COLORS[status] ?? "bg-navy/40"
-        }`}
-      />
+      <span className={`h-1.5 w-1.5 rounded-full ${DOT_COLORS[status] ?? "bg-navy/40"}`} />
       {STATUS_LABELS[status] ?? status}
     </span>
   );

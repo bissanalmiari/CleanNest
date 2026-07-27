@@ -64,11 +64,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
   const initials = useMemo(() => getInitials(user.name), [user.name]);
 
   const profileHref =
-    role === "admin"
-      ? "/admin/profile"
-      : role === "cleaner"
-        ? "/cleaner/profile"
-        : "/profile";
+    role === "admin" ? "/admin/profile" : role === "cleaner" ? "/cleaner/profile" : "/profile";
   const roleLabel =
     role === "admin" ? "Administrator" : role === "cleaner" ? "Cleaning professional" : "Customer";
 
@@ -213,7 +209,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
             </span>
           </Link>
 
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex">
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 2xl:flex">
             {items.map((item) => {
               const active = isActiveLink(item.href);
 
@@ -243,7 +239,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
             })}
           </div>
 
-          <div className="hidden shrink-0 items-center gap-2 xl:flex">
+          <div className="hidden shrink-0 items-center gap-2 2xl:flex">
             {role === "customer" && (
               <Link
                 href="/book-service"
@@ -255,7 +251,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
               </Link>
             )}
 
-            <NotificationBell />
+            <NotificationBell historyHref={role === "admin" ? "/admin/notifications" : undefined} />
 
             <div ref={profileMenuRef} className="relative">
               <button
@@ -343,7 +339,7 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
             }}
             aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMobileMenuOpen}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-white text-navy shadow-sm transition hover:bg-primary-light hover:text-primary xl:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-white text-navy shadow-sm transition hover:bg-primary-light hover:text-primary 2xl:hidden"
           >
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -361,14 +357,14 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 top-[76px] z-[-1] bg-navy/25 backdrop-blur-sm xl:hidden"
+                className="fixed inset-0 top-[76px] z-[-1] bg-navy/25 backdrop-blur-sm 2xl:hidden"
               />
 
               <motion.div
                 initial={{ opacity: 0, y: -16, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: "auto" }}
                 exit={{ opacity: 0, y: -16, height: 0 }}
-                className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md xl:hidden"
+                className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md 2xl:hidden"
               >
                 <div className="mx-auto max-h-[calc(100vh-76px)] max-w-[1500px] overflow-y-auto px-4 py-5 sm:px-6">
                   <div className="mb-5 flex items-center gap-3 rounded-2xl bg-primary-light/60 p-3">
@@ -385,10 +381,10 @@ export default function AuthenticatedNavbar({ role, items, user }: Authenticated
                   </div>
 
                   <div className="mb-4 flex items-center justify-between rounded-2xl border border-primary/10 bg-white p-3">
-                    <span className="text-xs font-black text-navy">
-                      Account notifications
-                    </span>
-                    <NotificationBell />
+                    <span className="text-xs font-black text-navy">Account notifications</span>
+                    <NotificationBell
+                      historyHref={role === "admin" ? "/admin/notifications" : undefined}
+                    />
                   </div>
 
                   <div className="grid gap-2 sm:grid-cols-2">

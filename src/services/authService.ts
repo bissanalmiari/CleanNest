@@ -15,7 +15,13 @@ import {
   isWithinResendCooldown,
 } from "@/lib/otp";
 import { sendOtpEmail } from "@/lib/email";
-import { AppError, ConflictError, NotFoundError, TooManyRequestsError, UnauthorizedError } from "@/lib/apiError";
+import {
+  AppError,
+  ConflictError,
+  NotFoundError,
+  TooManyRequestsError,
+  UnauthorizedError,
+} from "@/lib/apiError";
 import type {
   RegisterValues,
   LoginValues,
@@ -147,9 +153,7 @@ export async function verifyEmailOtp(
 export async function resendEmailVerificationOtp(input: ResendOtpValues): Promise<void> {
   await connectDB();
 
-  const userDoc = await User.findOne({ email: input.email }).select(
-    "+emailVerificationOtpExpires"
-  );
+  const userDoc = await User.findOne({ email: input.email }).select("+emailVerificationOtpExpires");
   if (!userDoc) throw new NotFoundError("No account found for this email");
 
   if (userDoc.status === "active") {
@@ -176,9 +180,7 @@ export async function resendEmailVerificationOtp(input: ResendOtpValues): Promis
 export async function forgotPassword(input: ForgotPasswordValues): Promise<void> {
   await connectDB();
 
-  const userDoc = await User.findOne({ email: input.email }).select(
-    "+passwordResetOtpExpires"
-  );
+  const userDoc = await User.findOne({ email: input.email }).select("+passwordResetOtpExpires");
   if (!userDoc) return;
 
   if (isWithinResendCooldown(userDoc.passwordResetOtpExpires)) {

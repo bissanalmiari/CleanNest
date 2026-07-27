@@ -1,10 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError } from "@/lib/apiError";
-import {
-  reviewImageFileSchema,
-  reviewImageSlotSchema,
-} from "@/validators/reviewValidator";
+import { reviewImageFileSchema, reviewImageSlotSchema } from "@/validators/reviewValidator";
 import { assertBookingOwnership } from "@/services/reviewService";
 import { uploadReviewImageToSupabase } from "@/lib/supabase";
 import { successResponse } from "@/lib/apiResponse";

@@ -132,9 +132,7 @@ function dateFormatForRange(range: RevenueRange): string {
   return range === "year" ? "%Y-%m" : "%Y-%m-%d";
 }
 
-export async function getRevenueStats(
-  range: RevenueRange = "week"
-): Promise<RevenueStats> {
+export async function getRevenueStats(range: RevenueRange = "week"): Promise<RevenueStats> {
   await connectDB();
 
   const rangeStart = getRangeStart(range);
@@ -152,16 +150,9 @@ export async function getRevenueStats(
     { $sort: { _id: 1 } },
   ]);
 
-  const totalRevenue = series.reduce(
-    (total, point) => total + Number(point.revenue ?? 0),
-    0,
-  );
-  const totalPayments = series.reduce(
-    (total, point) => total + Number(point.count ?? 0),
-    0,
-  );
-  const averageBookingValue =
-    totalPayments > 0 ? totalRevenue / totalPayments : 0;
+  const totalRevenue = series.reduce((total, point) => total + Number(point.revenue ?? 0), 0);
+  const totalPayments = series.reduce((total, point) => total + Number(point.count ?? 0), 0);
+  const averageBookingValue = totalPayments > 0 ? totalRevenue / totalPayments : 0;
 
   return {
     range,
@@ -208,42 +199,38 @@ export async function getBookingReports(filters: BookingReportFilters = {}) {
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(100, Math.max(1, limit));
 
-  const [bookings, total, statusBreakdownAgg, serviceBreakdownAgg] =
-    await Promise.all([
-      Booking.find(match)
-        .sort({ bookingDate: -1 })
-        .skip((safePage - 1) * safeLimit)
-        .limit(safeLimit)
-        .populate("customerId", "name email")
-        .populate("serviceId", "name")
-        .lean()
-        .exec(),
-      Booking.countDocuments(match),
-      Booking.aggregate([
-        { $match: match },
-        { $group: { _id: "$status", count: { $sum: 1 } } },
-      ]),
-      Booking.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: "$serviceId",
-            count: { $sum: 1 },
-            revenue: { $sum: "$totalAmount" },
-          },
+  const [bookings, total, statusBreakdownAgg, serviceBreakdownAgg] = await Promise.all([
+    Booking.find(match)
+      .sort({ bookingDate: -1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .populate("customerId", "name email")
+      .populate("serviceId", "name")
+      .lean()
+      .exec(),
+    Booking.countDocuments(match),
+    Booking.aggregate([{ $match: match }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
+    Booking.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: "$serviceId",
+          count: { $sum: 1 },
+          revenue: { $sum: "$totalAmount" },
         },
-        {
-          $lookup: {
-            from: Service.collection.name,
-            localField: "_id",
-            foreignField: "_id",
-            as: "service",
-          },
+      },
+      {
+        $lookup: {
+          from: Service.collection.name,
+          localField: "_id",
+          foreignField: "_id",
+          as: "service",
         },
-        { $sort: { count: -1 } },
-        { $limit: 10 },
-      ]),
-    ]);
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]),
+  ]);
 
   return {
     bookings,

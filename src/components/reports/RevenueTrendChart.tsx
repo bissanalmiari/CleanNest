@@ -46,10 +46,7 @@ function formatCurrency(value: number, compact = false) {
   }).format(value);
 }
 
-export default function RevenueTrendChart({
-  data,
-  loading = false,
-}: RevenueTrendChartProps) {
+export default function RevenueTrendChart({ data, loading = false }: RevenueTrendChartProps) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const chart = useMemo(() => {
@@ -61,9 +58,7 @@ export default function RevenueTrendChart({
           10 ** Math.floor(Math.log10(maxValue));
     const points = data.map((point, index) => {
       const x =
-        data.length === 1
-          ? LEFT + PLOT_WIDTH / 2
-          : LEFT + (index / (data.length - 1)) * PLOT_WIDTH;
+        data.length === 1 ? LEFT + PLOT_WIDTH / 2 : LEFT + (index / (data.length - 1)) * PLOT_WIDTH;
       const y = TOP + PLOT_HEIGHT - (point.revenue / roundedMax) * PLOT_HEIGHT;
       return { ...point, x, y };
     });
@@ -84,9 +79,7 @@ export default function RevenueTrendChart({
   }, [data]);
 
   if (loading) {
-    return (
-      <div className="h-[310px] animate-pulse rounded-[1.4rem] bg-slate-100" />
-    );
+    return <div className="h-[310px] animate-pulse rounded-[1.4rem] bg-slate-100" />;
   }
 
   if (data.length === 0) {
@@ -122,8 +115,7 @@ export default function RevenueTrendChart({
             {formatCurrency(hovered.revenue)}
           </p>
           <p className="mt-0.5 text-[10px] font-semibold text-blue-100/60">
-            {hovered.count} paid{" "}
-            {hovered.count === 1 ? "transaction" : "transactions"}
+            {hovered.count} paid {hovered.count === 1 ? "transaction" : "transactions"}
           </p>
         </div>
       )}
@@ -192,8 +184,7 @@ export default function RevenueTrendChart({
               strokeWidth="3"
               className="transition-all"
             />
-            {(index % chart.labelFrequency === 0 ||
-              index === chart.points.length - 1) && (
+            {(index % chart.labelFrequency === 0 || index === chart.points.length - 1) && (
               <text
                 x={point.x}
                 y={HEIGHT - 13}
@@ -211,9 +202,7 @@ export default function RevenueTrendChart({
         <button
           key={point.date}
           type="button"
-          aria-label={`${formatLabel(point.date)}: ${formatCurrency(
-            point.revenue,
-          )}`}
+          aria-label={`${formatLabel(point.date)}: ${formatCurrency(point.revenue)}`}
           onMouseEnter={() => setHoverIndex(index)}
           onMouseLeave={() => setHoverIndex(null)}
           onFocus={() => setHoverIndex(index)}

@@ -5,10 +5,7 @@ import { Types } from "mongoose";
 import { AppError, NotFoundError } from "@/lib/apiError";
 import { connectDB } from "@/lib/db";
 import { emailAppUrl, isPublicEmailUrl, sendEmail } from "@/lib/email";
-import Notification, {
-  type INotification,
-  type NotificationType,
-} from "@/models/Notification";
+import Notification, { type INotification, type NotificationType } from "@/models/Notification";
 import NotificationPreference from "@/models/NotificationPreference";
 import User from "@/models/User";
 import type {
@@ -50,17 +47,10 @@ function toNotification(notification: INotification): AppNotification {
   };
 }
 
-function emailCategoryEnabled(
-  type: NotificationType,
-  preferences: NotificationPreferences,
-) {
+function emailCategoryEnabled(type: NotificationType, preferences: NotificationPreferences) {
   if (!preferences.emailEnabled) return false;
   if (type === "booking_reminder") return preferences.reminders;
-  if (
-    ["assignment_new", "assignment_accepted", "assignment_declined"].includes(
-      type,
-    )
-  ) {
+  if (["assignment_new", "assignment_accepted", "assignment_declined"].includes(type)) {
     return preferences.assignmentUpdates;
   }
   if (type === "service_completed") return preferences.serviceReports;
@@ -119,9 +109,7 @@ function transactionalEmail(input: CreateNotificationInput, name: string) {
   };
 }
 
-export async function getNotificationPreferences(
-  userId: string,
-): Promise<NotificationPreferences> {
+export async function getNotificationPreferences(userId: string): Promise<NotificationPreferences> {
   await connectDB();
   const saved = await NotificationPreference.findOne({ userId }).lean();
   return saved
@@ -137,13 +125,12 @@ export async function getNotificationPreferences(
 
 export async function updateNotificationPreferences(
   userId: string,
-  input: Partial<NotificationPreferences>,
+  input: Partial<NotificationPreferences>
 ) {
   const allowed = Object.fromEntries(
     Object.entries(input).filter(
-      ([key, value]) =>
-        key in DEFAULT_PREFERENCES && typeof value === "boolean",
-    ),
+      ([key, value]) => key in DEFAULT_PREFERENCES && typeof value === "boolean"
+    )
   );
   if (Object.keys(allowed).length === 0) {
     throw new AppError("No valid notification preferences were provided", 422);
@@ -152,7 +139,7 @@ export async function updateNotificationPreferences(
   const saved = await NotificationPreference.findOneAndUpdate(
     { userId },
     { $set: allowed, $setOnInsert: { userId } },
-    { upsert: true, new: true, runValidators: true },
+    { upsert: true, new: true, runValidators: true }
   );
   return {
     emailEnabled: saved.emailEnabled,
@@ -212,7 +199,7 @@ export async function deliverPendingNotificationEmails(limit = 25) {
     const notification = await Notification.findOneAndUpdate(
       { _id: item._id, emailStatus: "pending" },
       { $set: { emailStatus: "processing" } },
-      { new: true },
+      { new: true }
     );
     if (!notification) continue;
 
@@ -256,9 +243,7 @@ export async function deliverPendingNotificationEmails(limit = 25) {
     } catch (error) {
       notification.emailStatus = "failed";
       notification.emailError =
-        error instanceof Error
-          ? error.message.slice(0, 1000)
-          : "Email delivery failed";
+        error instanceof Error ? error.message.slice(0, 1000) : "Email delivery failed";
       await notification.save();
       failed += 1;
     }
@@ -271,9 +256,7 @@ export async function createNotifications(inputs: CreateNotificationInput[]) {
   return Promise.all(inputs.map((input) => createNotification(input)));
 }
 
-export async function notifyActiveAdmins(
-  input: Omit<CreateNotificationInput, "userId">,
-) {
+export async function notifyActiveAdmins(input: Omit<CreateNotificationInput, "userId">) {
   await connectDB();
   const admins = await User.find({
     role: "admin",
@@ -285,28 +268,34 @@ export async function notifyActiveAdmins(
     admins.map((admin) => ({
       ...input,
       userId: admin._id.toString(),
-      dedupeKey: input.dedupeKey
-        ? `${input.dedupeKey}:${admin._id.toString()}`
-        : undefined,
-    })),
+      dedupeKey: input.dedupeKey ? `${input.dedupeKey}:${admin._id.toString()}` : undefined,
+    }))
   );
 }
 
 export async function listNotifications(
   userId: string,
   limit = 20,
+  page = 1
 ): Promise<NotificationListResponse> {
   await connectDB();
   const safeLimit = Math.min(50, Math.max(1, limit));
-  const [notifications, unreadCount] = await Promise.all([
+  const safePage = Math.max(1, page);
+  const [notifications, unreadCount, total] = await Promise.all([
     Notification.find({ userId })
       .sort({ createdAt: -1 })
+      .skip((safePage - 1) * safeLimit)
       .limit(safeLimit),
     Notification.countDocuments({ userId, readAt: { $exists: false } }),
+    Notification.countDocuments({ userId }),
   ]);
   return {
     notifications: notifications.map(toNotification),
     unreadCount,
+    total,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.max(1, Math.ceil(total / safeLimit)),
   };
 }
 
@@ -315,7 +304,7 @@ export async function markNotificationRead(userId: string, id: string) {
   const notification = await Notification.findOneAndUpdate(
     { _id: id, userId },
     { $set: { readAt: new Date() } },
-    { new: true },
+    { new: true }
   );
   if (!notification) throw new NotFoundError("Notification not found");
   return toNotification(notification);
@@ -325,7 +314,7 @@ export async function markAllNotificationsRead(userId: string) {
   await connectDB();
   const result = await Notification.updateMany(
     { userId, readAt: { $exists: false } },
-    { $set: { readAt: new Date() } },
+    { $set: { readAt: new Date() } }
   );
   return { updated: result.modifiedCount };
 }

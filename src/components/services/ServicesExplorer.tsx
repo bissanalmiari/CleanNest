@@ -1,12 +1,7 @@
 "use client";
 
 import type { ChangeEvent, FormEvent } from "react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -18,20 +13,11 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  MotionConfig,
-} from "motion/react";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 
 import ServiceCard from "@/components/services/ServiceCard";
 import { fetchServices } from "@/services/serviceApi";
-import type {
-  Service,
-  ServiceFilters,
-  ServicesPagination,
-  ServiceSort,
-} from "@/types/service";
+import type { Service, ServiceFilters, ServicesPagination, ServiceSort } from "@/types/service";
 
 const initialFilters: ServiceFilters = {
   search: "",
@@ -115,108 +101,68 @@ function ServiceCardSkeleton() {
 }
 
 export default function ServicesExplorer() {
-  const resultsSectionRef =
-    useRef<HTMLDivElement>(null);
+  const resultsSectionRef = useRef<HTMLDivElement>(null);
 
   /*
    * This ref remembers whether the next API response
    * should move the screen to the results section.
    */
-  const shouldScrollToResultsRef =
-    useRef(false);
+  const shouldScrollToResultsRef = useRef(false);
 
-  const [draftFilters, setDraftFilters] =
-    useState<ServiceFilters>(initialFilters);
+  const [draftFilters, setDraftFilters] = useState<ServiceFilters>(initialFilters);
 
-  const [appliedFilters, setAppliedFilters] =
-    useState<ServiceFilters>(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState<ServiceFilters>(initialFilters);
 
-  const [services, setServices] =
-    useState<Service[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
 
-  const [categories, setCategories] =
-    useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
-  const [pagination, setPagination] =
-    useState<ServicesPagination>(
-      initialPagination,
-    );
+  const [pagination, setPagination] = useState<ServicesPagination>(initialPagination);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [errorMessage, setErrorMessage] =
-    useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const loadServices = useCallback(
-    async (
-      filters: ServiceFilters,
-      signal?: AbortSignal,
-    ) => {
-      setIsLoading(true);
-      setErrorMessage("");
+  const loadServices = useCallback(async (filters: ServiceFilters, signal?: AbortSignal) => {
+    setIsLoading(true);
+    setErrorMessage("");
 
-      try {
-        const response = await fetchServices(
-          filters,
-          signal,
-        );
+    try {
+      const response = await fetchServices(filters, signal);
 
-        setServices(response.data.services);
-        setCategories(
-          response.data.categories,
-        );
-        setPagination(
-          response.data.pagination,
-        );
-      } catch (error) {
-        if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
-        ) {
-          return;
-        }
-
-        setServices([]);
-
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Unable to load services.",
-        );
-      } finally {
-        if (!signal?.aborted) {
-          setIsLoading(false);
-        }
+      setServices(response.data.services);
+      setCategories(response.data.categories);
+      setPagination(response.data.pagination);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
       }
-    },
-    [],
-  );
+
+      setServices([]);
+
+      setErrorMessage(error instanceof Error ? error.message : "Unable to load services.");
+    } finally {
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
     /*
      * Read and reset the scrolling request for this
      * particular service request.
      */
-    const shouldScroll =
-      shouldScrollToResultsRef.current;
+    const shouldScroll = shouldScrollToResultsRef.current;
 
-    shouldScrollToResultsRef.current =
-      false;
+    shouldScrollToResultsRef.current = false;
 
     let scrollTimer: number | undefined;
 
-    void loadServices(
-      appliedFilters,
-      controller.signal,
-    ).then(() => {
-      if (
-        controller.signal.aborted ||
-        !shouldScroll
-      ) {
+    void loadServices(appliedFilters, controller.signal).then(() => {
+      if (controller.signal.aborted || !shouldScroll) {
         return;
       }
 
@@ -245,13 +191,8 @@ export default function ServicesExplorer() {
     shouldScrollToResultsRef.current = true;
   }
 
-  function handleInputChange(
-    event: ChangeEvent<
-      HTMLInputElement | HTMLSelectElement
-    >,
-  ) {
-    const fieldName =
-      event.target.name as keyof ServiceFilters;
+  function handleInputChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    const fieldName = event.target.name as keyof ServiceFilters;
 
     const fieldValue = event.target.value;
 
@@ -262,9 +203,7 @@ export default function ServicesExplorer() {
     }));
   }
 
-  function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     requestResultsScroll();
@@ -285,9 +224,7 @@ export default function ServicesExplorer() {
     });
   }
 
-  function handleCategoryChange(
-    category: string,
-  ) {
+  function handleCategoryChange(category: string) {
     const updatedFilters: ServiceFilters = {
       ...draftFilters,
       category,
@@ -300,11 +237,8 @@ export default function ServicesExplorer() {
     setAppliedFilters(updatedFilters);
   }
 
-  function handleSortChange(
-    event: ChangeEvent<HTMLSelectElement>,
-  ) {
-    const sortValue =
-      event.target.value as ServiceSort;
+  function handleSortChange(event: ChangeEvent<HTMLSelectElement>) {
+    const sortValue = event.target.value as ServiceSort;
 
     const updatedFilters: ServiceFilters = {
       ...draftFilters,
@@ -319,11 +253,7 @@ export default function ServicesExplorer() {
   }
 
   function handlePageChange(page: number) {
-    if (
-      page < 1 ||
-      page > pagination.totalPages ||
-      page === appliedFilters.page
-    ) {
+    if (page < 1 || page > pagination.totalPages || page === appliedFilters.page) {
       return;
     }
 
@@ -411,17 +341,14 @@ export default function ServicesExplorer() {
 
             <h1 className="mt-6 font-heading text-4xl font-extrabold tracking-tight text-navy sm:text-5xl lg:text-6xl">
               Find the Right Cleaning
-
               <span className="mt-2 block bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent">
                 Service for Your Space
               </span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Search, filter, and compare
-              CleanNest services before choosing
-              the option that fits your home,
-              office, or special cleaning needs.
+              Search, filter, and compare CleanNest services before choosing the option that fits
+              your home, office, or special cleaning needs.
             </p>
           </motion.div>
 
@@ -450,13 +377,10 @@ export default function ServicesExplorer() {
               </span>
 
               <div>
-                <h2 className="font-heading text-lg font-bold text-navy">
-                  Search and filter
-                </h2>
+                <h2 className="font-heading text-lg font-bold text-navy">Search and filter</h2>
 
                 <p className="text-sm text-slate-500">
-                  Narrow the results to find the
-                  most suitable service.
+                  Narrow the results to find the most suitable service.
                 </p>
               </div>
             </div>
@@ -464,10 +388,7 @@ export default function ServicesExplorer() {
             <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_0.8fr_0.8fr_auto]">
               {/* Search */}
               <div>
-                <label
-                  htmlFor="service-search"
-                  className="text-sm font-semibold text-navy"
-                >
+                <label htmlFor="service-search" className="text-sm font-semibold text-navy">
                   Search
                 </label>
 
@@ -488,10 +409,7 @@ export default function ServicesExplorer() {
 
               {/* Minimum price */}
               <div>
-                <label
-                  htmlFor="minimum-price"
-                  className="text-sm font-semibold text-navy"
-                >
+                <label htmlFor="minimum-price" className="text-sm font-semibold text-navy">
                   Minimum price
                 </label>
 
@@ -506,9 +424,7 @@ export default function ServicesExplorer() {
                     type="number"
                     min="0"
                     step="1"
-                    value={
-                      draftFilters.minPrice
-                    }
+                    value={draftFilters.minPrice}
                     onChange={handleInputChange}
                     placeholder="0"
                     className="min-h-[52px] w-full rounded-xl border border-primary/10 bg-white px-4 py-3 pl-9 text-sm text-navy outline-none transition-all placeholder:text-slate-400 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
@@ -518,10 +434,7 @@ export default function ServicesExplorer() {
 
               {/* Maximum price */}
               <div>
-                <label
-                  htmlFor="maximum-price"
-                  className="text-sm font-semibold text-navy"
-                >
+                <label htmlFor="maximum-price" className="text-sm font-semibold text-navy">
                   Maximum price
                 </label>
 
@@ -536,9 +449,7 @@ export default function ServicesExplorer() {
                     type="number"
                     min="0"
                     step="1"
-                    value={
-                      draftFilters.maxPrice
-                    }
+                    value={draftFilters.maxPrice}
                     onChange={handleInputChange}
                     placeholder="150"
                     className="min-h-[52px] w-full rounded-xl border border-primary/10 bg-white px-4 py-3 pl-9 text-sm text-navy outline-none transition-all placeholder:text-slate-400 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
@@ -568,16 +479,12 @@ export default function ServicesExplorer() {
             {/* Categories and sort */}
             <div className="mt-6 flex flex-col gap-5 border-t border-primary/10 pt-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-sm font-semibold text-navy">
-                  Category
-                </p>
+                <p className="text-sm font-semibold text-navy">Category</p>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      handleCategoryChange("")
-                    }
+                    onClick={() => handleCategoryChange("")}
                     className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
                       draftFilters.category === ""
                         ? "border-primary bg-primary text-white shadow-md"
@@ -587,36 +494,26 @@ export default function ServicesExplorer() {
                     All services
                   </button>
 
-                  {categories.map(
-                    (category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() =>
-                          handleCategoryChange(
-                            category,
-                          )
-                        }
-                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
-                          draftFilters.category ===
-                          category
-                            ? "border-primary bg-primary text-white shadow-md"
-                            : "border-primary/10 bg-white text-slate-600 hover:border-primary/30 hover:text-primary"
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ),
-                  )}
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => handleCategoryChange(category)}
+                      className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                        draftFilters.category === category
+                          ? "border-primary bg-primary text-white shadow-md"
+                          : "border-primary/10 bg-white text-slate-600 hover:border-primary/30 hover:text-primary"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div>
-                  <label
-                    htmlFor="service-sort"
-                    className="text-sm font-semibold text-navy"
-                  >
+                  <label htmlFor="service-sort" className="text-sm font-semibold text-navy">
                     Sort services
                   </label>
 
@@ -624,21 +521,14 @@ export default function ServicesExplorer() {
                     id="service-sort"
                     name="sort"
                     value={draftFilters.sort}
-                    onChange={
-                      handleSortChange
-                    }
+                    onChange={handleSortChange}
                     className="mt-2 min-h-[46px] w-full rounded-xl border border-primary/10 bg-white px-4 py-2.5 text-sm font-semibold text-navy outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 sm:w-52"
                   >
-                    {sortOptions.map(
-                      (option) => (
-                        <option
-                          key={option.value}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </option>
-                      ),
-                    )}
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -656,10 +546,7 @@ export default function ServicesExplorer() {
           </motion.form>
 
           {/* Results section */}
-          <div
-            ref={resultsSectionRef}
-            className="mt-10 scroll-mt-28"
-          >
+          <div ref={resultsSectionRef} className="mt-10 scroll-mt-28">
             {/* Results heading */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -673,13 +560,8 @@ export default function ServicesExplorer() {
                 >
                   {isLoading
                     ? "Loading services..."
-                    : `${
-                        pagination.totalServices
-                      } ${
-                        pagination.totalServices ===
-                        1
-                          ? "service"
-                          : "services"
+                    : `${pagination.totalServices} ${
+                        pagination.totalServices === 1 ? "service" : "services"
                       } found`}
                 </h2>
               </div>
@@ -699,9 +581,7 @@ export default function ServicesExplorer() {
                   {Array.from({
                     length: 6,
                   }).map((_, index) => (
-                    <ServiceCardSkeleton
-                      key={`service-skeleton-${index}`}
-                    />
+                    <ServiceCardSkeleton key={`service-skeleton-${index}`} />
                   ))}
                 </div>
               ) : errorMessage ? (
@@ -728,11 +608,7 @@ export default function ServicesExplorer() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      void loadServices(
-                        appliedFilters,
-                      )
-                    }
+                    onClick={() => void loadServices(appliedFilters)}
                     className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition-colors hover:bg-red-700"
                   >
                     <LoaderCircle className="h-5 w-5" />
@@ -758,8 +634,7 @@ export default function ServicesExplorer() {
                   </h3>
 
                   <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600">
-                    Try changing the search term,
-                    category, or price range.
+                    Try changing the search term, category, or price range.
                   </p>
 
                   <button
@@ -789,92 +664,60 @@ export default function ServicesExplorer() {
                     }}
                     className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
                   >
-                    {services.map(
-                      (service, index) => (
-                        <ServiceCard
-                          key={service.id}
-                          service={service}
-                          index={index}
-                        />
-                      ),
-                    )}
+                    {services.map((service, index) => (
+                      <ServiceCard key={service.id} service={service} index={index} />
+                    ))}
                   </motion.div>
                 </AnimatePresence>
               )}
             </div>
 
             {/* Pagination */}
-            {!isLoading &&
-              !errorMessage &&
-              services.length > 0 &&
-              pagination.totalPages > 1 && (
-                <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePageChange(
-                        pagination.page - 1,
-                      )
-                    }
-                    disabled={
-                      !pagination.hasPreviousPage
-                    }
-                    className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Previous
-                  </button>
+            {!isLoading && !errorMessage && services.length > 0 && pagination.totalPages > 1 && (
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={!pagination.hasPreviousPage}
+                  className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Previous
+                </button>
 
-                  {Array.from(
-                    {
-                      length:
-                        pagination.totalPages,
-                    },
-                    (_, index) => index + 1,
-                  ).map((pageNumber) => (
-                    <button
-                      key={pageNumber}
-                      type="button"
-                      onClick={() =>
-                        handlePageChange(
-                          pageNumber,
-                        )
-                      }
-                      aria-label={`Open page ${pageNumber}`}
-                      aria-current={
-                        pagination.page ===
-                        pageNumber
-                          ? "page"
-                          : undefined
-                      }
-                      className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                        pagination.page ===
-                        pageNumber
-                          ? "bg-primary text-white shadow-[0_10px_25px_rgba(30,111,217,0.25)]"
-                          : "border border-primary/10 bg-white text-navy hover:bg-primary-light hover:text-primary"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  ))}
-
+                {Array.from(
+                  {
+                    length: pagination.totalPages,
+                  },
+                  (_, index) => index + 1
+                ).map((pageNumber) => (
                   <button
+                    key={pageNumber}
                     type="button"
-                    onClick={() =>
-                      handlePageChange(
-                        pagination.page + 1,
-                      )
-                    }
-                    disabled={
-                      !pagination.hasNextPage
-                    }
-                    className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={() => handlePageChange(pageNumber)}
+                    aria-label={`Open page ${pageNumber}`}
+                    aria-current={pagination.page === pageNumber ? "page" : undefined}
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                      pagination.page === pageNumber
+                        ? "bg-primary text-white shadow-[0_10px_25px_rgba(30,111,217,0.25)]"
+                        : "border border-primary/10 bg-white text-navy hover:bg-primary-light hover:text-primary"
+                    }`}
                   >
-                    Next
-                    <ArrowRight className="h-4 w-4" />
+                    {pageNumber}
                   </button>
-                </div>
-              )}
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={!pagination.hasNextPage}
+                  className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-2.5 text-sm font-bold text-navy transition-all hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>

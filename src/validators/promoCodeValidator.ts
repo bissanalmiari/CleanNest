@@ -26,23 +26,17 @@ const promoCodeBaseSchema = z.object({
 
 // POST /api/promo-codes (admin)
 export const createPromoCodeSchema = promoCodeBaseSchema
-  .refine(
-    (data) => data.discountType !== "percentage" || data.discountValue <= 100,
-    { message: "Percentage discount cannot exceed 100", path: ["discountValue"] }
-  )
-  .refine(
-    (data) =>
-      data.discountType === "percentage" ||
-      data.maximumDiscountAmount == null,
-    {
-      message: "A maximum discount is only valid for percentage codes",
-      path: ["maximumDiscountAmount"],
-    }
-  )
+  .refine((data) => data.discountType !== "percentage" || data.discountValue <= 100, {
+    message: "Percentage discount cannot exceed 100",
+    path: ["discountValue"],
+  })
+  .refine((data) => data.discountType === "percentage" || data.maximumDiscountAmount == null, {
+    message: "A maximum discount is only valid for percentage codes",
+    path: ["maximumDiscountAmount"],
+  })
   .refine(
     (data) =>
-      !data.startDate ||
-      new Date(data.expiryDate).getTime() > new Date(data.startDate).getTime(),
+      !data.startDate || new Date(data.expiryDate).getTime() > new Date(data.startDate).getTime(),
     {
       message: "Expiry date must be later than the start date",
       path: ["expiryDate"],

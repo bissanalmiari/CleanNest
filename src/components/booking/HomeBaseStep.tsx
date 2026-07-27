@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   AlertCircle,
@@ -66,6 +66,7 @@ interface HomeBaseStepProps {
   profileSaveState: "idle" | "saving" | "saved" | "error";
 
   onSelect: (address: HomeBaseAddress) => void;
+  onAddressesLoaded?: (addresses: HomeBaseAddress[]) => void;
 }
 
 interface AddressApiResponse {
@@ -92,9 +93,7 @@ function readNumber(value: unknown, fallback = 0): number {
 }
 
 function readPropertyType(value: unknown): SpaceScanPropertyType {
-  return value === "house" || value === "office" || value === "other"
-    ? value
-    : "apartment";
+  return value === "house" || value === "office" || value === "other" ? value : "apartment";
 }
 
 function normalizeAddress(value: unknown): HomeBaseAddress | null {
@@ -224,8 +223,10 @@ export default function HomeBaseStep({
   homeProfile,
   profileSaveState,
   onSelect,
+  onAddressesLoaded,
 }: HomeBaseStepProps) {
   const prefersReducedMotion = useReducedMotion();
+  const onAddressesLoadedRef = useRef(onAddressesLoaded);
 
   const [addresses, setAddresses] = useState<HomeBaseAddress[]>([]);
 
@@ -234,6 +235,10 @@ export default function HomeBaseStep({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [unavailableAddressId, setUnavailableAddressId] = useState<string | null>(null);
+
+  useEffect(() => {
+    onAddressesLoadedRef.current = onAddressesLoaded;
+  }, [onAddressesLoaded]);
 
   const loadAddresses = useCallback(async (showLoading = true): Promise<HomeBaseAddress[]> => {
     if (showLoading) {
@@ -244,6 +249,7 @@ export default function HomeBaseStep({
     try {
       const nextAddresses = await fetchBookingAddresses();
       setAddresses(nextAddresses);
+      onAddressesLoadedRef.current?.(nextAddresses);
       return nextAddresses;
     } catch (error) {
       setAddresses([]);
@@ -342,9 +348,7 @@ export default function HomeBaseStep({
       <div className="mt-8 rounded-[1.8rem] border border-amber-200 bg-amber-50 p-7 text-center">
         <MapPin className="mx-auto h-10 w-10 text-amber-600" />
 
-        <h3 className="mt-5 font-heading text-2xl font-black text-amber-900">
-          No saved homes yet
-        </h3>
+        <h3 className="mt-5 font-heading text-2xl font-black text-amber-900">No saved homes yet</h3>
 
         <p className="mx-auto mt-3 max-w-xl text-base font-medium leading-7 text-amber-700">
           Scroll down and complete the property and address fields to save your first home.
@@ -662,7 +666,6 @@ export default function HomeBaseStep({
           </div>
         </motion.section>
       )}
-
     </div>
   );
 }

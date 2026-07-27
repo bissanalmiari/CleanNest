@@ -1,11 +1,6 @@
 import "server-only";
 
-import mongoose, {
-  Schema,
-  type Document,
-  type Model,
-  type Types,
-} from "mongoose";
+import mongoose, { Schema, type Document, type Model, type Types } from "mongoose";
 
 export interface IServiceProofTask {
   key: string;
@@ -52,7 +47,7 @@ const taskSchema = new Schema<IServiceProofTask>(
     completed: { type: Boolean, default: false },
     completedAt: { type: Date, default: undefined },
   },
-  { _id: false },
+  { _id: false }
 );
 
 const photoSchema = new Schema<IServiceProofPhoto>(
@@ -60,7 +55,7 @@ const photoSchema = new Schema<IServiceProofPhoto>(
     url: { type: String, required: true, trim: true, maxlength: 2000 },
     uploadedAt: { type: Date, default: Date.now },
   },
-  { _id: false },
+  { _id: false }
 );
 
 const issueSchema = new Schema<IServiceProofIssue>(
@@ -74,7 +69,7 @@ const issueSchema = new Schema<IServiceProofIssue>(
     photos: { type: [photoSchema], default: [] },
     reportedAt: { type: Date, default: Date.now },
   },
-  { _id: false },
+  { _id: false }
 );
 
 const serviceProofSchema = new Schema<IServiceProof>(
@@ -110,7 +105,7 @@ const serviceProofSchema = new Schema<IServiceProof>(
       accuracy: { type: Number, min: 0 },
     },
   },
-  { timestamps: true, versionKey: false },
+  { timestamps: true, versionKey: false }
 );
 
 serviceProofSchema.index({ bookingId: 1, cleanerId: 1 }, { unique: true });

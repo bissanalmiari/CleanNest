@@ -39,7 +39,7 @@ export function useProfile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const run = useCallback(async <T,>(fn: () => Promise<T>): Promise<T | null> => {
+  const run = useCallback(async <T>(fn: () => Promise<T>): Promise<T | null> => {
     setLoading(true);
     setError(null);
     try {

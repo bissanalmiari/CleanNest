@@ -46,7 +46,7 @@ export interface CustomerDashboardStats {
 
 export async function getCustomerDashboardStats(
   customerId: string,
-  options: DashboardQueryOptions = {},
+  options: DashboardQueryOptions = {}
 ): Promise<CustomerDashboardStats> {
   await prepareDashboardQuery(options);
 
@@ -94,11 +94,7 @@ export async function getCustomerDashboardStats(
         totalBookings: { $sum: 1 },
         totalSpent: {
           $sum: {
-            $cond: [
-              { $eq: ["$paymentStatus", "paid"] },
-              { $ifNull: ["$totalAmount", 0] },
-              0,
-            ],
+            $cond: [{ $eq: ["$paymentStatus", "paid"] }, { $ifNull: ["$totalAmount", 0] }, 0],
           },
         },
       },
@@ -121,7 +117,7 @@ export async function getCustomerDashboardStats(
 export async function getUpcomingBookings(
   customerId: string,
   limit = 5,
-  options: DashboardQueryOptions = {},
+  options: DashboardQueryOptions = {}
 ) {
   await prepareDashboardQuery(options);
 
@@ -157,7 +153,7 @@ export interface BookingHistoryFilters {
 export async function getBookingHistory(
   customerId: string,
   filters: BookingHistoryFilters = {},
-  options: DashboardQueryOptions = {},
+  options: DashboardQueryOptions = {}
 ) {
   await prepareDashboardQuery(options);
 
@@ -203,7 +199,7 @@ export async function getCustomerDashboardOverview(
     historyPage?: number;
     historyLimit?: number;
     historyStatus?: string;
-  } = {},
+  } = {}
 ) {
   await prepareDashboardQuery();
 
@@ -221,7 +217,7 @@ export async function getCustomerDashboardOverview(
         page: historyPage,
         limit: historyLimit,
       },
-      sharedOptions,
+      sharedOptions
     ),
   ]);
 

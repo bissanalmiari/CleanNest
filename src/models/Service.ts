@@ -36,20 +36,14 @@ const serviceSchema = new Schema(
       type: String,
       required: [true, "Short description is required."],
       trim: true,
-      maxlength: [
-        180,
-        "Short description cannot exceed 180 characters.",
-      ],
+      maxlength: [180, "Short description cannot exceed 180 characters."],
     },
 
     description: {
       type: String,
       required: [true, "Service description is required."],
       trim: true,
-      maxlength: [
-        3000,
-        "Service description cannot exceed 3000 characters.",
-      ],
+      maxlength: [3000, "Service description cannot exceed 3000 characters."],
     },
 
     category: {
@@ -102,10 +96,7 @@ const serviceSchema = new Schema(
         {
           type: String,
           trim: true,
-          maxlength: [
-            150,
-            "A service feature cannot exceed 150 characters.",
-          ],
+          maxlength: [150, "A service feature cannot exceed 150 characters."],
         },
       ],
       default: [],
@@ -126,7 +117,7 @@ const serviceSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
 /*
@@ -160,7 +151,6 @@ export type Service = InferSchemaType<typeof serviceSchema>;
 export type ServiceDocument = HydratedDocument<Service>;
 
 const ServiceModel =
-  (models.Service as Model<Service> | undefined) ??
-  model<Service>("Service", serviceSchema);
+  (models.Service as Model<Service> | undefined) ?? model<Service>("Service", serviceSchema);
 
 export default ServiceModel;

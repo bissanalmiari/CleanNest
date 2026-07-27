@@ -3,12 +3,7 @@
 import { z } from "zod";
 import { objectIdSchema } from "./common";
 
-export const addressPropertyTypeSchema = z.enum([
-  "apartment",
-  "house",
-  "office",
-  "other",
-]);
+export const addressPropertyTypeSchema = z.enum(["apartment", "house", "office", "other"]);
 
 export const createAddressSchema = z.object({
   label: z.string().trim().min(1, "Label is required").max(50),

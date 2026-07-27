@@ -7,11 +7,7 @@ import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
-import {
-  getAllCleaners,
-  createCleaner,
-  type CreateCleanerInput,
-} from "@/services/cleanerService";
+import { getAllCleaners, createCleaner, type CreateCleanerInput } from "@/services/cleanerService";
 
 export async function GET(request: NextRequest) {
   try {

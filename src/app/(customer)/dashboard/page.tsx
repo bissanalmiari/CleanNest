@@ -165,8 +165,8 @@ function DashboardContent() {
                 </h1>
 
                 <p className="mt-5 max-w-2xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                  See what is coming next, review your cleaning history, and build a new
-                  service route from one calm, organized space.
+                  See what is coming next, review your cleaning history, and build a new service
+                  route from one calm, organized space.
                 </p>
               </div>
 

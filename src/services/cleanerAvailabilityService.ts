@@ -42,19 +42,13 @@ export async function getCleanerAvailability(cleanerId: string) {
   });
 }
 
-export async function updateCleanerAvailability(
-  cleanerId: string,
-  days: CleanerAvailabilityDay[],
-) {
+export async function updateCleanerAvailability(cleanerId: string, days: CleanerAvailabilityDay[]) {
   if (!Array.isArray(days) || days.length !== DAYS.length) {
     throw new AppError("Please provide all seven days", 422);
   }
 
   const uniqueDays = new Set(days.map((day) => day.dayOfWeek));
-  if (
-    uniqueDays.size !== DAYS.length ||
-    days.some((day) => !DAYS.includes(day.dayOfWeek))
-  ) {
+  if (uniqueDays.size !== DAYS.length || days.some((day) => !DAYS.includes(day.dayOfWeek))) {
     throw new AppError("Availability contains invalid or duplicate days", 422);
   }
 
@@ -63,10 +57,7 @@ export async function updateCleanerAvailability(
       throw new AppError("Availability time must use the HH:mm format", 422);
     }
     if (day.isAvailable && day.startTime >= day.endTime) {
-      throw new AppError(
-        `${day.dayOfWeek} end time must be after start time`,
-        422,
-      );
+      throw new AppError(`${day.dayOfWeek} end time must be after start time`, 422);
     }
   }
 
@@ -78,7 +69,7 @@ export async function updateCleanerAvailability(
         update: { $set: day },
         upsert: true,
       },
-    })),
+    }))
   );
 
   return getCleanerAvailability(cleanerId);

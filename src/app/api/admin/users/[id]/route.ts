@@ -7,10 +7,7 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
-import {
-  getUserById,
-  deleteUser,
-} from "@/services/userManagementService";
+import { getUserById, deleteUser } from "@/services/userManagementService";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -20,10 +17,7 @@ async function requireAdmin() {
   return user;
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;

@@ -54,11 +54,7 @@ export function AccountStatusBadge({ status }: { status: string }) {
         STATUS_STYLES[status] ?? "bg-navy/5 text-navy/60 ring-1 ring-navy/10"
       }`}
     >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          STATUS_DOT[status] ?? "bg-navy/40"
-        }`}
-      />
+      <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[status] ?? "bg-navy/40"}`} />
       {STATUS_LABELS[status] ?? status}
     </span>
   );

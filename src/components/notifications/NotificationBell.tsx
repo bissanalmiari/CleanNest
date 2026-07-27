@@ -14,14 +14,13 @@ import {
   ReceiptText,
   ShieldAlert,
   Sparkles,
+  Star,
+  MessageSquareText,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
-import type {
-  AppNotification,
-  NotificationListResponse,
-} from "@/types/notification";
+import type { AppNotification, NotificationListResponse } from "@/types/notification";
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -39,13 +38,12 @@ const iconByType = {
   issue_reported: ShieldAlert,
   booking_reminder: Clock3,
   payment_update: ReceiptText,
+  review_created: Star,
+  contact_message: MessageSquareText,
 } as const;
 
 function timeAgo(value: string) {
-  const seconds = Math.max(
-    0,
-    Math.floor((Date.now() - new Date(value).getTime()) / 1000),
-  );
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
   if (seconds < 60) return "Just now";
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
@@ -56,12 +54,16 @@ function timeAgo(value: string) {
   }).format(new Date(value));
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ historyHref }: { historyHref?: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<NotificationListResponse>({
     notifications: [],
     unreadCount: 0,
+    total: 0,
+    page: 1,
+    limit: 20,
+    totalPages: 1,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,11 +82,7 @@ export default function NotificationBell() {
       setError(null);
     } catch (loadError) {
       if (!quiet) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Could not load notifications",
-        );
+        setError(loadError instanceof Error ? loadError.message : "Could not load notifications");
       }
     } finally {
       if (!quiet) setLoading(false);
@@ -115,11 +113,10 @@ export default function NotificationBell() {
   async function markRead(notification: AppNotification) {
     if (notification.readAt) return;
     setData((current) => ({
+      ...current,
       unreadCount: Math.max(0, current.unreadCount - 1),
       notifications: current.notifications.map((item) =>
-        item.id === notification.id
-          ? { ...item, readAt: new Date().toISOString() }
-          : item,
+        item.id === notification.id ? { ...item, readAt: new Date().toISOString() } : item
       ),
     }));
     await fetch(`/api/notifications/${notification.id}/read`, {
@@ -129,15 +126,14 @@ export default function NotificationBell() {
 
   async function markAllRead() {
     setData((current) => ({
+      ...current,
       unreadCount: 0,
       notifications: current.notifications.map((item) => ({
         ...item,
         readAt: item.readAt ?? new Date().toISOString(),
       })),
     }));
-    await fetch("/api/notifications/read-all", { method: "POST" }).catch(
-      () => undefined,
-    );
+    await fetch("/api/notifications/read-all", { method: "POST" }).catch(() => undefined);
   }
 
   return (
@@ -145,9 +141,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        aria-label={`Notifications${
-          data.unreadCount ? `, ${data.unreadCount} unread` : ""
-        }`}
+        aria-label={`Notifications${data.unreadCount ? `, ${data.unreadCount} unread` : ""}`}
         aria-expanded={open}
         className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-white text-navy shadow-sm transition hover:border-primary/30 hover:bg-primary-light hover:text-primary"
       >
@@ -172,14 +166,10 @@ export default function NotificationBell() {
                 <Bell className="h-5 w-5" />
               </span>
               <div>
-                <p className="font-heading text-base font-black text-navy">
-                  Notifications
-                </p>
+                <p className="font-heading text-base font-black text-navy">Notifications</p>
                 <p className="text-xs font-semibold text-slate-500">
                   {data.unreadCount
-                    ? `${data.unreadCount} unread update${
-                        data.unreadCount === 1 ? "" : "s"
-                      }`
+                    ? `${data.unreadCount} unread update${data.unreadCount === 1 ? "" : "s"}`
                     : "You’re all caught up"}
                 </p>
               </div>
@@ -223,16 +213,11 @@ export default function NotificationBell() {
               ) : data.notifications.length === 0 ? (
                 <div className="px-5 py-14 text-center">
                   <Bell className="mx-auto h-8 w-8 text-slate-300" />
-                  <p className="mt-3 text-sm font-bold text-slate-500">
-                    No notifications yet
-                  </p>
+                  <p className="mt-3 text-sm font-bold text-slate-500">No notifications yet</p>
                 </div>
               ) : (
                 data.notifications.map((notification) => {
-                  const Icon =
-                    iconByType[
-                      notification.type as keyof typeof iconByType
-                    ] ?? Bell;
+                  const Icon = iconByType[notification.type as keyof typeof iconByType] ?? Bell;
                   const content = (
                     <div
                       className={`flex gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-primary-light/40 ${
@@ -284,6 +269,15 @@ export default function NotificationBell() {
                 })
               )}
             </div>
+            {historyHref && data.total > 0 && (
+              <Link
+                href={historyHref}
+                onClick={() => setOpen(false)}
+                className="flex min-h-12 items-center justify-center border-t border-slate-100 bg-slate-50 text-xs font-black text-primary transition hover:bg-primary-light"
+              >
+                View all notifications
+              </Link>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

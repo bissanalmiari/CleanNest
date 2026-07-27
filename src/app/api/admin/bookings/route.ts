@@ -6,7 +6,9 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
+import { createAdminBooking } from "@/services/bookingCreationService";
 import { getAllBookings } from "@/services/bookingManagementService";
+import { adminCreateBookingSchema } from "@/validators/bookingValidator";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -34,6 +36,42 @@ export async function GET(request: NextRequest) {
     });
 
     return successResponse(result);
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const admin = await requireAdmin();
+
+    let requestBody: unknown;
+
+    try {
+      requestBody = await request.json();
+    } catch {
+      throw new AppError("The request body must contain valid JSON.", 400);
+    }
+
+    const validation = adminCreateBookingSchema.safeParse(requestBody);
+
+    if (!validation.success) {
+      const message = validation.error.issues
+        .map((issue) => {
+          const field = issue.path.length > 0 ? issue.path.join(".") : "booking";
+          return `${field}: ${issue.message}`;
+        })
+        .join(" ");
+
+      throw new AppError(message, 422);
+    }
+
+    const result = await createAdminBooking({
+      adminId: admin.id,
+      input: validation.data,
+    });
+
+    return successResponse(result, 201);
   } catch (error) {
     return errorResponse(error);
   }

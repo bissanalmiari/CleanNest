@@ -32,8 +32,8 @@ interface ApiEnvelope<T> {
 }
 
 const assignmentLabels = {
-  assigned: "Needs response",
-  accepted: "Accepted",
+  assigned: "Needs acknowledgement",
+  accepted: "Acknowledged",
   declined: "Declined",
   completed: "Completed",
 } as const;
@@ -84,11 +84,7 @@ function JobSkeleton() {
   );
 }
 
-export default function CleanerJobsPage({
-  scope,
-}: {
-  scope: "today" | "upcoming";
-}) {
+export default function CleanerJobsPage({ scope }: { scope: "today" | "upcoming" }) {
   const reduceMotion = useReducedMotion();
   const [data, setData] = useState<CleanerJobsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,11 +104,7 @@ export default function CleanerJobsPage({
       }
       setData(payload.data);
     } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Could not load your jobs",
-      );
+      setError(loadError instanceof Error ? loadError.message : "Could not load your jobs");
     } finally {
       setLoading(false);
     }
@@ -122,7 +114,8 @@ export default function CleanerJobsPage({
     void loadJobs();
   }, [loadJobs]);
 
-  async function act(job: CleanerJob, action: "accept" | "decline") {
+  async function acknowledgeJob(job: CleanerJob) {
+    const action = "accept";
     setWorkingId(`${job.id}-${action}`);
     setError(null);
     try {
@@ -137,11 +130,7 @@ export default function CleanerJobsPage({
       }
       await loadJobs();
     } catch (actionError) {
-      setError(
-        actionError instanceof Error
-          ? actionError.message
-          : "The job could not be updated",
-      );
+      setError(actionError instanceof Error ? actionError.message : "The job could not be updated");
     } finally {
       setWorkingId(null);
     }
@@ -151,11 +140,9 @@ export default function CleanerJobsPage({
   const acceptedCount = useMemo(
     () =>
       data?.jobs.filter(
-        (job) =>
-          job.assignmentStatus === "accepted" ||
-          job.assignmentStatus === "completed",
+        (job) => job.assignmentStatus === "accepted" || job.assignmentStatus === "completed"
       ).length ?? 0,
-    [data],
+    [data]
   );
 
   return (
@@ -176,14 +163,12 @@ export default function CleanerJobsPage({
                 Cleaner command center
               </div>
               <h1 className="max-w-3xl font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                {scope === "today"
-                  ? "Your route for today."
-                  : "Your upcoming schedule."}
+                {scope === "today" ? "Your route for today." : "Your upcoming schedule."}
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-blue-100/80 sm:text-base">
                 {scope === "today"
                   ? "Everything you need for a smooth shift—customers, locations, timing, and live job actions."
-                  : "Review new assignments early, accept your work, and arrive prepared for every home."}
+                  : "Review assigned work early, confirm you have seen it, and arrive prepared for every home."}
               </p>
             </div>
             <button
@@ -203,14 +188,10 @@ export default function CleanerJobsPage({
               label={scope === "today" ? "Jobs today" : "Upcoming jobs"}
               value={data?.summary.total ?? 0}
             />
-            <Metric
-              icon={ShieldCheck}
-              label="Accepted"
-              value={acceptedCount}
-            />
+            <Metric icon={ShieldCheck} label="Acknowledged" value={acceptedCount} />
             <Metric
               icon={TimerReset}
-              label="Awaiting reply"
+              label="Needs acknowledgement"
               value={data?.summary.assigned ?? 0}
             />
           </div>
@@ -253,10 +234,7 @@ export default function CleanerJobsPage({
             </div>
 
             <div className="space-y-4">
-              {loading &&
-                Array.from({ length: 3 }).map((_, index) => (
-                  <JobSkeleton key={index} />
-                ))}
+              {loading && Array.from({ length: 3 }).map((_, index) => <JobSkeleton key={index} />)}
 
               {!loading && data?.jobs.length === 0 && (
                 <div className="rounded-[30px] border border-dashed border-slate-300 bg-white/80 px-6 py-16 text-center shadow-sm">
@@ -264,9 +242,7 @@ export default function CleanerJobsPage({
                     <CheckCircle2 className="h-8 w-8" />
                   </span>
                   <h3 className="mt-5 font-heading text-xl font-black text-navy">
-                    {scope === "today"
-                      ? "Your route is clear"
-                      : "No upcoming assignments"}
+                    {scope === "today" ? "Your route is clear" : "No upcoming assignments"}
                   </h3>
                   <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
                     {scope === "today"
@@ -280,9 +256,7 @@ export default function CleanerJobsPage({
                 data?.jobs.map((job, index) => (
                   <motion.article
                     key={job.assignmentId}
-                    initial={
-                      reduceMotion ? false : { opacity: 0, y: 16, scale: 0.99 }
-                    }
+                    initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.99 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
                     className="group overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_14px_44px_rgba(15,42,72,0.07)] transition hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_22px_55px_rgba(15,42,72,0.12)]"
@@ -335,29 +309,19 @@ export default function CleanerJobsPage({
 
                     <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/75 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
                       {job.assignmentStatus === "assigned" ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => void act(job, "accept")}
-                            disabled={workingId !== null}
-                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/15 transition hover:bg-emerald-700 disabled:opacity-55"
-                          >
-                            {workingId === `${job.id}-accept` ? (
-                              <LoaderCircle className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Check className="h-4 w-4" />
-                            )}
-                            Accept job
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void act(job, "decline")}
-                            disabled={workingId !== null}
-                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-extrabold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:opacity-55"
-                          >
-                            Decline
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          onClick={() => void acknowledgeJob(job)}
+                          disabled={workingId !== null}
+                          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/15 transition hover:bg-emerald-700 disabled:opacity-55"
+                        >
+                          {workingId === `${job.id}-accept` ? (
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
+                          Acknowledge job
+                        </button>
                       ) : (
                         <span className="flex items-center gap-2 text-xs font-bold text-slate-500">
                           <Navigation className="h-4 w-4 text-primary" />
@@ -393,8 +357,7 @@ export default function CleanerJobsPage({
               {nextJob && (
                 <>
                   <p className="mt-2 text-sm leading-6 text-blue-100/75">
-                    {formatDate(nextJob.bookingDate, true)} at{" "}
-                    {nextJob.startTime}
+                    {formatDate(nextJob.bookingDate, true)} at {nextJob.startTime}
                   </p>
                   <Link
                     href={`/cleaner/jobs/${nextJob.id}`}
@@ -414,8 +377,7 @@ export default function CleanerJobsPage({
                 Keep your schedule accurate
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Set the days and hours you can work so operations can assign the
-                right visits.
+                Set the days and hours you can work so operations can assign the right visits.
               </p>
               <Link
                 href="/cleaner/availability"

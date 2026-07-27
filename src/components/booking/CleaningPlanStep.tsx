@@ -752,9 +752,30 @@ export default function CleaningPlanStep({
             const displayedDuration =
               personalizedQuote?.estimatedDurationMinutes ?? service.estimatedDurationMinutes;
 
+            const selectService = () => {
+              onSelect({
+                ...service,
+                basePrice: displayedPrice,
+                estimatedDurationMinutes: displayedDuration,
+              });
+            };
+
             return (
               <motion.article
                 key={service.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-label={`${isSelected ? "Selected" : "Choose"} ${service.name} cleaning service`}
+                onClick={selectService}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    selectService();
+                  }
+                }}
                 initial={
                   prefersReducedMotion
                     ? undefined
@@ -778,7 +799,7 @@ export default function CleaningPlanStep({
                         y: -4,
                       }
                 }
-                className={`group relative overflow-hidden rounded-[1.5rem] border p-5 text-left transition-all ${
+                className={`group relative cursor-pointer overflow-hidden rounded-[1.5rem] border p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 ${
                   isSelected
                     ? "border-primary bg-primary-light/60 shadow-[0_18px_45px_rgba(30,111,217,0.14)]"
                     : "border-slate-200 bg-white shadow-[0_12px_35px_rgba(11,37,69,0.06)] hover:border-primary/35"
@@ -915,7 +936,8 @@ export default function CleaningPlanStep({
                     <button
                       type="button"
                       aria-expanded={expandedServiceId === service.id}
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation();
                         setExpandedServiceId((currentId) =>
                           currentId === service.id ? null : service.id
                         );
@@ -931,12 +953,9 @@ export default function CleaningPlanStep({
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        onSelect({
-                          ...service,
-                          basePrice: displayedPrice,
-                          estimatedDurationMinutes: displayedDuration,
-                        });
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        selectService();
                       }}
                       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold transition ${
                         isSelected

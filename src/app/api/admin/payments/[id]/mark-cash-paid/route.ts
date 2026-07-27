@@ -7,10 +7,7 @@ import { errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
 import { markCashPaymentReceived } from "@/services/paymentService";
 
-export async function PATCH(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireRole("admin");
     const { id } = await params;

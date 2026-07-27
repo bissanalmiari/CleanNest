@@ -14,20 +14,14 @@ const bookingAddonSchema = new Schema(
     bookingId: {
       type: Schema.Types.ObjectId,
       ref: "Booking",
-      required: [
-        true,
-        "Booking is required.",
-      ],
+      required: [true, "Booking is required."],
       index: true,
     },
 
     addonId: {
       type: Schema.Types.ObjectId,
       ref: "Addon",
-      required: [
-        true,
-        "Add-on is required.",
-      ],
+      required: [true, "Add-on is required."],
       index: true,
     },
 
@@ -38,28 +32,16 @@ const bookingAddonSchema = new Schema(
      */
     addonName: {
       type: String,
-      required: [
-        true,
-        "Add-on name is required.",
-      ],
+      required: [true, "Add-on name is required."],
       trim: true,
-      maxlength: [
-        100,
-        "Add-on name cannot exceed 100 characters.",
-      ],
+      maxlength: [100, "Add-on name cannot exceed 100 characters."],
     },
 
     quantity: {
       type: Number,
       required: true,
-      min: [
-        1,
-        "Add-on quantity must be at least one.",
-      ],
-      max: [
-        50,
-        "Add-on quantity cannot exceed 50.",
-      ],
+      min: [1, "Add-on quantity must be at least one."],
+      max: [50, "Add-on quantity cannot exceed 50."],
       default: 1,
     },
 
@@ -69,87 +51,52 @@ const bookingAddonSchema = new Schema(
      */
     unitPrice: {
       type: Number,
-      required: [
-        true,
-        "Add-on unit price is required.",
-      ],
-      min: [
-        0,
-        "Add-on unit price cannot be negative.",
-      ],
+      required: [true, "Add-on unit price is required."],
+      min: [0, "Add-on unit price cannot be negative."],
     },
 
     lineTotal: {
       type: Number,
-      required: [
-        true,
-        "Add-on line total is required.",
-      ],
-      min: [
-        0,
-        "Add-on line total cannot be negative.",
-      ],
+      required: [true, "Add-on line total is required."],
+      min: [0, "Add-on line total cannot be negative."],
     },
 
     unitExtraDurationMinutes: {
       type: Number,
       required: true,
-      min: [
-        0,
-        "Extra duration cannot be negative.",
-      ],
-      max: [
-        1440,
-        "Extra duration cannot exceed 24 hours.",
-      ],
+      min: [0, "Extra duration cannot be negative."],
+      max: [1440, "Extra duration cannot exceed 24 hours."],
       default: 0,
     },
 
     totalExtraDurationMinutes: {
       type: Number,
       required: true,
-      min: [
-        0,
-        "Total extra duration cannot be negative.",
-      ],
+      min: [0, "Total extra duration cannot be negative."],
       default: 0,
     },
   },
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
 /*
  * Always calculate totals on the server instead of
  * trusting values submitted by the frontend.
  */
-bookingAddonSchema.pre(
-  "validate",
-  function calculateBookingAddonTotals() {
-    const quantity =
-      Number(this.quantity) || 0;
+bookingAddonSchema.pre("validate", function calculateBookingAddonTotals() {
+  const quantity = Number(this.quantity) || 0;
 
-    const unitPrice =
-      Number(this.unitPrice) || 0;
+  const unitPrice = Number(this.unitPrice) || 0;
 
-    const unitDuration =
-      Number(
-        this.unitExtraDurationMinutes,
-      ) || 0;
+  const unitDuration = Number(this.unitExtraDurationMinutes) || 0;
 
-    this.lineTotal =
-      Math.round(
-        quantity *
-          unitPrice *
-          100,
-      ) / 100;
+  this.lineTotal = Math.round(quantity * unitPrice * 100) / 100;
 
-    this.totalExtraDurationMinutes =
-      quantity * unitDuration;
-  },
-);
+  this.totalExtraDurationMinutes = quantity * unitDuration;
+});
 
 /*
  * The same add-on can only appear once in a booking.
@@ -162,7 +109,7 @@ bookingAddonSchema.index(
   },
   {
     unique: true,
-  },
+  }
 );
 
 bookingAddonSchema.index({
@@ -170,21 +117,12 @@ bookingAddonSchema.index({
   createdAt: 1,
 });
 
-export type BookingAddon =
-  InferSchemaType<
-    typeof bookingAddonSchema
-  >;
+export type BookingAddon = InferSchemaType<typeof bookingAddonSchema>;
 
-export type BookingAddonDocument =
-  HydratedDocument<BookingAddon>;
+export type BookingAddonDocument = HydratedDocument<BookingAddon>;
 
 const BookingAddonModel =
-  (models.BookingAddon as
-    | Model<BookingAddon>
-    | undefined) ??
-  model<BookingAddon>(
-    "BookingAddon",
-    bookingAddonSchema,
-  );
+  (models.BookingAddon as Model<BookingAddon> | undefined) ??
+  model<BookingAddon>("BookingAddon", bookingAddonSchema);
 
 export default BookingAddonModel;

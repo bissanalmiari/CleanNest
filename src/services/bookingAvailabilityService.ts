@@ -12,25 +12,15 @@ import {
   type AvailabilityQueryInput,
 } from "@/validators/bookingValidator";
 
-const CAPACITY_CONSUMING_STATUSES = [
-  "pending",
-  "confirmed",
-  "in_progress",
-] as const;
+const CAPACITY_CONSUMING_STATUSES = ["pending", "confirmed", "in_progress"] as const;
 
 const DEFAULT_MAXIMUM_CONCURRENT_BOOKINGS = 3;
 
 export type BookingAvailabilityReason =
-  | "AVAILABLE"
-  | "PAST_TIME"
-  | "BLOCKED_TIME"
-  | "CAPACITY_REACHED";
+  "AVAILABLE" | "PAST_TIME" | "BLOCKED_TIME" | "CAPACITY_REACHED";
 
 export type BookingAvailabilityErrorCode =
-  | "INVALID_SERVICE_ID"
-  | "INVALID_SERVICE_AREA_ID"
-  | "INVALID_BOOKING_ID"
-  | "INVALID_TIME_RANGE";
+  "INVALID_SERVICE_ID" | "INVALID_SERVICE_AREA_ID" | "INVALID_BOOKING_ID" | "INVALID_TIME_RANGE";
 
 export class BookingAvailabilityError extends Error {
   readonly code: BookingAvailabilityErrorCode;
@@ -41,7 +31,7 @@ export class BookingAvailabilityError extends Error {
     code: BookingAvailabilityErrorCode,
     message: string,
     statusCode = 400,
-    details?: Record<string, unknown>,
+    details?: Record<string, unknown>
   ) {
     super(message);
 
@@ -111,137 +101,81 @@ interface CheckAvailabilityOptions {
 
 function getMaximumConcurrentBookings() {
   const configuredCapacity = Number.parseInt(
-    process.env
-      .CLEANNEST_MAX_SIMULTANEOUS_BOOKINGS ??
-      "",
-    10,
+    process.env.CLEANNEST_MAX_SIMULTANEOUS_BOOKINGS ?? "",
+    10
   );
 
-  if (
-    Number.isInteger(configuredCapacity) &&
-    configuredCapacity > 0
-  ) {
+  if (Number.isInteger(configuredCapacity) && configuredCapacity > 0) {
     return configuredCapacity;
   }
 
   return DEFAULT_MAXIMUM_CONCURRENT_BOOKINGS;
 }
 
-function normalizeCapacity(
-  value: number | undefined,
-) {
-  if (
-    value !== undefined &&
-    Number.isInteger(value) &&
-    value > 0
-  ) {
+function normalizeCapacity(value: number | undefined) {
+  if (value !== undefined && Number.isInteger(value) && value > 0) {
     return value;
   }
 
   return getMaximumConcurrentBookings();
 }
 
-function toObjectId(
-  value: string,
-  errorCode: BookingAvailabilityErrorCode,
-  fieldName: string,
-) {
+function toObjectId(value: string, errorCode: BookingAvailabilityErrorCode, fieldName: string) {
   if (!Types.ObjectId.isValid(value)) {
-    throw new BookingAvailabilityError(
-      errorCode,
-      `${fieldName} is invalid.`,
-      400,
-      {
-        field: fieldName,
-        value,
-      },
-    );
+    throw new BookingAvailabilityError(errorCode, `${fieldName} is invalid.`, 400, {
+      field: fieldName,
+      value,
+    });
   }
 
   return new Types.ObjectId(value);
 }
 
-function getDateInTimeZone(
-  date: Date,
-  timeZone = CLEAN_NEST_TIME_ZONE,
-) {
-  const formatter =
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
+function getDateInTimeZone(date: Date, timeZone = CLEAN_NEST_TIME_ZONE) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 
-  const parts =
-    formatter.formatToParts(date);
+  const parts = formatter.formatToParts(date);
 
-  const year = parts.find(
-    (part) => part.type === "year",
-  )?.value;
+  const year = parts.find((part) => part.type === "year")?.value;
 
-  const month = parts.find(
-    (part) => part.type === "month",
-  )?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
 
-  const day = parts.find(
-    (part) => part.type === "day",
-  )?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
 
   if (!year || !month || !day) {
     throw new BookingAvailabilityError(
       "INVALID_TIME_RANGE",
-      "Unable to determine the booking date.",
+      "Unable to determine the booking date."
     );
   }
 
   return `${year}-${month}-${day}`;
 }
 
-function getNextCalendarDate(
-  dateText: string,
-) {
+function getNextCalendarDate(dateText: string) {
   const parts = dateText.split("-");
 
   const year = Number(parts[0]);
   const month = Number(parts[1]);
   const day = Number(parts[2]);
 
-  const date = new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-    ),
-  );
+  const date = new Date(Date.UTC(year, month - 1, day));
 
-  date.setUTCDate(
-    date.getUTCDate() + 1,
-  );
+  date.setUTCDate(date.getUTCDate() + 1);
 
-  return date
-    .toISOString()
-    .slice(0, 10);
+  return date.toISOString().slice(0, 10);
 }
 
-function timeRangesOverlap(
-  firstStart: Date,
-  firstEnd: Date,
-  secondStart: Date,
-  secondEnd: Date,
-) {
-  return (
-    firstStart.getTime() <
-      secondEnd.getTime() &&
-    firstEnd.getTime() >
-      secondStart.getTime()
-  );
+function timeRangesOverlap(firstStart: Date, firstEnd: Date, secondStart: Date, secondEnd: Date) {
+  return firstStart.getTime() < secondEnd.getTime() && firstEnd.getTime() > secondStart.getTime();
 }
 
-function buildAvailabilityMessage(
-  reason: BookingAvailabilityReason,
-  remainingCapacity: number,
-) {
+function buildAvailabilityMessage(reason: BookingAvailabilityReason, remainingCapacity: number) {
   switch (reason) {
     case "PAST_TIME":
       return "The selected booking time has already passed.";
@@ -273,75 +207,53 @@ async function findBlockedTimeConflicts({
   requestedStart: Date;
   requestedEnd: Date;
 }) {
-  const blockedTimes =
-    await BlockedTimeModel.find({
-      isActive: true,
+  const blockedTimes = await BlockedTimeModel.find({
+    isActive: true,
 
-      startDatetime: {
-        $lt: requestedEnd,
+    startDatetime: {
+      $lt: requestedEnd,
+    },
+
+    endDatetime: {
+      $gt: requestedStart,
+    },
+
+    $or: [
+      {
+        serviceAreaId: {
+          $exists: false,
+        },
       },
-
-      endDatetime: {
-        $gt: requestedStart,
+      {
+        serviceAreaId: null,
       },
-
-      $or: [
-        {
-          serviceAreaId: {
-            $exists: false,
-          },
-        },
-        {
-          serviceAreaId: null,
-        },
-        {
-          serviceAreaId,
-        },
-      ],
+      {
+        serviceAreaId,
+      },
+    ],
+  })
+    .select(
+      ["_id", "serviceAreaId", "startDatetime", "endDatetime", "blockType", "reason"].join(" ")
+    )
+    .sort({
+      startDatetime: 1,
     })
-      .select(
-        [
-          "_id",
-          "serviceAreaId",
-          "startDatetime",
-          "endDatetime",
-          "blockType",
-          "reason",
-        ].join(" "),
-      )
-      .sort({
-        startDatetime: 1,
-      })
-      .lean()
-      .exec();
+    .lean()
+    .exec();
 
-  return blockedTimes.map(
-    (blockedTime): BlockedTimeConflict => ({
-      blockedTimeId:
-        blockedTime._id.toString(),
+  return blockedTimes.map((blockedTime): BlockedTimeConflict => ({
+    blockedTimeId: blockedTime._id.toString(),
 
-      scope: blockedTime.serviceAreaId
-        ? "service_area"
-        : "company",
+    scope: blockedTime.serviceAreaId ? "service_area" : "company",
 
-      blockType:
-        blockedTime.blockType,
+    blockType: blockedTime.blockType,
 
-      reason:
-        blockedTime.reason ||
-        "This time has been blocked by CleanNest.",
+    reason: blockedTime.reason || "This time has been blocked by CleanNest.",
 
-      startDatetime:
-        new Date(
-          blockedTime.startDatetime,
-        ).toISOString(),
+    startDatetime: new Date(blockedTime.startDatetime).toISOString(),
 
-      endDatetime:
-        new Date(
-          blockedTime.endDatetime,
-        ).toISOString(),
-    }),
-  );
+    endDatetime: new Date(blockedTime.endDatetime).toISOString(),
+  }));
 }
 
 /*
@@ -361,25 +273,13 @@ async function findBookingConflicts({
   requestedEnd: Date;
   excludeBookingId?: Types.ObjectId;
 }) {
-  const nextCalendarDate =
-    getNextCalendarDate(bookingDate);
+  const nextCalendarDate = getNextCalendarDate(bookingDate);
 
-  const localDayStart =
-    bookingDateTimeToUtc(
-      bookingDate,
-      "00:00",
-    );
+  const localDayStart = bookingDateTimeToUtc(bookingDate, "00:00");
 
-  const nextLocalDayStart =
-    bookingDateTimeToUtc(
-      nextCalendarDate,
-      "00:00",
-    );
+  const nextLocalDayStart = bookingDateTimeToUtc(nextCalendarDate, "00:00");
 
-  const bookingQuery: Record<
-    string,
-    unknown
-  > = {
+  const bookingQuery: Record<string, unknown> = {
     serviceAreaId,
 
     status: {
@@ -398,78 +298,41 @@ async function findBookingConflicts({
     };
   }
 
-  const bookings =
-    await BookingModel.find(
-      bookingQuery,
-    )
-      .select(
-        [
-          "_id",
-          "bookingNumber",
-          "bookingDate",
-          "startTime",
-          "endTime",
-          "status",
-        ].join(" "),
-      )
-      .sort({
-        startTime: 1,
-      })
-      .lean()
-      .exec();
+  const bookings = await BookingModel.find(bookingQuery)
+    .select(["_id", "bookingNumber", "bookingDate", "startTime", "endTime", "status"].join(" "))
+    .sort({
+      startTime: 1,
+    })
+    .lean()
+    .exec();
 
-  const conflicts: BookingConflict[] =
-    [];
+  const conflicts: BookingConflict[] = [];
 
   for (const booking of bookings) {
-    const existingBookingDate =
-      getDateInTimeZone(
-        new Date(
-          booking.bookingDate,
-        ),
-      );
+    const existingBookingDate = getDateInTimeZone(new Date(booking.bookingDate));
 
-    const existingStart =
-      bookingDateTimeToUtc(
-        existingBookingDate,
-        booking.startTime,
-      );
+    const existingStart = bookingDateTimeToUtc(existingBookingDate, booking.startTime);
 
-    const existingEnd =
-      bookingDateTimeToUtc(
-        existingBookingDate,
-        booking.endTime,
-      );
+    const existingEnd = bookingDateTimeToUtc(existingBookingDate, booking.endTime);
 
-    const overlaps =
-      timeRangesOverlap(
-        requestedStart,
-        requestedEnd,
-        existingStart,
-        existingEnd,
-      );
+    const overlaps = timeRangesOverlap(requestedStart, requestedEnd, existingStart, existingEnd);
 
     if (!overlaps) {
       continue;
     }
 
     conflicts.push({
-      bookingId:
-        booking._id.toString(),
+      bookingId: booking._id.toString(),
 
-      bookingNumber:
-        booking.bookingNumber,
+      bookingNumber: booking.bookingNumber,
 
       status: booking.status,
 
-      bookingDate:
-        existingBookingDate,
+      bookingDate: existingBookingDate,
 
-      startTime:
-        booking.startTime,
+      startTime: booking.startTime,
 
-      endTime:
-        booking.endTime,
+      endTime: booking.endTime,
     });
   }
 
@@ -490,96 +353,59 @@ async function findBookingConflicts({
  */
 export async function checkBookingAvailability(
   input: AvailabilityQueryInput,
-  options: CheckAvailabilityOptions = {},
+  options: CheckAvailabilityOptions = {}
 ): Promise<BookingAvailabilityResult> {
-  const now =
-    options.now ?? new Date();
+  const now = options.now ?? new Date();
 
-  const serviceObjectId =
-    toObjectId(
-      input.serviceId,
-      "INVALID_SERVICE_ID",
-      "Service ID",
-    );
+  const serviceObjectId = toObjectId(input.serviceId, "INVALID_SERVICE_ID", "Service ID");
 
-  const serviceAreaObjectId =
-    toObjectId(
-      input.serviceAreaId,
-      "INVALID_SERVICE_AREA_ID",
-      "Service-area ID",
-    );
+  const serviceAreaObjectId = toObjectId(
+    input.serviceAreaId,
+    "INVALID_SERVICE_AREA_ID",
+    "Service-area ID"
+  );
 
-  const excludedBookingObjectId =
-    input.excludeBookingId
-      ? toObjectId(
-          input.excludeBookingId,
-          "INVALID_BOOKING_ID",
-          "Excluded booking ID",
-        )
-      : undefined;
+  const excludedBookingObjectId = input.excludeBookingId
+    ? toObjectId(input.excludeBookingId, "INVALID_BOOKING_ID", "Excluded booking ID")
+    : undefined;
 
-  const requestedStart =
-    bookingDateTimeToUtc(
-      input.bookingDate,
-      input.startTime,
-    );
+  const requestedStart = bookingDateTimeToUtc(input.bookingDate, input.startTime);
 
-  const requestedEnd =
-    bookingDateTimeToUtc(
-      input.bookingDate,
-      input.endTime,
-    );
+  const requestedEnd = bookingDateTimeToUtc(input.bookingDate, input.endTime);
 
-  if (
-    requestedEnd.getTime() <=
-    requestedStart.getTime()
-  ) {
+  if (requestedEnd.getTime() <= requestedStart.getTime()) {
     throw new BookingAvailabilityError(
       "INVALID_TIME_RANGE",
-      "End time must be later than start time.",
+      "End time must be later than start time."
     );
   }
 
-  const durationMinutes =
-    Math.round(
-      (requestedEnd.getTime() -
-        requestedStart.getTime()) /
-        (1000 * 60),
-    );
+  const durationMinutes = Math.round(
+    (requestedEnd.getTime() - requestedStart.getTime()) / (1000 * 60)
+  );
 
-  const maximumConcurrentBookings =
-    normalizeCapacity(
-      options.maximumConcurrentBookings,
-    );
+  const maximumConcurrentBookings = normalizeCapacity(options.maximumConcurrentBookings);
 
   const emptyCapacity = {
     maximumConcurrentBookings,
     overlappingBookings: 0,
-    remainingCapacity:
-      maximumConcurrentBookings,
+    remainingCapacity: maximumConcurrentBookings,
   };
 
   const requestedSlot = {
-    serviceId:
-      serviceObjectId.toString(),
+    serviceId: serviceObjectId.toString(),
 
-    serviceAreaId:
-      serviceAreaObjectId.toString(),
+    serviceAreaId: serviceAreaObjectId.toString(),
 
-    bookingDate:
-      input.bookingDate,
+    bookingDate: input.bookingDate,
 
-    startTime:
-      input.startTime,
+    startTime: input.startTime,
 
-    endTime:
-      input.endTime,
+    endTime: input.endTime,
 
-    startDatetime:
-      requestedStart.toISOString(),
+    startDatetime: requestedStart.toISOString(),
 
-    endDatetime:
-      requestedEnd.toISOString(),
+    endDatetime: requestedEnd.toISOString(),
 
     durationMinutes,
   };
@@ -589,18 +415,11 @@ export async function checkBookingAvailability(
    * validator, but it is repeated here to keep
    * the service safe when called directly.
    */
-  if (
-    requestedStart.getTime() <=
-    now.getTime()
-  ) {
+  if (requestedStart.getTime() <= now.getTime()) {
     return {
       available: false,
       reason: "PAST_TIME",
-      message:
-        buildAvailabilityMessage(
-          "PAST_TIME",
-          maximumConcurrentBookings,
-        ),
+      message: buildAvailabilityMessage("PAST_TIME", maximumConcurrentBookings),
 
       requestedSlot,
       capacity: emptyCapacity,
@@ -612,12 +431,11 @@ export async function checkBookingAvailability(
     };
   }
 
-  const recurringScheduleBlock =
-    getRecurringScheduleBlock({
-      bookingDate: input.bookingDate,
-      startTime: input.startTime,
-      endTime: input.endTime,
-    });
+  const recurringScheduleBlock = getRecurringScheduleBlock({
+    bookingDate: input.bookingDate,
+    startTime: input.startTime,
+    endTime: input.endTime,
+  });
 
   if (recurringScheduleBlock) {
     return {
@@ -642,42 +460,29 @@ export async function checkBookingAvailability(
     };
   }
 
-  const [
-    blockedTimeConflicts,
-    bookingConflicts,
-  ] = await Promise.all([
+  const [blockedTimeConflicts, bookingConflicts] = await Promise.all([
     findBlockedTimeConflicts({
-      serviceAreaId:
-        serviceAreaObjectId,
+      serviceAreaId: serviceAreaObjectId,
 
       requestedStart,
       requestedEnd,
     }),
 
     findBookingConflicts({
-      serviceAreaId:
-        serviceAreaObjectId,
+      serviceAreaId: serviceAreaObjectId,
 
-      bookingDate:
-        input.bookingDate,
+      bookingDate: input.bookingDate,
 
       requestedStart,
       requestedEnd,
 
-      excludeBookingId:
-        excludedBookingObjectId,
+      excludeBookingId: excludedBookingObjectId,
     }),
   ]);
 
-  const overlappingBookings =
-    bookingConflicts.length;
+  const overlappingBookings = bookingConflicts.length;
 
-  const remainingCapacity =
-    Math.max(
-      0,
-      maximumConcurrentBookings -
-        overlappingBookings,
-    );
+  const remainingCapacity = Math.max(0, maximumConcurrentBookings - overlappingBookings);
 
   const capacity = {
     maximumConcurrentBookings,
@@ -685,41 +490,28 @@ export async function checkBookingAvailability(
     remainingCapacity,
   };
 
-  let reason:
-    BookingAvailabilityReason =
-      "AVAILABLE";
+  let reason: BookingAvailabilityReason = "AVAILABLE";
 
-  if (
-    blockedTimeConflicts.length > 0
-  ) {
+  if (blockedTimeConflicts.length > 0) {
     reason = "BLOCKED_TIME";
-  } else if (
-    overlappingBookings >=
-    maximumConcurrentBookings
-  ) {
+  } else if (overlappingBookings >= maximumConcurrentBookings) {
     reason = "CAPACITY_REACHED";
   }
 
-  const available =
-    reason === "AVAILABLE";
+  const available = reason === "AVAILABLE";
 
   return {
     available,
     reason,
 
-    message:
-      buildAvailabilityMessage(
-        reason,
-        remainingCapacity,
-      ),
+    message: buildAvailabilityMessage(reason, remainingCapacity),
 
     requestedSlot,
     capacity,
 
     conflicts: {
       bookings: bookingConflicts,
-      blockedTimes:
-        blockedTimeConflicts,
+      blockedTimes: blockedTimeConflicts,
     },
   };
 }

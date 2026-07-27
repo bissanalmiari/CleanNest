@@ -1,11 +1,6 @@
 import "server-only";
 
-import mongoose, {
-  Schema,
-  type Document,
-  type Model,
-  type Types,
-} from "mongoose";
+import mongoose, { Schema, type Document, type Model, type Types } from "mongoose";
 
 export type NotificationType =
   | "booking_created"
@@ -22,6 +17,8 @@ export type NotificationType =
   | "booking_cancelled"
   | "booking_rescheduled"
   | "payment_update"
+  | "review_created"
+  | "contact_message"
   | "system";
 
 export interface INotification extends Document {
@@ -33,13 +30,7 @@ export interface INotification extends Document {
   bookingId?: Types.ObjectId;
   dedupeKey?: string;
   readAt?: Date;
-  emailStatus:
-    | "not_requested"
-    | "pending"
-    | "processing"
-    | "sent"
-    | "failed"
-    | "skipped";
+  emailStatus: "not_requested" | "pending" | "processing" | "sent" | "failed" | "skipped";
   emailSentAt?: Date;
   emailError?: string;
   createdAt: Date;
@@ -71,6 +62,8 @@ const notificationSchema = new Schema<INotification>(
         "booking_cancelled",
         "booking_rescheduled",
         "payment_update",
+        "review_created",
+        "contact_message",
         "system",
       ],
       required: true,
@@ -94,21 +87,14 @@ const notificationSchema = new Schema<INotification>(
     readAt: { type: Date, default: undefined },
     emailStatus: {
       type: String,
-      enum: [
-        "not_requested",
-        "pending",
-        "processing",
-        "sent",
-        "failed",
-        "skipped",
-      ],
+      enum: ["not_requested", "pending", "processing", "sent", "failed", "skipped"],
       default: "not_requested",
       required: true,
     },
     emailSentAt: { type: Date, default: undefined },
     emailError: { type: String, maxlength: 1000, default: undefined },
   },
-  { timestamps: true, versionKey: false },
+  { timestamps: true, versionKey: false }
 );
 
 notificationSchema.index({ userId: 1, readAt: 1, createdAt: -1 });
@@ -117,7 +103,7 @@ notificationSchema.index(
   {
     unique: true,
     partialFilterExpression: { dedupeKey: { $type: "string" } },
-  },
+  }
 );
 
 const Notification =

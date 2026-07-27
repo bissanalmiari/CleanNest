@@ -17,10 +17,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import {
-  forgotPasswordSchema,
-  type ForgotPasswordValues,
-} from "@/validators/authValidator";
+import { forgotPasswordSchema, type ForgotPasswordValues } from "@/validators/authValidator";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
@@ -44,34 +41,21 @@ const recoverySteps = [
 export default function ForgotPasswordPage() {
   const router = useRouter();
 
-  const {
-    forgotPassword,
-    loading,
-    error,
-  } = useAuth();
+  const { forgotPassword, loading, error } = useAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordValues>({
-    resolver: zodResolver(
-      forgotPasswordSchema,
-    ),
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
-  async function onSubmit(
-    values: ForgotPasswordValues,
-  ) {
-    const result =
-      await forgotPassword(values);
+  async function onSubmit(values: ForgotPasswordValues) {
+    const result = await forgotPassword(values);
 
     if (result) {
-      router.push(
-        `/reset-password?email=${encodeURIComponent(
-          values.email,
-        )}`,
-      );
+      router.push(`/reset-password?email=${encodeURIComponent(values.email)}`);
     }
   }
 
@@ -132,9 +116,8 @@ export default function ForgotPasswordPage() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-500">
-          Enter the email connected to your
-          CleanNest account and we will send you a
-          secure code to reset your password.
+          Enter the email connected to your CleanNest account and we will send you a secure code to
+          reset your password.
         </p>
       </div>
 
@@ -153,17 +136,12 @@ export default function ForgotPasswordPage() {
           }}
           className="mt-7"
         >
-          <Alert variant="error">
-            {error}
-          </Alert>
+          <Alert variant="error">{error}</Alert>
         </motion.div>
       )}
 
       {/* Recovery form */}
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-7 space-y-5"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-5">
         <motion.div
           initial={{
             opacity: 0,
@@ -196,9 +174,7 @@ export default function ForgotPasswordPage() {
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
 
             <p className="text-xs leading-5 text-slate-500">
-              The reset code will only be sent to
-              the verified email connected to your
-              account.
+              The reset code will only be sent to the verified email connected to your account.
             </p>
           </div>
         </motion.div>
@@ -231,19 +207,11 @@ export default function ForgotPasswordPage() {
                 }
           }
         >
-          <Button
-            type="submit"
-            className="min-h-[54px] w-full"
-            isLoading={loading}
-          >
+          <Button type="submit" className="min-h-[54px] w-full" isLoading={loading}>
             <span className="inline-flex items-center justify-center gap-2">
               <Send className="h-5 w-5" />
-
               Send Reset Code
-
-              {!loading && (
-                <ArrowRight className="h-5 w-5" />
-              )}
+              {!loading && <ArrowRight className="h-5 w-5" />}
             </span>
           </Button>
         </motion.div>
@@ -267,46 +235,38 @@ export default function ForgotPasswordPage() {
         <div className="flex items-center gap-2">
           <LockKeyhole className="h-5 w-5 text-primary" />
 
-          <h2 className="font-heading text-sm font-bold text-navy">
-            How password recovery works
-          </h2>
+          <h2 className="font-heading text-sm font-bold text-navy">How password recovery works</h2>
         </div>
 
         <div className="mt-4 space-y-3">
-          {recoverySteps.map(
-            (step, index) => (
-              <motion.div
-                key={step.number}
-                initial={{
-                  opacity: 0,
-                  x: -12,
-                }}
-                animate={{
-                  opacity: 1,
-                  x: 0,
-                }}
-                transition={{
-                  delay:
-                    0.34 +
-                    index * 0.08,
-                }}
-                whileHover={{
-                  x: 4,
-                }}
-                className="flex items-center gap-3 rounded-xl bg-surface-soft px-3 py-3"
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-light text-xs font-extrabold text-primary">
-                  {step.number}
-                </span>
+          {recoverySteps.map((step, index) => (
+            <motion.div
+              key={step.number}
+              initial={{
+                opacity: 0,
+                x: -12,
+              }}
+              animate={{
+                opacity: 1,
+                x: 0,
+              }}
+              transition={{
+                delay: 0.34 + index * 0.08,
+              }}
+              whileHover={{
+                x: 4,
+              }}
+              className="flex items-center gap-3 rounded-xl bg-surface-soft px-3 py-3"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-light text-xs font-extrabold text-primary">
+                {step.number}
+              </span>
 
-                <span className="text-xs font-semibold text-slate-600">
-                  {step.text}
-                </span>
+              <span className="text-xs font-semibold text-slate-600">{step.text}</span>
 
-                <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-emerald-500" />
-              </motion.div>
-            ),
-          )}
+              <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-emerald-500" />
+            </motion.div>
+          ))}
         </div>
       </motion.div>
 
@@ -330,14 +290,11 @@ export default function ForgotPasswordPage() {
         </span>
 
         <div>
-          <p className="text-sm font-bold text-emerald-800">
-            Secure password recovery
-          </p>
+          <p className="text-sm font-bold text-emerald-800">Secure password recovery</p>
 
           <p className="mt-1 text-xs leading-5 text-emerald-700/70">
-            CleanNest will never ask you to send
-            your password or verification code to
-            another person.
+            CleanNest will never ask you to send your password or verification code to another
+            person.
           </p>
         </div>
       </motion.div>
@@ -351,7 +308,6 @@ export default function ForgotPasswordPage() {
             className="group inline-flex items-center gap-1 font-bold text-primary transition-colors hover:text-primary-dark"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-
             Back to login
           </Link>
         </p>

@@ -36,9 +36,7 @@ export default function ServiceProofWorkspace({
   const [proof, setProof] = useState<ServiceProofReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [workingKey, setWorkingKey] = useState<string | null>(null);
-  const [uploadingStage, setUploadingStage] = useState<
-    "before" | "after" | null
-  >(null);
+  const [uploadingStage, setUploadingStage] = useState<"before" | "after" | null>(null);
   const [issue, setIssue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
@@ -49,7 +47,7 @@ export default function ServiceProofWorkspace({
       setProof(nextProof);
       onProofChange(nextProof);
     },
-    [onProofChange],
+    [onProofChange]
   );
 
   const loadProof = useCallback(async () => {
@@ -65,11 +63,7 @@ export default function ServiceProofWorkspace({
       }
       applyProof(payload.data);
     } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Could not load service proof",
-      );
+      setError(loadError instanceof Error ? loadError.message : "Could not load service proof");
     } finally {
       setLoading(false);
     }
@@ -98,11 +92,7 @@ export default function ServiceProofWorkspace({
       }
       applyProof(payload.data);
     } catch (taskError) {
-      setError(
-        taskError instanceof Error
-          ? taskError.message
-          : "Checklist could not be updated",
-      );
+      setError(taskError instanceof Error ? taskError.message : "Checklist could not be updated");
     } finally {
       setWorkingKey(null);
     }
@@ -116,19 +106,17 @@ export default function ServiceProofWorkspace({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("stage", stage);
-      const response = await fetch(
-        `/api/cleaner/jobs/${bookingId}/proof/upload`,
-        { method: "POST", body: formData },
-      );
+      const response = await fetch(`/api/cleaner/jobs/${bookingId}/proof/upload`, {
+        method: "POST",
+        body: formData,
+      });
       const payload = (await response.json()) as ApiEnvelope<ServiceProofReport>;
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? "Photo upload failed");
       }
       applyProof(payload.data);
     } catch (uploadError) {
-      setError(
-        uploadError instanceof Error ? uploadError.message : "Photo upload failed",
-      );
+      setError(uploadError instanceof Error ? uploadError.message : "Photo upload failed");
     } finally {
       setUploadingStage(null);
       if (beforeInput.current) beforeInput.current.value = "";
@@ -156,11 +144,7 @@ export default function ServiceProofWorkspace({
       applyProof(payload.data);
       setIssue("");
     } catch (issueError) {
-      setError(
-        issueError instanceof Error
-          ? issueError.message
-          : "Issue could not be reported",
-      );
+      setError(issueError instanceof Error ? issueError.message : "Issue could not be reported");
     } finally {
       setWorkingKey(null);
     }
@@ -171,10 +155,10 @@ export default function ServiceProofWorkspace({
       <section className="rounded-[28px] border border-dashed border-slate-300 bg-white p-7 text-center shadow-sm">
         <ClipboardCheck className="mx-auto h-10 w-10 text-slate-300" />
         <h2 className="mt-4 font-heading text-xl font-black text-navy">
-          Accept the job to open its work checklist
+          Acknowledge the job to open its work checklist
         </h2>
         <p className="mt-2 text-sm text-slate-500">
-          The service checklist and photo report are prepared after acceptance.
+          Confirm that you have seen this assigned job to prepare its checklist and photo report.
         </p>
       </section>
     );
@@ -205,9 +189,7 @@ export default function ServiceProofWorkspace({
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">
               Proof of service
             </p>
-            <h2 className="mt-1 font-heading text-xl font-black">
-              Live quality checklist
-            </h2>
+            <h2 className="mt-1 font-heading text-xl font-black">Live quality checklist</h2>
           </div>
           <div className="min-w-40">
             <div className="flex items-center justify-between text-xs font-bold text-blue-100/70">
@@ -256,7 +238,7 @@ export default function ServiceProofWorkspace({
                   ? "Checked in — checklist is active"
                   : proof.onMyWayAt
                     ? "On the way — the customer has been notified"
-                  : "Check in and start the service to unlock this checklist"}
+                    : "Check in and start the service to unlock this checklist"}
             </p>
             {proof.checkedInAt && (
               <p className="mt-1 text-xs font-semibold opacity-70">
@@ -315,8 +297,8 @@ export default function ServiceProofWorkspace({
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
           <PhotoStage
             stage="before"
-            title="Before cleaning"
-            description="Capture the starting condition."
+            title="Before cleaning · Optional"
+            description="Add a photo if it helps document the starting condition."
             photos={proof.beforePhotos}
             inputRef={beforeInput}
             uploading={uploadingStage === "before"}
@@ -325,8 +307,8 @@ export default function ServiceProofWorkspace({
           />
           <PhotoStage
             stage="after"
-            title="After cleaning"
-            description="Show the finished result clearly."
+            title="After cleaning · Optional"
+            description="Add a photo if you want to document the finished result."
             photos={proof.afterPhotos}
             inputRef={afterInput}
             uploading={uploadingStage === "after"}
@@ -341,12 +323,10 @@ export default function ServiceProofWorkspace({
               <ShieldAlert className="h-5 w-5" />
             </span>
             <div className="flex-1">
-              <h3 className="font-heading text-base font-black text-navy">
-                Report an issue
-              </h3>
+              <h3 className="font-heading text-base font-black text-navy">Report an issue</h3>
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Record access problems, existing damage, missing supplies, or
-                anything operations should know.
+                Record access problems, existing damage, missing supplies, or anything operations
+                should know.
               </p>
             </div>
           </div>
@@ -366,9 +346,7 @@ export default function ServiceProofWorkspace({
                 disabled={!issue.trim() || workingKey !== null}
                 className="inline-flex min-h-11 items-center justify-center gap-2 self-end rounded-xl bg-amber-600 px-5 text-sm font-black text-white transition hover:bg-amber-700 disabled:opacity-50"
               >
-                {workingKey === "issue" && (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                )}
+                {workingKey === "issue" && <LoaderCircle className="h-4 w-4 animate-spin" />}
                 Save issue
               </button>
             </div>
@@ -408,8 +386,8 @@ export default function ServiceProofWorkspace({
             <ClipboardCheck className="mt-0.5 h-5 w-5 shrink-0" />
           )}
           {proof.progress.readyToComplete
-            ? "All proof requirements are ready. You can finish your work."
-            : "Complete every task and add at least one before and one after photo to finish."}
+            ? "Every required task is complete. You can finish your work."
+            : "Complete every checklist task before finishing. Photos are optional."}
         </div>
       </div>
     </section>
@@ -440,9 +418,7 @@ function PhotoStage({
       <div className="flex items-center gap-3">
         <span
           className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-            stage === "before"
-              ? "bg-amber-100 text-amber-700"
-              : "bg-emerald-100 text-emerald-700"
+            stage === "before" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
           }`}
         >
           <Camera className="h-5 w-5" />

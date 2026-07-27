@@ -1,11 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Suspense,
-  useEffect,
-  useState,
-} from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,10 +19,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import {
-  verifyEmailSchema,
-  type VerifyEmailValues,
-} from "@/validators/authValidator";
+import { verifyEmailSchema, type VerifyEmailValues } from "@/validators/authValidator";
 import { useAuth } from "@/hooks/useAuth";
 import { OtpInput } from "@/components/ui/OtpInput";
 import { Alert } from "@/components/ui/Alert";
@@ -51,26 +44,14 @@ function maskEmail(email: string) {
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
 
-  const email =
-    searchParams.get("email") ?? "";
+  const email = searchParams.get("email") ?? "";
 
-  const {
-    verifyEmail,
-    resendOtp,
-    loading,
-    error,
-    setError: setAuthError,
-  } = useAuth();
+  const { verifyEmail, resendOtp, loading, error, setError: setAuthError } = useAuth();
 
   const [otp, setOtp] = useState("");
-  const [cooldown, setCooldown] =
-    useState(RESEND_COOLDOWN);
-  const [
-    resendSuccess,
-    setResendSuccess,
-  ] = useState<string | null>(null);
-  const [isResending, setIsResending] =
-    useState(false);
+  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   const {
     register,
@@ -78,9 +59,7 @@ function VerifyEmailForm() {
     setValue,
     formState: { errors },
   } = useForm<VerifyEmailValues>({
-    resolver: zodResolver(
-      verifyEmailSchema,
-    ),
+    resolver: zodResolver(verifyEmailSchema),
     defaultValues: {
       email,
       otp: "",
@@ -99,9 +78,7 @@ function VerifyEmailForm() {
     }
 
     const timer = window.setTimeout(() => {
-      setCooldown((current) =>
-        Math.max(current - 1, 0),
-      );
+      setCooldown((current) => Math.max(current - 1, 0));
     }, 1000);
 
     return () => {
@@ -118,9 +95,7 @@ function VerifyEmailForm() {
     });
   }
 
-  async function onSubmit(
-    values: VerifyEmailValues,
-  ) {
+  async function onSubmit(values: VerifyEmailValues) {
     setResendSuccess(null);
 
     await verifyEmail({
@@ -136,9 +111,7 @@ function VerifyEmailForm() {
     }
 
     if (!email) {
-      setAuthError(
-        "The email address is missing. Please return to signup and try again.",
-      );
+      setAuthError("The email address is missing. Please return to signup and try again.");
       return;
     }
 
@@ -151,19 +124,14 @@ function VerifyEmailForm() {
 
       if (result) {
         setCooldown(RESEND_COOLDOWN);
-        setResendSuccess(
-          "A new verification code has been sent to your email.",
-        );
+        setResendSuccess("A new verification code has been sent to your email.");
       }
     } finally {
       setIsResending(false);
     }
   }
 
-  const canResend =
-    cooldown === 0 &&
-    !isResending &&
-    !loading;
+  const canResend = cooldown === 0 && !isResending && !loading;
 
   return (
     <motion.div
@@ -222,9 +190,8 @@ function VerifyEmailForm() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-500">
-          Enter the six-digit verification code
-          sent to your email to activate your
-          CleanNest account.
+          Enter the six-digit verification code sent to your email to activate your CleanNest
+          account.
         </p>
       </div>
 
@@ -263,15 +230,11 @@ function VerifyEmailForm() {
           </p>
 
           <p className="mt-1 truncate text-sm font-bold text-navy">
-            {email
-              ? maskEmail(email)
-              : "Email address unavailable"}
+            {email ? maskEmail(email) : "Email address unavailable"}
           </p>
         </div>
 
-        {email && (
-          <CheckCircle2 className="ml-auto h-5 w-5 shrink-0 text-emerald-500" />
-        )}
+        {email && <CheckCircle2 className="ml-auto h-5 w-5 shrink-0 text-emerald-500" />}
       </motion.div>
 
       {/* Error message */}
@@ -289,9 +252,7 @@ function VerifyEmailForm() {
           }}
           className="mt-5"
         >
-          <Alert variant="error">
-            {error}
-          </Alert>
+          <Alert variant="error">{error}</Alert>
         </motion.div>
       )}
 
@@ -310,25 +271,14 @@ function VerifyEmailForm() {
           }}
           className="mt-5"
         >
-          <Alert variant="success">
-            {resendSuccess}
-          </Alert>
+          <Alert variant="success">{resendSuccess}</Alert>
         </motion.div>
       )}
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-6 space-y-5"
-      >
-        <input
-          type="hidden"
-          {...register("email")}
-        />
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
+        <input type="hidden" {...register("email")} />
 
-        <input
-          type="hidden"
-          {...register("otp")}
-        />
+        <input type="hidden" {...register("otp")} />
 
         {/* OTP section */}
         <motion.div
@@ -356,26 +306,20 @@ function VerifyEmailForm() {
               </p>
 
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Enter all six digits from the
-                verification email.
+                Enter all six digits from the verification email.
               </p>
             </div>
           </div>
 
           <div className="mt-5">
-            <OtpInput
-              value={otp}
-              onChange={handleOtpChange}
-              error={errors.otp?.message}
-            />
+            <OtpInput value={otp} onChange={handleOtpChange} error={errors.otp?.message} />
           </div>
 
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2.5">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
 
             <p className="text-xs leading-5 text-amber-800/75">
-              Never share your verification code
-              with another person.
+              Never share your verification code with another person.
             </p>
           </div>
         </motion.div>
@@ -412,18 +356,12 @@ function VerifyEmailForm() {
             type="submit"
             className="min-h-[54px] w-full"
             isLoading={loading}
-            disabled={
-              !email || otp.length !== 6
-            }
+            disabled={!email || otp.length !== 6}
           >
             <span className="inline-flex items-center justify-center gap-2">
               <MailCheck className="h-5 w-5" />
-
               Verify Email
-
-              {!loading && (
-                <ArrowRight className="h-5 w-5" />
-              )}
+              {!loading && <ArrowRight className="h-5 w-5" />}
             </span>
           </Button>
         </motion.div>
@@ -446,21 +384,14 @@ function VerifyEmailForm() {
       >
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-soft text-primary">
-            {cooldown > 0 ? (
-              <Clock3 className="h-5 w-5" />
-            ) : (
-              <RefreshCw className="h-5 w-5" />
-            )}
+            {cooldown > 0 ? <Clock3 className="h-5 w-5" /> : <RefreshCw className="h-5 w-5" />}
           </span>
 
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-navy">
-              Didn&apos;t receive the code?
-            </p>
+            <p className="text-sm font-bold text-navy">Didn&apos;t receive the code?</p>
 
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Check your spam folder or request a
-              new verification code.
+              Check your spam folder or request a new verification code.
             </p>
           </div>
         </div>
@@ -485,13 +416,7 @@ function VerifyEmailForm() {
           }
           className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary/15 bg-primary-light px-4 text-sm font-bold text-primary transition-colors hover:border-primary/30 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${
-              isResending
-                ? "animate-spin"
-                : ""
-            }`}
-          />
+          <RefreshCw className={`h-4 w-4 ${isResending ? "animate-spin" : ""}`} />
 
           {isResending
             ? "Sending new code..."
@@ -508,11 +433,7 @@ function VerifyEmailForm() {
                 width: "100%",
               }}
               animate={{
-                width: `${
-                  (cooldown /
-                    RESEND_COOLDOWN) *
-                  100
-                }%`,
+                width: `${(cooldown / RESEND_COOLDOWN) * 100}%`,
               }}
               transition={{
                 duration: 0.3,
@@ -543,14 +464,10 @@ function VerifyEmailForm() {
         </span>
 
         <div>
-          <p className="text-sm font-bold text-emerald-800">
-            Secure account activation
-          </p>
+          <p className="text-sm font-bold text-emerald-800">Secure account activation</p>
 
           <p className="mt-1 text-xs leading-5 text-emerald-700/70">
-            Email verification protects your
-            account and confirms that the email
-            belongs to you.
+            Email verification protects your account and confirms that the email belongs to you.
           </p>
         </div>
       </motion.div>
@@ -562,7 +479,6 @@ function VerifyEmailForm() {
           className="group inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-colors hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-
           Back to signup
         </Link>
 
@@ -571,7 +487,6 @@ function VerifyEmailForm() {
           className="group inline-flex items-center gap-1.5 text-sm font-bold text-primary transition-colors hover:text-primary-dark"
         >
           Go to login
-
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
         </Link>
       </div>
@@ -601,11 +516,7 @@ function VerifyEmailLoadingFallback() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense
-      fallback={
-        <VerifyEmailLoadingFallback />
-      }
-    >
+    <Suspense fallback={<VerifyEmailLoadingFallback />}>
       <VerifyEmailForm />
     </Suspense>
   );

@@ -32,8 +32,18 @@ function formatLabel(date: string, range: RevenueRange): string {
   if (range === "year") {
     const [, month] = date.split("-");
     const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return months[Number(month) - 1] ?? date;
   }
@@ -60,9 +70,7 @@ export default function RevenueChart({
   return (
     <div className="rounded-card bg-surface p-5 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-heading text-lg font-semibold text-navy">
-          Revenue
-        </h3>
+        <h3 className="font-heading text-lg font-semibold text-navy">Revenue</h3>
 
         <div className="flex gap-1 rounded-full bg-surface-soft p-1">
           {(Object.keys(RANGE_LABELS) as RevenueRange[]).map((r) => (
@@ -71,9 +79,7 @@ export default function RevenueChart({
               type="button"
               onClick={() => onRangeChange(r)}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                range === r
-                  ? "bg-primary text-white"
-                  : "text-navy/60 hover:text-navy"
+                range === r ? "bg-primary text-white" : "text-navy/60 hover:text-navy"
               }`}
             >
               {RANGE_LABELS[r]}
@@ -83,10 +89,7 @@ export default function RevenueChart({
       </div>
 
       {loading ? (
-        <div
-          className="mt-6 animate-pulse rounded bg-navy/5"
-          style={{ height: chartHeight }}
-        />
+        <div className="mt-6 animate-pulse rounded bg-navy/5" style={{ height: chartHeight }} />
       ) : data.length === 0 ? (
         <div
           className="mt-6 flex items-center justify-center rounded bg-surface-soft text-sm text-navy/40"
@@ -105,10 +108,7 @@ export default function RevenueChart({
             }}
           >
             {data.map((point, i) => {
-              const barHeight = Math.max(
-                4,
-                (point.revenue / maxRevenue) * (chartHeight - 24)
-              );
+              const barHeight = Math.max(4, (point.revenue / maxRevenue) * (chartHeight - 24));
               const isHovered = hoverIndex === i;
 
               return (

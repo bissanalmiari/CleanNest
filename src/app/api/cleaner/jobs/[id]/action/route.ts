@@ -3,19 +3,9 @@ import { successResponse } from "@/lib/apiResponse";
 import { requireRole } from "@/lib/auth";
 import { performCleanerJobAction } from "@/services/cleanerPortalService";
 
-const ACTIONS = [
-  "accept",
-  "decline",
-  "on_my_way",
-  "start",
-  "demo_start",
-  "complete",
-] as const;
+const ACTIONS = ["accept", "on_my_way", "start", "demo_start", "complete"] as const;
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const cleaner = await requireRole("cleaner");
     const { id } = await params;
@@ -39,8 +29,7 @@ export async function PATCH(
         latitude > 90 ||
         longitude < -180 ||
         longitude > 180 ||
-        (accuracy !== undefined &&
-          (!Number.isFinite(accuracy) || accuracy < 0))
+        (accuracy !== undefined && (!Number.isFinite(accuracy) || accuracy < 0))
       ) {
         throw new AppError("Invalid check-in location", 422);
       }
@@ -50,8 +39,8 @@ export async function PATCH(
         cleaner.id,
         id,
         body.action as (typeof ACTIONS)[number],
-        body.location,
-      ),
+        body.location
+      )
     );
   } catch (error) {
     return errorResponse(error);

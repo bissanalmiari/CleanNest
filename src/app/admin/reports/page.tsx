@@ -23,12 +23,7 @@ import { motion, useReducedMotion } from "motion/react";
 import RevenueTrendChart from "@/components/reports/RevenueTrendChart";
 
 type ReportRange = "week" | "month" | "year" | "all";
-type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
+type BookingStatus = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -140,9 +135,7 @@ function formatMoney(value: number, compact = false) {
 }
 
 function percent(value: number) {
-  return `${Math.min(100, Math.max(0, value)).toFixed(
-    Number.isInteger(value) ? 0 : 1,
-  )}%`;
+  return `${Math.min(100, Math.max(0, value)).toFixed(Number.isInteger(value) ? 0 : 1)}%`;
 }
 
 function DashboardSkeleton() {
@@ -163,100 +156,82 @@ export default function AdminReportsPage() {
   const [range, setRange] = useState<ReportRange>("month");
   const [revenue, setRevenue] = useState<RevenueReport | null>(null);
   const [bookings, setBookings] = useState<BookingReport | null>(null);
-  const [popularServices, setPopularServices] = useState<PopularServiceRow[]>(
-    [],
-  );
+  const [popularServices, setPopularServices] = useState<PopularServiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchReports = useCallback(
-    async (currentRange: ReportRange, isRefresh = false) => {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+  const fetchReports = useCallback(async (currentRange: ReportRange, isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
 
-      try {
-        const [revenueResponse, bookingsResponse, servicesResponse] =
-          await Promise.all([
-            fetch(`/api/admin/reports/revenue?range=${currentRange}`, {
-              cache: "no-store",
-            }),
-            fetch(`/api/admin/reports/bookings?range=${currentRange}`, {
-              cache: "no-store",
-            }),
-            fetch(
-              `/api/admin/reports/popular-services?range=${currentRange}&limit=6`,
-              { cache: "no-store" },
-            ),
-          ]);
+    try {
+      const [revenueResponse, bookingsResponse, servicesResponse] = await Promise.all([
+        fetch(`/api/admin/reports/revenue?range=${currentRange}`, {
+          cache: "no-store",
+        }),
+        fetch(`/api/admin/reports/bookings?range=${currentRange}`, {
+          cache: "no-store",
+        }),
+        fetch(`/api/admin/reports/popular-services?range=${currentRange}&limit=6`, {
+          cache: "no-store",
+        }),
+      ]);
 
-        const [revenueJson, bookingsJson, servicesJson] = (await Promise.all([
-          revenueResponse.json(),
-          bookingsResponse.json(),
-          servicesResponse.json(),
-        ])) as [
-          ApiEnvelope<RevenueReport>,
-          ApiEnvelope<BookingReport>,
-          ApiEnvelope<{ services: PopularServiceRow[] }>,
-        ];
+      const [revenueJson, bookingsJson, servicesJson] = (await Promise.all([
+        revenueResponse.json(),
+        bookingsResponse.json(),
+        servicesResponse.json(),
+      ])) as [
+        ApiEnvelope<RevenueReport>,
+        ApiEnvelope<BookingReport>,
+        ApiEnvelope<{ services: PopularServiceRow[] }>,
+      ];
 
-        if (!revenueResponse.ok || !revenueJson.success) {
-          throw new Error(revenueJson.error ?? "Revenue report failed.");
-        }
-        if (!bookingsResponse.ok || !bookingsJson.success) {
-          throw new Error(bookingsJson.error ?? "Booking report failed.");
-        }
-        if (!servicesResponse.ok || !servicesJson.success) {
-          throw new Error(servicesJson.error ?? "Service report failed.");
-        }
-
-        setRevenue(revenueJson.data ?? null);
-        setBookings(bookingsJson.data ?? null);
-        setPopularServices(servicesJson.data?.services ?? []);
-        setErrorMessage(null);
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Reports could not be loaded.",
-        );
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+      if (!revenueResponse.ok || !revenueJson.success) {
+        throw new Error(revenueJson.error ?? "Revenue report failed.");
       }
-    },
-    [],
-  );
+      if (!bookingsResponse.ok || !bookingsJson.success) {
+        throw new Error(bookingsJson.error ?? "Booking report failed.");
+      }
+      if (!servicesResponse.ok || !servicesJson.success) {
+        throw new Error(servicesJson.error ?? "Service report failed.");
+      }
+
+      setRevenue(revenueJson.data ?? null);
+      setBookings(bookingsJson.data ?? null);
+      setPopularServices(servicesJson.data?.services ?? []);
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Reports could not be loaded.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     void fetchReports(range);
   }, [fetchReports, range]);
 
   const breakdown = bookings?.statusBreakdown ?? EMPTY_BREAKDOWN;
-  const activePipeline =
-    breakdown.pending + breakdown.confirmed + breakdown.in_progress;
+  const activePipeline = breakdown.pending + breakdown.confirmed + breakdown.in_progress;
   const cancellationRate =
     bookings && bookings.totalBookings > 0
       ? (breakdown.cancelled / bookings.totalBookings) * 100
       : 0;
   const maximumServiceBookings = Math.max(
     1,
-    ...popularServices.map((service) => service.bookingCount),
+    ...popularServices.map((service) => service.bookingCount)
   );
-  const totalServiceRevenue = popularServices.reduce(
-    (sum, service) => sum + service.revenue,
-    0,
-  );
+  const totalServiceRevenue = popularServices.reduce((sum, service) => sum + service.revenue, 0);
   const currentRangeLabel =
-    RANGE_OPTIONS.find((option) => option.value === range)?.label ??
-    "Selected period";
+    RANGE_OPTIONS.find((option) => option.value === range)?.label ?? "Selected period";
 
   const donutBackground = useMemo(() => {
     const total = Math.max(1, bookings?.totalBookings ?? 0);
     let cursor = 0;
-    const segments = (
-      Object.keys(STATUS_META) as BookingStatus[]
-    ).map((status) => {
+    const segments = (Object.keys(STATUS_META) as BookingStatus[]).map((status) => {
       const start = cursor;
       cursor += (breakdown[status] / total) * 100;
       return `${STATUS_META[status].dot} ${start}% ${cursor}%`;
@@ -298,13 +273,11 @@ export default function AdminReportsPage() {
                 </div>
                 <h1 className="mt-6 max-w-3xl font-heading text-4xl font-black leading-[1.04] tracking-[-0.045em] sm:text-5xl">
                   Performance you can read.
-                  <span className="block text-cyan-300">
-                    Decisions you can trust.
-                  </span>
+                  <span className="block text-cyan-300">Decisions you can trust.</span>
                 </h1>
                 <p className="mt-5 max-w-2xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                  Follow revenue, booking health, and service demand through
-                  one focused operational view.
+                  Follow revenue, booking health, and service demand through one focused operational
+                  view.
                 </p>
               </div>
 
@@ -339,9 +312,7 @@ export default function AdminReportsPage() {
                   className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.07] px-4 text-xs font-extrabold text-blue-100 transition hover:bg-white/[0.12] disabled:cursor-wait disabled:opacity-60"
                 >
                   <RefreshCw
-                    className={`h-4 w-4 text-cyan-300 ${
-                      refreshing ? "animate-spin" : ""
-                    }`}
+                    className={`h-4 w-4 text-cyan-300 ${refreshing ? "animate-spin" : ""}`}
                   />
                   Refresh data
                 </button>
@@ -363,9 +334,7 @@ export default function AdminReportsPage() {
                   <ExecutiveMetric
                     icon={CreditCard}
                     label="Average payment"
-                    value={formatMoney(
-                      revenue?.averageTransactionValue ?? 0,
-                    )}
+                    value={formatMoney(revenue?.averageTransactionValue ?? 0)}
                     note="Per successful transaction"
                     accent="blue"
                   />
@@ -421,16 +390,11 @@ export default function AdminReportsPage() {
                 <p className="text-[9px] font-extrabold uppercase tracking-[0.13em] text-primary/60">
                   Selected range
                 </p>
-                <p className="mt-1 text-xs font-extrabold text-primary">
-                  {currentRangeLabel}
-                </p>
+                <p className="mt-1 text-xs font-extrabold text-primary">{currentRangeLabel}</p>
               </div>
             </div>
             <div className="mt-5">
-              <RevenueTrendChart
-                data={revenue?.series ?? []}
-                loading={loading}
-              />
+              <RevenueTrendChart data={revenue?.series ?? []} loading={loading} />
             </div>
           </div>
 
@@ -440,9 +404,7 @@ export default function AdminReportsPage() {
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-300">
                   Booking health
                 </p>
-                <h2 className="mt-2 font-heading text-xl font-black">
-                  Status distribution
-                </h2>
+                <h2 className="mt-2 font-heading text-xl font-black">Status distribution</h2>
               </div>
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.08] text-cyan-300">
                 <BarChart3 className="h-5 w-5" />
@@ -464,37 +426,24 @@ export default function AdminReportsPage() {
                 </div>
               </div>
               <div className="min-w-0 flex-1 space-y-2.5">
-                {(Object.keys(STATUS_META) as BookingStatus[]).map(
-                  (status) => (
-                    <div
-                      key={status}
-                      className="flex items-center justify-between gap-3 text-xs"
-                    >
-                      <span className="flex items-center gap-2 font-semibold text-blue-100/65">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: STATUS_META[status].dot }}
-                        />
-                        {STATUS_META[status].label}
-                      </span>
-                      <span className="font-extrabold text-white">
-                        {breakdown[status]}
-                      </span>
-                    </div>
-                  ),
-                )}
+                {(Object.keys(STATUS_META) as BookingStatus[]).map((status) => (
+                  <div key={status} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="flex items-center gap-2 font-semibold text-blue-100/65">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: STATUS_META[status].dot }}
+                      />
+                      {STATUS_META[status].label}
+                    </span>
+                    <span className="font-extrabold text-white">{breakdown[status]}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="mt-7 grid grid-cols-2 gap-3 border-t border-white/10 pt-5">
-              <SmallInsight
-                label="Active pipeline"
-                value={String(activePipeline)}
-              />
-              <SmallInsight
-                label="Cancellation"
-                value={percent(cancellationRate)}
-              />
+              <SmallInsight label="Active pipeline" value={String(activePipeline)} />
+              <SmallInsight label="Cancellation" value={percent(cancellationRate)} />
             </div>
           </div>
         </section>
@@ -519,10 +468,7 @@ export default function AdminReportsPage() {
             {loading ? (
               <div className="space-y-3 p-6">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-16 animate-pulse rounded-2xl bg-slate-100"
-                  />
+                  <div key={index} className="h-16 animate-pulse rounded-2xl bg-slate-100" />
                 ))}
               </div>
             ) : popularServices.length === 0 ? (
@@ -599,28 +545,21 @@ export default function AdminReportsPage() {
                 </p>
                 <span className="mb-1 text-xs font-bold text-slate-400">
                   {breakdown.completed} of{" "}
-                  {Math.max(
-                    0,
-                    (bookings?.totalBookings ?? 0) - breakdown.cancelled,
-                  )}
+                  {Math.max(0, (bookings?.totalBookings ?? 0) - breakdown.cancelled)}
                 </span>
               </div>
               <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <motion.div
                   initial={reduceMotion ? false : { width: 0 }}
                   animate={{
-                    width: `${Math.min(
-                      100,
-                      bookings?.completionRate ?? 0,
-                    )}%`,
+                    width: `${Math.min(100, bookings?.completionRate ?? 0)}%`,
                   }}
                   transition={{ duration: 0.65, ease: "easeOut" }}
                   className="h-full rounded-full bg-[linear-gradient(90deg,#10b981,#22d3ee)]"
                 />
               </div>
               <p className="mt-4 text-xs font-medium leading-5 text-slate-500">
-                Cancelled bookings are excluded from the completion-rate
-                denominator.
+                Cancelled bookings are excluded from the completion-rate denominator.
               </p>
             </div>
           </aside>
@@ -662,9 +601,7 @@ function ExecutiveMetric({
           {label}
         </p>
       </div>
-      <p className="mt-4 font-heading text-2xl font-black tracking-[-0.04em] text-white">
-        {value}
-      </p>
+      <p className="mt-4 font-heading text-2xl font-black tracking-[-0.04em] text-white">{value}</p>
       <p className="mt-1 text-[10px] font-bold text-blue-100/50">{note}</p>
     </div>
   );
@@ -676,9 +613,7 @@ function SmallInsight({ label, value }: { label: string; value: string }) {
       <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-blue-100/45">
         {label}
       </p>
-      <p className="mt-1.5 font-heading text-lg font-black text-white">
-        {value}
-      </p>
+      <p className="mt-1.5 font-heading text-lg font-black text-white">{value}</p>
     </div>
   );
 }
@@ -728,9 +663,7 @@ function ServiceRanking({
         <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
           Bookings
         </p>
-        <p className="mt-1 font-heading text-lg font-black text-navy">
-          {service.bookingCount}
-        </p>
+        <p className="mt-1 font-heading text-lg font-black text-navy">{service.bookingCount}</p>
       </div>
 
       <div>

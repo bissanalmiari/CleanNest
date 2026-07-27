@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentType,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -34,20 +27,11 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  motion,
-  useReducedMotion,
-} from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 
-export type FinalCheckPaymentMethod =
-  | "cash"
-  | "card";
+export type FinalCheckPaymentMethod = "cash" | "card";
 
-export type FinalCheckPropertyType =
-  | "apartment"
-  | "house"
-  | "office"
-  | "other";
+export type FinalCheckPropertyType = "apartment" | "house" | "office" | "other";
 
 export interface FinalCheckAddOn {
   addOnId: string;
@@ -85,13 +69,9 @@ export interface FinalCheckDraft {
 interface FinalCheckStepProps {
   draft: FinalCheckDraft;
 
-  onPaymentMethodChange: (
-    method: FinalCheckPaymentMethod,
-  ) => void;
+  onPaymentMethodChange: (method: FinalCheckPaymentMethod) => void;
 
-  onCustomerNotesChange: (
-    notes: string,
-  ) => void;
+  onCustomerNotesChange: (notes: string) => void;
 }
 
 interface PropertyPriceLine {
@@ -123,9 +103,7 @@ interface AppliedPromoCode {
   code: string;
   description: string;
 
-  discountType:
-    | "percentage"
-    | "fixed_amount";
+  discountType: "percentage" | "fixed_amount";
 
   discountValue: number;
   discountAmount: number;
@@ -156,9 +134,7 @@ interface BookingPriceQuote {
 
   addOns: QuoteAddOnLine[];
 
-  promoCode:
-    | AppliedPromoCode
-    | null;
+  promoCode: AppliedPromoCode | null;
 
   serviceBaseAmount: number;
   propertyAdjustmentAmount: number;
@@ -208,328 +184,172 @@ interface ApiResponse {
   error?: unknown;
 }
 
-function readString(
-  value: unknown,
-  fallback = "",
-): string {
-  return typeof value === "string"
-    ? value.trim()
-    : fallback;
+function readString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value.trim() : fallback;
 }
 
-function readNumber(
-  value: unknown,
-  fallback = 0,
-): number {
-  const parsedValue =
-    Number(value);
+function readNumber(value: unknown, fallback = 0): number {
+  const parsedValue = Number(value);
 
-  return Number.isFinite(
-    parsedValue,
-  )
-    ? parsedValue
-    : fallback;
+  return Number.isFinite(parsedValue) ? parsedValue : fallback;
 }
 
-function asRecord(
-  value: unknown,
-): Record<string, unknown> | null {
-  if (
-    typeof value !== "object" ||
-    value === null
-  ) {
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== "object" || value === null) {
     return null;
   }
 
-  return value as Record<
-    string,
-    unknown
-  >;
+  return value as Record<string, unknown>;
 }
 
-function roundMoney(
-  value: number,
-): number {
-  return (
-    Math.round(
-      (value +
-        Number.EPSILON) *
-        100,
-    ) / 100
-  );
+function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-function formatCurrency(
-  value: number,
-): string {
-  return new Intl.NumberFormat(
-    "en-US",
-    {
-      style: "currency",
-      currency: "USD",
-    },
-  ).format(value);
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
 }
 
-function formatDuration(
-  minutes: number,
-): string {
+function formatDuration(minutes: number): string {
   if (minutes <= 0) {
     return "0 min";
   }
 
-  const hours =
-    Math.floor(
-      minutes / 60,
-    );
+  const hours = Math.floor(minutes / 60);
 
-  const remainingMinutes =
-    minutes % 60;
+  const remainingMinutes = minutes % 60;
 
   if (hours === 0) {
     return `${remainingMinutes} min`;
   }
 
-  if (
-    remainingMinutes === 0
-  ) {
-    return `${hours} ${
-      hours === 1
-        ? "hour"
-        : "hours"
-    }`;
+  if (remainingMinutes === 0) {
+    return `${hours} ${hours === 1 ? "hour" : "hours"}`;
   }
 
   return `${hours} hr ${remainingMinutes} min`;
 }
 
-function formatClockTime(
-  value: string,
-): string {
+function formatClockTime(value: string): string {
   if (!value) {
     return "Not selected";
   }
 
-  const [hours, minutes] =
-    value
-      .split(":")
-      .map(Number);
+  const [hours, minutes] = value.split(":").map(Number);
 
-  if (
-    !Number.isFinite(hours) ||
-    !Number.isFinite(minutes)
-  ) {
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
     return value;
   }
 
-  const date = new Date(
-    Date.UTC(
-      2000,
-      0,
-      1,
-      hours ?? 0,
-      minutes ?? 0,
-    ),
-  );
+  const date = new Date(Date.UTC(2000, 0, 1, hours ?? 0, minutes ?? 0));
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "UTC",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  }).format(date);
 }
 
-function formatBookingDate(
-  value: string,
-): string {
+function formatBookingDate(value: string): string {
   if (!value) {
     return "Not selected";
   }
 
-  const [year, month, day] =
-    value
-      .split("-")
-      .map(Number);
+  const [year, month, day] = value.split("-").map(Number);
 
-  if (
-    !year ||
-    !month ||
-    !day
-  ) {
+  if (!year || !month || !day) {
     return value;
   }
 
-  const date = new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-      12,
-    ),
-  );
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
-function propertyTypeLabel(
-  value: FinalCheckPropertyType,
-): string {
-  return (
-    value
-      .charAt(0)
-      .toUpperCase() +
-    value.slice(1)
-  );
+function propertyTypeLabel(value: FinalCheckPropertyType): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function calculateEndTime(
-  startTime: string,
-  durationMinutes: number,
-): string {
-  const [hours, minutes] =
-    startTime
-      .split(":")
-      .map(Number);
+function calculateEndTime(startTime: string, durationMinutes: number): string {
+  const [hours, minutes] = startTime.split(":").map(Number);
 
-  if (
-    !Number.isFinite(hours) ||
-    !Number.isFinite(minutes) ||
-    durationMinutes <= 0
-  ) {
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || durationMinutes <= 0) {
     return "";
   }
 
-  const startMinutes =
-    (hours ?? 0) * 60 +
-    (minutes ?? 0);
+  const startMinutes = (hours ?? 0) * 60 + (minutes ?? 0);
 
-  const endMinutes =
-    startMinutes +
-    durationMinutes;
+  const endMinutes = startMinutes + durationMinutes;
 
-  if (
-    endMinutes >=
-    24 * 60
-  ) {
+  if (endMinutes >= 24 * 60) {
     return "";
   }
 
-  const endHours =
-    Math.floor(
-      endMinutes / 60,
-    );
+  const endHours = Math.floor(endMinutes / 60);
 
-  const endMinuteValue =
-    endMinutes % 60;
+  const endMinuteValue = endMinutes % 60;
 
-  return `${String(
-    endHours,
-  ).padStart(2, "0")}:${String(
-    endMinuteValue,
-  ).padStart(2, "0")}`;
+  return `${String(endHours).padStart(2, "0")}:${String(endMinuteValue).padStart(2, "0")}`;
 }
 
-function extractErrorMessage(
-  payload: ApiResponse,
-  fallback: string,
-): string {
-  if (
-    typeof payload.message ===
-    "string"
-  ) {
+function extractErrorMessage(payload: ApiResponse, fallback: string): string {
+  if (typeof payload.message === "string") {
     return payload.message;
   }
 
-  if (
-    typeof payload.error ===
-    "string"
-  ) {
+  if (typeof payload.error === "string") {
     return payload.error;
   }
 
-  const errorRecord =
-    asRecord(payload.error);
+  const errorRecord = asRecord(payload.error);
 
-  if (
-    errorRecord &&
-    typeof errorRecord.message ===
-      "string"
-  ) {
+  if (errorRecord && typeof errorRecord.message === "string") {
     return errorRecord.message;
   }
 
   return fallback;
 }
 
-function normalizePropertyLine(
-  value: unknown,
-): PropertyPriceLine | null {
-  const record =
-    asRecord(value);
+function normalizePropertyLine(value: unknown): PropertyPriceLine | null {
+  const record = asRecord(value);
 
   if (!record) {
     return null;
   }
 
   return {
-    code:
-      readString(record.code),
+    code: readString(record.code),
 
-    label:
-      readString(
-        record.label,
-        "Property adjustment",
-      ),
+    label: readString(record.label, "Property adjustment"),
 
-    quantity:
-      readNumber(
-        record.quantity,
-      ),
+    quantity: readNumber(record.quantity),
 
-    unitAmount:
-      readNumber(
-        record.unitAmount,
-      ),
+    unitAmount: readNumber(record.unitAmount),
 
-    totalAmount:
-      readNumber(
-        record.totalAmount,
-      ),
+    totalAmount: readNumber(record.totalAmount),
 
-    extraDurationMinutes:
-      readNumber(
-        record.extraDurationMinutes,
-      ),
+    extraDurationMinutes: readNumber(record.extraDurationMinutes),
   };
 }
 
-function normalizeQuoteAddOn(
-  value: unknown,
-): QuoteAddOnLine | null {
-  const record =
-    asRecord(value);
+function normalizeQuoteAddOn(value: unknown): QuoteAddOnLine | null {
+  const record = asRecord(value);
 
   if (!record) {
     return null;
   }
 
-  const addOnId =
-    readString(
-      record.addOnId,
-    );
+  const addOnId = readString(record.addOnId);
 
   if (!addOnId) {
     return null;
@@ -538,171 +358,87 @@ function normalizeQuoteAddOn(
   return {
     addOnId,
 
-    name:
-      readString(
-        record.name,
-        "Extra touch",
-      ),
+    name: readString(record.name, "Extra touch"),
 
-    description:
-      readString(
-        record.description,
-      ),
+    description: readString(record.description),
 
-    quantity:
-      Math.max(
-        1,
-        readNumber(
-          record.quantity,
-          1,
-        ),
-      ),
+    quantity: Math.max(1, readNumber(record.quantity, 1)),
 
-    unitPrice:
-      readNumber(
-        record.unitPrice,
-      ),
+    unitPrice: readNumber(record.unitPrice),
 
-    totalPrice:
-      readNumber(
-        record.totalPrice,
-      ),
+    totalPrice: readNumber(record.totalPrice),
 
-    unitExtraDurationMinutes:
-      readNumber(
-        record.unitExtraDurationMinutes,
-      ),
+    unitExtraDurationMinutes: readNumber(record.unitExtraDurationMinutes),
 
-    totalExtraDurationMinutes:
-      readNumber(
-        record.totalExtraDurationMinutes,
-      ),
+    totalExtraDurationMinutes: readNumber(record.totalExtraDurationMinutes),
 
-    maximumQuantity:
-      Math.max(
-        1,
-        readNumber(
-          record.maximumQuantity,
-          1,
-        ),
-      ),
+    maximumQuantity: Math.max(1, readNumber(record.maximumQuantity, 1)),
   };
 }
 
-function normalizePromoCode(
-  value: unknown,
-): AppliedPromoCode | null {
-  const record =
-    asRecord(value);
+function normalizePromoCode(value: unknown): AppliedPromoCode | null {
+  const record = asRecord(value);
 
   if (!record) {
     return null;
   }
 
-  const id =
-    readString(record.id);
+  const id = readString(record.id);
 
-  const code =
-    readString(record.code);
+  const code = readString(record.code);
 
   if (!id || !code) {
     return null;
   }
 
-  const discountType =
-    record.discountType ===
-    "fixed_amount"
-      ? "fixed_amount"
-      : "percentage";
+  const discountType = record.discountType === "fixed_amount" ? "fixed_amount" : "percentage";
 
   return {
     id,
     code,
 
-    description:
-      readString(
-        record.description,
-      ),
+    description: readString(record.description),
 
     discountType,
 
-    discountValue:
-      readNumber(
-        record.discountValue,
-      ),
+    discountValue: readNumber(record.discountValue),
 
-    discountAmount:
-      readNumber(
-        record.discountAmount,
-      ),
+    discountAmount: readNumber(record.discountAmount),
   };
 }
 
-function normalizeQuote(
-  value: unknown,
-): BookingPriceQuote | null {
-  const record =
-    asRecord(value);
+function normalizeQuote(value: unknown): BookingPriceQuote | null {
+  const record = asRecord(value);
 
   if (!record) {
     return null;
   }
 
-  const service =
-    asRecord(
-      record.service,
-    );
+  const service = asRecord(record.service);
 
-  const property =
-    asRecord(
-      record.property,
-    );
+  const property = asRecord(record.property);
 
-  if (
-    !service ||
-    !property
-  ) {
+  if (!service || !property) {
     return null;
   }
 
-  const serviceId =
-    readString(service.id);
+  const serviceId = readString(service.id);
 
   if (!serviceId) {
     return null;
   }
 
-  const propertyLines =
-    Array.isArray(
-      property.lines,
-    )
-      ? property.lines
-          .map(
-            normalizePropertyLine,
-          )
-          .filter(
-            (
-              line,
-            ): line is PropertyPriceLine =>
-              line !== null,
-          )
-      : [];
+  const propertyLines = Array.isArray(property.lines)
+    ? property.lines
+        .map(normalizePropertyLine)
+        .filter((line): line is PropertyPriceLine => line !== null)
+    : [];
 
-  const addOns =
-    Array.isArray(
-      record.addOns,
-    )
-      ? record.addOns
-          .map(
-            normalizeQuoteAddOn,
-          )
-          .filter(
-            (
-              addOn,
-            ): addOn is QuoteAddOnLine =>
-              addOn !== null,
-          )
-      : [];
+  const addOns = Array.isArray(record.addOns)
+    ? record.addOns
+        .map(normalizeQuoteAddOn)
+        .filter((addOn): addOn is QuoteAddOnLine => addOn !== null)
+    : [];
 
   return {
     currency: "USD",
@@ -710,229 +446,106 @@ function normalizeQuote(
     service: {
       id: serviceId,
 
-      name:
-        readString(
-          service.name,
-          "Cleaning service",
-        ),
+      name: readString(service.name, "Cleaning service"),
 
-      basePrice:
-        readNumber(
-          service.basePrice,
-        ),
+      basePrice: readNumber(service.basePrice),
 
-      baseDurationMinutes:
-        readNumber(
-          service.baseDurationMinutes,
-        ),
+      baseDurationMinutes: readNumber(service.baseDurationMinutes),
     },
 
     property: {
-      type:
-        readString(
-          property.type,
-        ),
+      type: readString(property.type),
 
-      bedrooms:
-        property.bedrooms ===
-        undefined
-          ? undefined
-          : readNumber(
-              property.bedrooms,
-            ),
+      bedrooms: property.bedrooms === undefined ? undefined : readNumber(property.bedrooms),
 
-      bathrooms:
-        property.bathrooms ===
-        undefined
-          ? undefined
-          : readNumber(
-              property.bathrooms,
-            ),
+      bathrooms: property.bathrooms === undefined ? undefined : readNumber(property.bathrooms),
 
-      size:
-        property.size ===
-        undefined
-          ? undefined
-          : readNumber(
-              property.size,
-            ),
+      size: property.size === undefined ? undefined : readNumber(property.size),
 
-      adjustmentAmount:
-        readNumber(
-          property.adjustmentAmount,
-        ),
+      adjustmentAmount: readNumber(property.adjustmentAmount),
 
-      extraDurationMinutes:
-        readNumber(
-          property.extraDurationMinutes,
-        ),
+      extraDurationMinutes: readNumber(property.extraDurationMinutes),
 
-      lines:
-        propertyLines,
+      lines: propertyLines,
     },
 
     addOns,
 
-    promoCode:
-      normalizePromoCode(
-        record.promoCode,
-      ),
+    promoCode: normalizePromoCode(record.promoCode),
 
-    serviceBaseAmount:
-      readNumber(
-        record.serviceBaseAmount,
-    ),
+    serviceBaseAmount: readNumber(record.serviceBaseAmount),
 
-    propertyAdjustmentAmount:
-      readNumber(
-        record.propertyAdjustmentAmount,
-      ),
+    propertyAdjustmentAmount: readNumber(record.propertyAdjustmentAmount),
 
-    baseAmount:
-      readNumber(
-        record.baseAmount,
-      ),
+    baseAmount: readNumber(record.baseAmount),
 
-    addOnsAmount:
-      readNumber(
-        record.addOnsAmount,
-      ),
+    addOnsAmount: readNumber(record.addOnsAmount),
 
-    subtotalAmount:
-      readNumber(
-        record.subtotalAmount,
-      ),
+    subtotalAmount: readNumber(record.subtotalAmount),
 
-    discountAmount:
-      readNumber(
-        record.discountAmount,
-      ),
+    discountAmount: readNumber(record.discountAmount),
 
-    totalAmount:
-      readNumber(
-        record.totalAmount,
-      ),
+    totalAmount: readNumber(record.totalAmount),
 
-    serviceDurationMinutes:
-      readNumber(
-        record.serviceDurationMinutes,
-      ),
+    serviceDurationMinutes: readNumber(record.serviceDurationMinutes),
 
-    propertyExtraDurationMinutes:
-      readNumber(
-        record.propertyExtraDurationMinutes,
-      ),
+    propertyExtraDurationMinutes: readNumber(record.propertyExtraDurationMinutes),
 
-    addOnsExtraDurationMinutes:
-      readNumber(
-        record.addOnsExtraDurationMinutes,
-      ),
+    addOnsExtraDurationMinutes: readNumber(record.addOnsExtraDurationMinutes),
 
-    estimatedDurationMinutes:
-      readNumber(
-        record.estimatedDurationMinutes,
-      ),
+    estimatedDurationMinutes: readNumber(record.estimatedDurationMinutes),
   };
 }
 
-function extractQuote(
-  payload: ApiResponse,
-): BookingPriceQuote | null {
-  return normalizeQuote(
-    payload.data?.quote ??
-      payload.quote,
-  );
+function extractQuote(payload: ApiResponse): BookingPriceQuote | null {
+  return normalizeQuote(payload.data?.quote ?? payload.quote);
 }
 
-function normalizeCreatedBooking(
-  value: unknown,
-): CreatedBooking | null {
-  const record =
-    asRecord(value);
+function normalizeCreatedBooking(value: unknown): CreatedBooking | null {
+  const record = asRecord(value);
 
   if (!record) {
     return null;
   }
 
-  const id =
-    readString(record.id);
+  const id = readString(record.id);
 
-  const bookingNumber =
-    readString(
-      record.bookingNumber,
-    );
+  const bookingNumber = readString(record.bookingNumber);
 
-  if (
-    !id ||
-    !bookingNumber
-  ) {
+  if (!id || !bookingNumber) {
     return null;
   }
 
-  const pricing =
-    asRecord(
-      record.pricing,
-    );
+  const pricing = asRecord(record.pricing);
 
   return {
     id,
     bookingNumber,
 
-    status:
-      readString(
-        record.status,
-        "pending",
-      ),
+    status: readString(record.status, "pending"),
 
-    bookingDate:
-      readString(
-        record.bookingDate,
-      ),
+    bookingDate: readString(record.bookingDate),
 
-    startTime:
-      readString(
-        record.startTime,
-      ),
+    startTime: readString(record.startTime),
 
-    endTime:
-      readString(
-        record.endTime,
-      ),
+    endTime: readString(record.endTime),
 
-    estimatedDurationMinutes:
-      readNumber(
-        record.estimatedDurationMinutes,
-      ),
+    estimatedDurationMinutes: readNumber(record.estimatedDurationMinutes),
 
     pricing: pricing
       ? {
-          currency:
-            readString(
-              pricing.currency,
-              "USD",
-            ),
+          currency: readString(pricing.currency, "USD"),
 
-          serviceAreaFee:
-            readNumber(
-              pricing.serviceAreaFee,
-            ),
+          serviceAreaFee: readNumber(pricing.serviceAreaFee),
 
-          totalAmount:
-            readNumber(
-              pricing.totalAmount,
-            ),
+          totalAmount: readNumber(pricing.totalAmount),
         }
       : undefined,
   };
 }
 
-function extractCreatedBooking(
-  payload: ApiResponse,
-): CreatedBooking | null {
-  return normalizeCreatedBooking(
-    payload.data?.booking ??
-      payload.booking,
-  );
+function extractCreatedBooking(payload: ApiResponse): CreatedBooking | null {
+  return normalizeCreatedBooking(payload.data?.booking ?? payload.booking);
 }
 
 export default function FinalCheckStep({
@@ -940,129 +553,75 @@ export default function FinalCheckStep({
   onPaymentMethodChange,
   onCustomerNotesChange,
 }: FinalCheckStepProps) {
-  const router =
-    useRouter();
+  const router = useRouter();
 
-  const prefersReducedMotion =
-    useReducedMotion();
+  const prefersReducedMotion = useReducedMotion();
 
-  const requestVersionRef =
-    useRef(0);
+  const requestVersionRef = useRef(0);
 
-  const redirectTimerRef =
-    useRef<
-      ReturnType<
-        typeof setTimeout
-      > | null
-    >(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [quote, setQuote] =
-    useState<
-      BookingPriceQuote | null
-    >(null);
+  const [quote, setQuote] = useState<BookingPriceQuote | null>(null);
 
-  const [
-    isLoadingQuote,
-    setIsLoadingQuote,
-  ] = useState(true);
+  const [isLoadingQuote, setIsLoadingQuote] = useState(true);
 
-  const [
-    isSubmitting,
-    setIsSubmitting,
-  ] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [
-    quoteError,
-    setQuoteError,
-  ] = useState<
-    string | null
-  >(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
 
-  const [
-    submissionError,
-    setSubmissionError,
-  ] = useState<
-    string | null
-  >(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  const [
-    createdBooking,
-    setCreatedBooking,
-  ] = useState<
-    CreatedBooking | null
-  >(null);
+  const [createdBooking, setCreatedBooking] = useState<CreatedBooking | null>(null);
 
-  const [
-    refreshNumber,
-    setRefreshNumber,
-  ] = useState(0);
+  const [refreshNumber, setRefreshNumber] = useState(0);
 
   const [promoInput, setPromoInput] = useState("");
-  const [appliedPromoCodeId, setAppliedPromoCodeId] =
-    useState<string | null>(null);
+  const [appliedPromoCodeId, setAppliedPromoCodeId] = useState<string | null>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [promoMessage, setPromoMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
 
-  const pricingPayload =
-    useMemo(
-      () => ({
-        serviceId:
-          draft.serviceId,
+  const pricingPayload = useMemo(
+    () => ({
+      serviceId: draft.serviceId,
 
-        frequency:
-          "one_time",
+      frequency: "one_time",
 
-        property: {
-          propertyType:
-            draft.propertyType,
+      property: {
+        propertyType: draft.propertyType,
 
-          bedrooms:
-            draft.bedrooms,
+        bedrooms: draft.bedrooms,
 
-          bathrooms:
-            draft.bathrooms,
+        bathrooms: draft.bathrooms,
 
-          propertySize:
-            draft.propertySize,
-        },
+        propertySize: draft.propertySize,
+      },
 
-        addOns:
-          draft.addOns.map(
-            (addOn) => ({
-              addOnId:
-                addOn.addOnId,
+      addOns: draft.addOns.map((addOn) => ({
+        addOnId: addOn.addOnId,
 
-              quantity:
-                addOn.quantity,
-            }),
-          ),
+        quantity: addOn.quantity,
+      })),
 
-        promoCodeId:
-          appliedPromoCodeId ??
-          undefined,
-      }),
-      [
-        appliedPromoCodeId,
-        draft.addOns,
-        draft.bathrooms,
-        draft.bedrooms,
-        draft.propertySize,
-        draft.propertyType,
-        draft.serviceId,
-      ],
-    );
+      promoCodeId: appliedPromoCodeId ?? undefined,
+    }),
+    [
+      appliedPromoCodeId,
+      draft.addOns,
+      draft.bathrooms,
+      draft.bedrooms,
+      draft.propertySize,
+      draft.propertyType,
+      draft.serviceId,
+    ]
+  );
 
   useEffect(() => {
     return () => {
-      if (
-        redirectTimerRef.current
-      ) {
-        clearTimeout(
-          redirectTimerRef.current,
-        );
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
       }
     };
   }, []);
@@ -1072,21 +631,16 @@ export default function FinalCheckStep({
       setQuote(null);
       setIsLoadingQuote(false);
 
-      setQuoteError(
-        "A cleaning plan is required before requesting a price.",
-      );
+      setQuoteError("A cleaning plan is required before requesting a price.");
 
       return;
     }
 
-    requestVersionRef.current +=
-      1;
+    requestVersionRef.current += 1;
 
-    const requestVersion =
-      requestVersionRef.current;
+    const requestVersion = requestVersionRef.current;
 
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
     async function loadQuote() {
       setIsLoadingQuote(true);
@@ -1094,113 +648,71 @@ export default function FinalCheckStep({
       setSubmissionError(null);
 
       try {
-        const response =
-          await fetch(
-            "/api/customer/bookings/price-preview",
-            {
-              method: "POST",
+        const response = await fetch("/api/customer/bookings/price-preview", {
+          method: "POST",
 
-              credentials:
-                "include",
+          credentials: "include",
 
-              cache:
-                "no-store",
+          cache: "no-store",
 
-              signal:
-                controller.signal,
+          signal: controller.signal,
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-              body:
-                JSON.stringify(
-                  pricingPayload,
-                ),
-            },
-          );
+          body: JSON.stringify(pricingPayload),
+        });
 
-        const responseText =
-          await response.text();
+        const responseText = await response.text();
 
-        let payload:
-          ApiResponse = {};
+        let payload: ApiResponse = {};
 
-        if (
-          responseText.trim()
-        ) {
+        if (responseText.trim()) {
           try {
-            payload =
-              JSON.parse(
-                responseText,
-              ) as ApiResponse;
+            payload = JSON.parse(responseText) as ApiResponse;
           } catch {
-            throw new Error(
-              "The pricing server returned an invalid response.",
-            );
+            throw new Error("The pricing server returned an invalid response.");
           }
         }
 
         if (!response.ok) {
           throw new Error(
-            extractErrorMessage(
-              payload,
-              "The trusted price could not be calculated.",
-            ),
+            extractErrorMessage(payload, "The trusted price could not be calculated.")
           );
         }
 
-        const nextQuote =
-          extractQuote(
-            payload,
-          );
+        const nextQuote = extractQuote(payload);
 
         if (!nextQuote) {
-          throw new Error(
-            "The pricing response did not contain a valid quote.",
-          );
+          throw new Error("The pricing response did not contain a valid quote.");
         }
 
-        if (
-          requestVersion !==
-          requestVersionRef.current
-        ) {
+        if (requestVersion !== requestVersionRef.current) {
           return;
         }
 
         setQuote(nextQuote);
 
-        if (
-          nextQuote.promoCode &&
-          appliedPromoCodeId ===
-            nextQuote.promoCode.id
-        ) {
+        if (nextQuote.promoCode && appliedPromoCodeId === nextQuote.promoCode.id) {
           setPromoMessage({
             type: "success",
             text: `${nextQuote.promoCode.code} applied — you save ${formatCurrency(
-              nextQuote.promoCode.discountAmount,
+              nextQuote.promoCode.discountAmount
             )}.`,
           });
         }
       } catch (error) {
-        if (
-          controller.signal.aborted
-        ) {
+        if (controller.signal.aborted) {
           return;
         }
 
-        if (
-          requestVersion !==
-          requestVersionRef.current
-        ) {
+        if (requestVersion !== requestVersionRef.current) {
           return;
         }
 
         const message =
-          error instanceof Error
-            ? error.message
-            : "The trusted price could not be calculated.";
+          error instanceof Error ? error.message : "The trusted price could not be calculated.";
 
         if (appliedPromoCodeId) {
           setPromoMessage({
@@ -1213,14 +725,8 @@ export default function FinalCheckStep({
           setQuoteError(message);
         }
       } finally {
-        if (
-          requestVersion ===
-            requestVersionRef.current &&
-          !controller.signal.aborted
-        ) {
-          setIsLoadingQuote(
-            false,
-          );
+        if (requestVersion === requestVersionRef.current && !controller.signal.aborted) {
+          setIsLoadingQuote(false);
         }
       }
     }
@@ -1230,12 +736,7 @@ export default function FinalCheckStep({
     return () => {
       controller.abort();
     };
-  }, [
-    appliedPromoCodeId,
-    pricingPayload,
-    refreshNumber,
-    draft.serviceId,
-  ]);
+  }, [appliedPromoCodeId, pricingPayload, refreshNumber, draft.serviceId]);
 
   async function handleApplyPromoCode() {
     const code = promoInput.trim().toUpperCase();
@@ -1253,23 +754,19 @@ export default function FinalCheckStep({
     setPromoMessage(null);
 
     try {
-      const response = await fetch(
-        "/api/promo-codes/validate",
-        {
-          method: "POST",
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            code,
-            serviceId: draft.serviceId,
-            bookingAmount:
-              quote?.subtotalAmount,
-          }),
+      const response = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          code,
+          serviceId: draft.serviceId,
+          bookingAmount: quote?.subtotalAmount,
+        }),
+      });
       const payload = (await response.json()) as {
         success?: boolean;
         data?: {
@@ -1282,15 +779,8 @@ export default function FinalCheckStep({
       };
       const promoCode = payload.data?.promoCode;
 
-      if (
-        !response.ok ||
-        !payload.success ||
-        !promoCode?.id
-      ) {
-        throw new Error(
-          payload.error ??
-            "This promo code could not be applied.",
-        );
+      if (!response.ok || !payload.success || !promoCode?.id) {
+        throw new Error(payload.error ?? "This promo code could not be applied.");
       }
 
       setPromoInput(promoCode.code ?? code);
@@ -1298,10 +788,7 @@ export default function FinalCheckStep({
     } catch (error) {
       setPromoMessage({
         type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "This promo code could not be applied.",
+        text: error instanceof Error ? error.message : "This promo code could not be applied.",
       });
     } finally {
       setIsApplyingPromo(false);
@@ -1314,73 +801,44 @@ export default function FinalCheckStep({
     setPromoMessage(null);
   }
 
-  const trustedEndTime =
-    useMemo(() => {
-      if (!quote) {
-        return draft.endTime;
-      }
+  const trustedEndTime = useMemo(() => {
+    if (!quote) {
+      return draft.endTime;
+    }
 
-      return calculateEndTime(
-        draft.startTime,
-        quote.estimatedDurationMinutes,
-      );
-    }, [
-      draft.endTime,
-      draft.startTime,
-      quote,
-    ]);
+    return calculateEndTime(draft.startTime, quote.estimatedDurationMinutes);
+  }, [draft.endTime, draft.startTime, quote]);
 
-  const subtotalWithAreaFee =
-    useMemo(() => {
-      if (!quote) {
-        return 0;
-      }
+  const subtotalWithAreaFee = useMemo(() => {
+    if (!quote) {
+      return 0;
+    }
 
-      return roundMoney(
-        quote.subtotalAmount +
-          draft.serviceAreaFee,
-      );
-    }, [
-      draft.serviceAreaFee,
-      quote,
-    ]);
+    return roundMoney(quote.subtotalAmount + draft.serviceAreaFee);
+  }, [draft.serviceAreaFee, quote]);
 
-  const finalTotalAmount =
-    useMemo(() => {
-      if (!quote) {
-        return 0;
-      }
+  const finalTotalAmount = useMemo(() => {
+    if (!quote) {
+      return 0;
+    }
 
-      return roundMoney(
-        quote.totalAmount +
-          draft.serviceAreaFee,
-      );
-    }, [
-      draft.serviceAreaFee,
-      quote,
-    ]);
+    return roundMoney(quote.totalAmount + draft.serviceAreaFee);
+  }, [draft.serviceAreaFee, quote]);
 
-  const notesLength =
-    draft.customerNotes.length;
+  const notesLength = draft.customerNotes.length;
 
-  const isComplete =
-    Boolean(
-      draft.serviceId &&
-        draft.addressId &&
-        draft.serviceAreaId &&
-        draft.bookingDate &&
-        draft.startTime &&
-        trustedEndTime &&
-        quote,
-    );
+  const isComplete = Boolean(
+    draft.serviceId &&
+    draft.addressId &&
+    draft.serviceAreaId &&
+    draft.bookingDate &&
+    draft.startTime &&
+    trustedEndTime &&
+    quote
+  );
 
   async function handleCreateBooking() {
-    if (
-      !quote ||
-      !isComplete ||
-      isSubmitting ||
-      createdBooking
-    ) {
+    if (!quote || !isComplete || isSubmitting || createdBooking) {
       return;
     }
 
@@ -1388,152 +846,95 @@ export default function FinalCheckStep({
     setSubmissionError(null);
 
     try {
-      const response =
-        await fetch(
-          "/api/customer/bookings/create",
-          {
-            method: "POST",
+      const response = await fetch("/api/customer/bookings/create", {
+        method: "POST",
 
-            credentials:
-              "include",
+        credentials: "include",
 
-            cache:
-              "no-store",
+        cache: "no-store",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-            body:
-              JSON.stringify({
-                serviceId:
-                  draft.serviceId,
+        body: JSON.stringify({
+          serviceId: draft.serviceId,
 
-                addressId:
-                  draft.addressId,
+          addressId: draft.addressId,
 
-                serviceAreaId:
-                  draft.serviceAreaId,
+          serviceAreaId: draft.serviceAreaId,
 
-                promoCodeId:
-                  appliedPromoCodeId ??
-                  undefined,
+          promoCodeId: appliedPromoCodeId ?? undefined,
 
-                frequency:
-                  "one_time",
+          frequency: "one_time",
 
-                property: {
-                  propertyType:
-                    draft.propertyType,
+          property: {
+            propertyType: draft.propertyType,
 
-                  bedrooms:
-                    draft.bedrooms,
+            bedrooms: draft.bedrooms,
 
-                  bathrooms:
-                    draft.bathrooms,
+            bathrooms: draft.bathrooms,
 
-                  propertySize:
-                    draft.propertySize,
-                },
-
-                addOns:
-                  draft.addOns.map(
-                    (addOn) => ({
-                      addOnId:
-                        addOn.addOnId,
-
-                      quantity:
-                        addOn.quantity,
-                    }),
-                  ),
-
-                paymentMethod:
-                  draft.paymentMethod,
-
-                customerNotes:
-                  draft.customerNotes.trim(),
-
-                bookingDate:
-                  draft.bookingDate,
-
-                startTime:
-                  draft.startTime,
-
-                /*
-                 * The server recalculates the trusted
-                 * end time, but the validator requires
-                 * this field in the request.
-                 */
-                endTime:
-                  trustedEndTime,
-              }),
+            propertySize: draft.propertySize,
           },
-        );
 
-      const responseText =
-        await response.text();
+          addOns: draft.addOns.map((addOn) => ({
+            addOnId: addOn.addOnId,
 
-      let payload:
-        ApiResponse = {};
+            quantity: addOn.quantity,
+          })),
 
-      if (
-        responseText.trim()
-      ) {
+          paymentMethod: draft.paymentMethod,
+
+          customerNotes: draft.customerNotes.trim(),
+
+          bookingDate: draft.bookingDate,
+
+          startTime: draft.startTime,
+
+          /*
+           * The server recalculates the trusted
+           * end time, but the validator requires
+           * this field in the request.
+           */
+          endTime: trustedEndTime,
+        }),
+      });
+
+      const responseText = await response.text();
+
+      let payload: ApiResponse = {};
+
+      if (responseText.trim()) {
         try {
-          payload =
-            JSON.parse(
-              responseText,
-            ) as ApiResponse;
+          payload = JSON.parse(responseText) as ApiResponse;
         } catch {
-          throw new Error(
-            "The booking server returned an invalid response.",
-          );
+          throw new Error("The booking server returned an invalid response.");
         }
       }
 
       if (!response.ok) {
-        throw new Error(
-          extractErrorMessage(
-            payload,
-            "The booking could not be created.",
-          ),
-        );
+        throw new Error(extractErrorMessage(payload, "The booking could not be created."));
       }
 
-      const booking =
-        extractCreatedBooking(
-          payload,
-        );
+      const booking = extractCreatedBooking(payload);
 
       if (!booking) {
-        throw new Error(
-          "The booking was created, but its confirmation details were missing.",
-        );
+        throw new Error("The booking was created, but its confirmation details were missing.");
       }
 
-      setCreatedBooking(
-        booking,
-      );
+      setCreatedBooking(booking);
 
-      if (
-        draft.paymentMethod !==
-        "card"
-      ) {
-        redirectTimerRef.current =
-          setTimeout(() => {
-            router.push(
-              "/bookings",
-            );
+      if (draft.paymentMethod !== "card") {
+        redirectTimerRef.current = setTimeout(() => {
+          router.push("/bookings");
 
-            router.refresh();
-          }, 1600);
+          router.refresh();
+        }, 1600);
       }
     } catch (error) {
       setSubmissionError(
-        error instanceof Error
-          ? error.message
-          : "The booking could not be created.",
+        error instanceof Error ? error.message : "The booking could not be created."
       );
     } finally {
       setIsSubmitting(false);
@@ -1598,9 +999,7 @@ export default function FinalCheckStep({
           </p>
 
           <p className="mt-3 font-mono text-2xl font-black text-navy sm:text-3xl">
-            {
-              createdBooking.bookingNumber
-            }
+            {createdBooking.bookingNumber}
           </p>
 
           <div className="mx-auto mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
@@ -1610,9 +1009,7 @@ export default function FinalCheckStep({
               </p>
 
               <p className="mt-2 text-sm font-extrabold text-navy">
-                {formatBookingDate(
-                  createdBooking.bookingDate,
-                )}
+                {formatBookingDate(createdBooking.bookingDate)}
               </p>
             </div>
 
@@ -1622,40 +1019,26 @@ export default function FinalCheckStep({
               </p>
 
               <p className="mt-2 text-sm font-extrabold text-navy">
-                {formatClockTime(
-                  createdBooking.startTime,
-                )}{" "}
-                –{" "}
-                {formatClockTime(
-                  createdBooking.endTime,
-                )}
+                {formatClockTime(createdBooking.startTime)} –{" "}
+                {formatClockTime(createdBooking.endTime)}
               </p>
             </div>
           </div>
 
-          {draft.paymentMethod ===
-          "card" ? (
+          {draft.paymentMethod === "card" ? (
             <>
               <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left">
-                <p className="text-sm font-extrabold text-amber-800">
-                  Payment required to confirm
-                </p>
+                <p className="text-sm font-extrabold text-amber-800">Payment required to confirm</p>
                 <p className="mt-1.5 text-sm font-medium leading-6 text-amber-700">
-                  Your booking is on hold
-                  as pending. CleanNest
-                  cannot confirm it until
-                  the card payment is
-                  completed (test mode —
-                  no real charge).
+                  Your booking is on hold as pending. CleanNest cannot confirm it until the card
+                  payment is completed (test mode — no real charge).
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => {
-                  router.push(
-                    `/payments/pay/${createdBooking.id}`,
-                  );
+                  router.push(`/payments/pay/${createdBooking.id}`);
                 }}
                 className="mx-auto mt-6 inline-flex min-h-[54px] min-w-[220px] items-center justify-center gap-3 rounded-2xl bg-primary px-7 text-base font-extrabold text-white shadow-[0_16px_35px_rgba(30,111,217,0.3)] transition hover:bg-navy"
               >
@@ -1666,9 +1049,7 @@ export default function FinalCheckStep({
           ) : (
             <>
               <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-500">
-                Your booking is pending
-                confirmation. You are being
-                redirected to My Bookings.
+                Your booking is pending confirmation. You are being redirected to My Bookings.
               </p>
 
               <LoaderCircle className="mx-auto mt-7 h-7 w-7 animate-spin text-primary" />
@@ -1698,36 +1079,21 @@ export default function FinalCheckStep({
             </h3>
 
             <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
-              CleanNest reloads the
-              service, property rules,
-              add-ons, prices, and
-              duration from the database.
+              CleanNest reloads the service, property rules, add-ons, prices, and duration from the
+              database.
             </p>
           </div>
         </div>
 
         <button
           type="button"
-          disabled={
-            isLoadingQuote ||
-            isSubmitting
-          }
+          disabled={isLoadingQuote || isSubmitting}
           onClick={() => {
-            setRefreshNumber(
-              (current) =>
-                current + 1,
-            );
+            setRefreshNumber((current) => current + 1);
           }}
           className="inline-flex min-h-[48px] items-center justify-center gap-3 rounded-xl border border-primary/15 bg-white px-5 text-sm font-extrabold text-primary transition hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${
-              isLoadingQuote
-                ? "animate-spin"
-                : ""
-            }`}
-          />
-
+          <RefreshCw className={`h-4 w-4 ${isLoadingQuote ? "animate-spin" : ""}`} />
           Refresh quote
         </button>
       </section>
@@ -1742,9 +1108,7 @@ export default function FinalCheckStep({
             </h3>
 
             <p className="mt-3 text-base font-medium text-slate-500">
-              Verifying the service,
-              property, extras, and
-              cleaning duration.
+              Verifying the service, property, extras, and cleaning duration.
             </p>
           </div>
         </section>
@@ -1764,695 +1128,465 @@ export default function FinalCheckStep({
         </section>
       )}
 
-      {quote &&
-        !isLoadingQuote && (
-          <>
-            {/* Main review cards */}
-            <section className="grid gap-5 lg:grid-cols-2">
-              <ReviewCard
-                icon={Home}
-                eyebrow="Property"
-                title={propertyTypeLabel(
-                  draft.propertyType,
-                )}
-              >
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <SmallStat
-                    icon={BedDouble}
-                    label={
-                      draft.propertyType ===
-                      "office"
-                        ? "Work areas"
-                        : draft.propertyType ===
-                            "other"
-                          ? "Main rooms"
-                          : "Bedrooms"
-                    }
-                    value={String(
-                      draft.bedrooms,
-                    )}
-                  />
-
-                  <SmallStat
-                    icon={Bath}
-                    label="Bathrooms"
-                    value={String(
-                      draft.bathrooms,
-                    )}
-                  />
-
-                  <SmallStat
-                    icon={Home}
-                    label="Size"
-                    value={`${draft.propertySize} m²`}
-                  />
-                </div>
-
-                {quote.property.lines
-                  .length > 0 && (
-                  <div className="mt-5 space-y-3 border-t border-primary/10 pt-5">
-                    {quote.property.lines.map(
-                      (line) => (
-                        <div
-                          key={`${line.code}-${line.label}`}
-                          className="flex items-center justify-between gap-4 text-sm"
-                        >
-                          <span className="font-semibold text-slate-500">
-                            {line.label}
-                          </span>
-
-                          <span className="font-extrabold text-navy">
-                            +
-                            {formatCurrency(
-                              line.totalAmount,
-                            )}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                )}
-              </ReviewCard>
-
-              <ReviewCard
-                icon={SprayCan}
-                eyebrow="Cleaning plan"
-                title={
-                  quote.service.name ||
-                  draft.serviceName
-                }
-              >
-                <div className="space-y-3">
-                  <ReviewLine
-                    label="Service price"
-                    value={formatCurrency(
-                      quote.serviceBaseAmount,
-                    )}
-                  />
-
-                  <ReviewLine
-                    label="Property adjustment"
-                    value={formatCurrency(
-                      quote.propertyAdjustmentAmount,
-                    )}
-                  />
-
-                  <ReviewLine
-                    label="Base duration"
-                    value={formatDuration(
-                      quote.serviceDurationMinutes,
-                    )}
-                  />
-                </div>
-              </ReviewCard>
-
-              <ReviewCard
-                icon={Sparkles}
-                eyebrow="Extra touches"
-                title={
-                  quote.addOns.length >
-                  0
-                    ? `${quote.addOns.length} selected`
-                    : "No extras selected"
-                }
-              >
-                {quote.addOns.length ===
-                0 ? (
-                  <p className="text-base font-medium leading-7 text-slate-500">
-                    This booking contains
-                    only the selected
-                    cleaning plan.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {quote.addOns.map(
-                      (addOn) => (
-                        <div
-                          key={
-                            addOn.addOnId
-                          }
-                          className="rounded-2xl bg-surface-soft p-4"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className="font-extrabold text-navy">
-                                {
-                                  addOn.name
-                                }
-                              </p>
-
-                              <p className="mt-1 text-sm font-medium text-slate-500">
-                                Quantity{" "}
-                                {
-                                  addOn.quantity
-                                }{" "}
-                                ·{" "}
-                                {formatDuration(
-                                  addOn.totalExtraDurationMinutes,
-                                )}
-                              </p>
-                            </div>
-
-                            <p className="font-extrabold text-primary">
-                              {formatCurrency(
-                                addOn.totalPrice,
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                )}
-              </ReviewCard>
-
-              <ReviewCard
-                icon={MapPin}
-                eyebrow="Home base"
-                title={
-                  draft.serviceAreaLabel
-                }
-              >
-                <p className="text-base font-semibold leading-7 text-slate-600">
-                  {draft.addressLabel}
-                </p>
-
-                <div className="mt-5 rounded-2xl bg-surface-soft p-4">
-                  <ReviewLine
-                    label="Service-area fee"
-                    value={formatCurrency(
-                      draft.serviceAreaFee,
-                    )}
-                  />
-                </div>
-              </ReviewCard>
-
-              <ReviewCard
-                icon={CalendarDays}
-                eyebrow="Cleaning date"
-                title={formatBookingDate(
-                  draft.bookingDate,
-                )}
-              >
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <SmallStat
-                    icon={Clock3}
-                    label="Arrival"
-                    value={formatClockTime(
-                      draft.startTime,
-                    )}
-                  />
-
-                  <SmallStat
-                    icon={Timer}
-                    label="Trusted finish"
-                    value={formatClockTime(
-                      trustedEndTime,
-                    )}
-                  />
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                  <p className="text-sm font-extrabold text-emerald-800">
-                    Estimated duration:{" "}
-                    {formatDuration(
-                      quote.estimatedDurationMinutes,
-                    )}
-                  </p>
-                </div>
-              </ReviewCard>
-
-              <ReviewCard
-                icon={CreditCard}
-                eyebrow="Payment"
-                title="Choose how to pay"
-              >
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    aria-pressed={
-                      draft.paymentMethod ===
-                      "cash"
-                    }
-                    disabled={
-                      isSubmitting
-                    }
-                    onClick={() => {
-                      onPaymentMethodChange(
-                        "cash",
-                      );
-                    }}
-                    className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                      draft.paymentMethod ===
-                      "cash"
-                        ? "border-primary bg-primary-light shadow-[0_12px_30px_rgba(30,111,217,0.12)]"
-                        : "border-slate-200 bg-white hover:border-primary/35"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span
-                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                          draft.paymentMethod ===
-                          "cash"
-                            ? "bg-primary text-white"
-                            : "bg-surface-soft text-primary"
-                        }`}
-                      >
-                        <Banknote className="h-5 w-5" />
-                      </span>
-
-                      <SelectionCircle
-                        selected={
-                          draft.paymentMethod ===
-                          "cash"
-                        }
-                      />
-                    </div>
-
-                    <p className="mt-4 font-extrabold text-navy">
-                      Cash
-                    </p>
-
-                    <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                      Pay after the
-                      cleaning service.
-                    </p>
-                  </button>
-
-                  <button
-                    type="button"
-                    aria-pressed={
-                      draft.paymentMethod ===
-                      "card"
-                    }
-                    disabled={
-                      isSubmitting
-                    }
-                    onClick={() => {
-                      onPaymentMethodChange(
-                        "card",
-                      );
-                    }}
-                    className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                      draft.paymentMethod ===
-                      "card"
-                        ? "border-primary bg-primary-light shadow-[0_12px_30px_rgba(30,111,217,0.12)]"
-                        : "border-slate-200 bg-white hover:border-primary/35"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span
-                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                          draft.paymentMethod ===
-                          "card"
-                            ? "bg-primary text-white"
-                            : "bg-surface-soft text-primary"
-                        }`}
-                      >
-                        <CreditCard className="h-5 w-5" />
-                      </span>
-
-                      <SelectionCircle
-                        selected={
-                          draft.paymentMethod ===
-                          "card"
-                        }
-                      />
-                    </div>
-
-                    <p className="mt-4 font-extrabold text-navy">
-                      Card
-                    </p>
-
-                    <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                      The booking will be
-                      created with pending
-                      card payment.
-                    </p>
-                  </button>
-                </div>
-              </ReviewCard>
-            </section>
-
-            {/* Notes and pricing */}
-            <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_370px]">
-              <div className="rounded-[1.7rem] border border-primary/10 bg-white p-5 sm:p-6">
-                <div className="flex items-start gap-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
-                    <FileText className="h-5 w-5" />
-                  </span>
-
-                  <div>
-                    <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-primary">
-                      Optional instructions
-                    </p>
-
-                    <h3 className="mt-2 font-heading text-2xl font-black text-navy">
-                      Notes for the cleaning team
-                    </h3>
-                  </div>
-                </div>
-
-                <textarea
-                  value={
-                    draft.customerNotes
+      {quote && !isLoadingQuote && (
+        <>
+          {/* Main review cards */}
+          <section className="grid gap-5 lg:grid-cols-2">
+            <ReviewCard
+              icon={Home}
+              eyebrow="Property"
+              title={propertyTypeLabel(draft.propertyType)}
+            >
+              <div className="grid gap-3 sm:grid-cols-3">
+                <SmallStat
+                  icon={BedDouble}
+                  label={
+                    draft.propertyType === "office"
+                      ? "Work areas"
+                      : draft.propertyType === "other"
+                        ? "Main rooms"
+                        : "Bedrooms"
                   }
-                  disabled={
-                    isSubmitting
-                  }
-                  maxLength={1000}
-                  rows={7}
-                  onChange={(event) => {
-                    onCustomerNotesChange(
-                      event.target.value,
-                    );
-                  }}
-                  placeholder="Entry instructions, pets, priority rooms, delicate surfaces, or anything the team should know..."
-                  className="mt-6 w-full resize-none rounded-2xl border border-primary/15 bg-surface-soft px-5 py-4 text-base font-medium leading-7 text-navy outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  value={String(draft.bedrooms)}
                 />
 
-                <div className="mt-3 flex items-center justify-between gap-4">
-                  <p className="text-sm font-medium text-slate-400">
-                    Maximum 1,000
-                    characters
-                  </p>
+                <SmallStat icon={Bath} label="Bathrooms" value={String(draft.bathrooms)} />
 
-                  <p
-                    className={`text-sm font-extrabold ${
-                      notesLength > 950
-                        ? "text-red-500"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    {notesLength}/1000
-                  </p>
-                </div>
+                <SmallStat icon={Home} label="Size" value={`${draft.propertySize} m²`} />
+              </div>
 
-                <div className="mt-6 rounded-2xl border border-dashed border-primary/25 bg-primary-light/30 p-4 sm:p-5">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
-                      <Tag className="h-4 w-4" />
-                    </span>
-
-                    <div>
-                      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary">
-                        Have a promo code?
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-slate-500">
-                        Apply it here and your trusted total will update automatically.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <input
-                      value={promoInput}
-                      disabled={
-                        isApplyingPromo ||
-                        Boolean(
-                          appliedPromoCodeId,
-                        )
-                      }
-                      onChange={(event) => {
-                        setPromoInput(
-                          event.target.value
-                            .toUpperCase()
-                            .replace(
-                              /[^A-Z0-9_-]/g,
-                              "",
-                            ),
-                        );
-                        setPromoMessage(null);
-                      }}
-                      onKeyDown={(event) => {
-                        if (
-                          event.key === "Enter"
-                        ) {
-                          event.preventDefault();
-                          void handleApplyPromoCode();
-                        }
-                      }}
-                      placeholder="e.g. WELCOME20"
-                      maxLength={30}
-                      className="min-h-12 flex-1 rounded-xl border border-primary/15 bg-white px-4 font-mono text-sm font-black tracking-[0.1em] text-navy outline-none transition placeholder:font-sans placeholder:font-medium placeholder:tracking-normal placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:bg-slate-50"
-                    />
-
-                    {appliedPromoCodeId ? (
-                      <button
-                        type="button"
-                        onClick={
-                          handleRemovePromoCode
-                        }
-                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-extrabold text-red-500 transition hover:bg-red-50"
-                      >
-                        <X className="h-4 w-4" />
-                        Remove
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={
-                          isApplyingPromo ||
-                          !promoInput.trim()
-                        }
-                        onClick={() =>
-                          void handleApplyPromoCode()
-                        }
-                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-navy px-5 text-sm font-extrabold text-white shadow-lg transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isApplyingPromo ? (
-                          <LoaderCircle className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Tag className="h-4 w-4" />
-                        )}
-                        {isApplyingPromo
-                          ? "Checking"
-                          : "Apply code"}
-                      </button>
-                    )}
-                  </div>
-
-                  {promoMessage && (
-                    <p
-                      aria-live="polite"
-                      className={`mt-3 text-sm font-bold ${
-                        promoMessage.type ===
-                        "success"
-                          ? "text-emerald-600"
-                          : "text-red-500"
-                      }`}
+              {quote.property.lines.length > 0 && (
+                <div className="mt-5 space-y-3 border-t border-primary/10 pt-5">
+                  {quote.property.lines.map((line) => (
+                    <div
+                      key={`${line.code}-${line.label}`}
+                      className="flex items-center justify-between gap-4 text-sm"
                     >
-                      {promoMessage.text}
-                    </p>
-                  )}
-                </div>
-              </div>
+                      <span className="font-semibold text-slate-500">{line.label}</span>
 
-              <div className="overflow-hidden rounded-[1.7rem] border border-primary/10 bg-white">
-                <div className="bg-navy p-6 text-white">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.17em] text-cyan-300">
-                    Estimated final total
-                  </p>
-
-                  <p className="mt-3 font-heading text-4xl font-black">
-                    {formatCurrency(
-                      finalTotalAmount,
-                    )}
-                  </p>
-
-                  <p className="mt-2 text-sm font-medium text-blue-100/70">
-                    Rechecked by the
-                    server during
-                    confirmation
-                  </p>
-                </div>
-
-                <div className="space-y-4 p-6">
-                  <PriceLine
-                    label="Service base"
-                    value={
-                      quote.serviceBaseAmount
-                    }
-                  />
-
-                  <PriceLine
-                    label="Property adjustment"
-                    value={
-                      quote.propertyAdjustmentAmount
-                    }
-                  />
-
-                  <PriceLine
-                    label="Extra touches"
-                    value={
-                      quote.addOnsAmount
-                    }
-                  />
-
-                  <PriceLine
-                    label="Service-area fee"
-                    value={
-                      draft.serviceAreaFee
-                    }
-                  />
-
-                  {quote.discountAmount >
-                    0 && (
-                    <PriceLine
-                      label={
-                        quote.promoCode
-                          ? `Discount (${quote.promoCode.code})`
-                          : "Discount"
-                      }
-                      value={
-                        -quote.discountAmount
-                      }
-                    />
-                  )}
-
-                  <div className="border-t border-primary/10 pt-4">
-                    <PriceLine
-                      label="Subtotal before discount"
-                      value={
-                        subtotalWithAreaFee
-                      }
-                      strong
-                    />
-                  </div>
-
-                  <div className="border-t border-primary/10 pt-4">
-                    <PriceLine
-                      label="Final total"
-                      value={
-                        finalTotalAmount
-                      }
-                      strong
-                    />
-                  </div>
-
-                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                    <div className="flex items-start gap-3">
-                      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-
-                      <p className="text-sm font-semibold leading-6 text-emerald-700">
-                        The server checks
-                        the service-area
-                        fee, price,
-                        duration, and
-                        availability again
-                        when the booking is
-                        created.
-                      </p>
+                      <span className="font-extrabold text-navy">
+                        +{formatCurrency(line.totalAmount)}
+                      </span>
                     </div>
-                  </div>
+                  ))}
                 </div>
+              )}
+            </ReviewCard>
+
+            <ReviewCard
+              icon={SprayCan}
+              eyebrow="Cleaning plan"
+              title={quote.service.name || draft.serviceName}
+            >
+              <div className="space-y-3">
+                <ReviewLine label="Service price" value={formatCurrency(quote.serviceBaseAmount)} />
+
+                <ReviewLine
+                  label="Property adjustment"
+                  value={formatCurrency(quote.propertyAdjustmentAmount)}
+                />
+
+                <ReviewLine
+                  label="Base duration"
+                  value={formatDuration(quote.serviceDurationMinutes)}
+                />
               </div>
-            </section>
+            </ReviewCard>
 
-            {!trustedEndTime && (
-              <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+            <ReviewCard
+              icon={Sparkles}
+              eyebrow="Extra touches"
+              title={
+                quote.addOns.length > 0 ? `${quote.addOns.length} selected` : "No extras selected"
+              }
+            >
+              {quote.addOns.length === 0 ? (
+                <p className="text-base font-medium leading-7 text-slate-500">
+                  This booking contains only the selected cleaning plan.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {quote.addOns.map((addOn) => (
+                    <div key={addOn.addOnId} className="rounded-2xl bg-surface-soft p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-extrabold text-navy">{addOn.name}</p>
 
-                <p className="text-sm font-semibold leading-6 text-red-600">
-                  The trusted cleaning
-                  duration extends past
-                  midnight. Return to Time
-                  Route and choose an
-                  earlier arrival time.
+                          <p className="mt-1 text-sm font-medium text-slate-500">
+                            Quantity {addOn.quantity} ·{" "}
+                            {formatDuration(addOn.totalExtraDurationMinutes)}
+                          </p>
+                        </div>
+
+                        <p className="font-extrabold text-primary">
+                          {formatCurrency(addOn.totalPrice)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ReviewCard>
+
+            <ReviewCard icon={MapPin} eyebrow="Home base" title={draft.serviceAreaLabel}>
+              <p className="text-base font-semibold leading-7 text-slate-600">
+                {draft.addressLabel}
+              </p>
+
+              <div className="mt-5 rounded-2xl bg-surface-soft p-4">
+                <ReviewLine label="Service-area fee" value={formatCurrency(draft.serviceAreaFee)} />
+              </div>
+            </ReviewCard>
+
+            <ReviewCard
+              icon={CalendarDays}
+              eyebrow="Cleaning date"
+              title={formatBookingDate(draft.bookingDate)}
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SmallStat icon={Clock3} label="Arrival" value={formatClockTime(draft.startTime)} />
+
+                <SmallStat
+                  icon={Timer}
+                  label="Trusted finish"
+                  value={formatClockTime(trustedEndTime)}
+                />
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-sm font-extrabold text-emerald-800">
+                  Estimated duration: {formatDuration(quote.estimatedDurationMinutes)}
                 </p>
               </div>
-            )}
+            </ReviewCard>
 
-            {submissionError && (
-              <div
-                aria-live="polite"
-                className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5"
-              >
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+            <ReviewCard icon={CreditCard} eyebrow="Payment" title="Choose how to pay">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  aria-pressed={draft.paymentMethod === "cash"}
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    onPaymentMethodChange("cash");
+                  }}
+                  className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    draft.paymentMethod === "cash"
+                      ? "border-primary bg-primary-light shadow-[0_12px_30px_rgba(30,111,217,0.12)]"
+                      : "border-slate-200 bg-white hover:border-primary/35"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                        draft.paymentMethod === "cash"
+                          ? "bg-primary text-white"
+                          : "bg-surface-soft text-primary"
+                      }`}
+                    >
+                      <Banknote className="h-5 w-5" />
+                    </span>
+
+                    <SelectionCircle selected={draft.paymentMethod === "cash"} />
+                  </div>
+
+                  <p className="mt-4 font-extrabold text-navy">Cash</p>
+
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+                    Pay after the cleaning service.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  aria-pressed={draft.paymentMethod === "card"}
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    onPaymentMethodChange("card");
+                  }}
+                  className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    draft.paymentMethod === "card"
+                      ? "border-primary bg-primary-light shadow-[0_12px_30px_rgba(30,111,217,0.12)]"
+                      : "border-slate-200 bg-white hover:border-primary/35"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                        draft.paymentMethod === "card"
+                          ? "bg-primary text-white"
+                          : "bg-surface-soft text-primary"
+                      }`}
+                    >
+                      <CreditCard className="h-5 w-5" />
+                    </span>
+
+                    <SelectionCircle selected={draft.paymentMethod === "card"} />
+                  </div>
+
+                  <p className="mt-4 font-extrabold text-navy">Card</p>
+
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+                    The booking will be created with pending card payment.
+                  </p>
+                </button>
+              </div>
+            </ReviewCard>
+          </section>
+
+          {/* Notes and pricing */}
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_370px]">
+            <div className="rounded-[1.7rem] border border-primary/10 bg-white p-5 sm:p-6">
+              <div className="flex items-start gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
+                  <FileText className="h-5 w-5" />
+                </span>
 
                 <div>
-                  <p className="font-extrabold text-red-800">
-                    Booking could not be confirmed
+                  <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-primary">
+                    Optional instructions
                   </p>
 
-                  <p className="mt-2 text-sm font-semibold leading-6 text-red-600">
-                    {submissionError}
-                  </p>
+                  <h3 className="mt-2 font-heading text-2xl font-black text-navy">
+                    Notes for the cleaning team
+                  </h3>
                 </div>
               </div>
-            )}
 
-            {/* Confirmation */}
-            <section className="overflow-hidden rounded-[1.8rem] border border-primary/10 bg-white shadow-[0_20px_60px_rgba(11,37,69,0.09)]">
-              <div className="grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:p-8">
-                <div className="flex items-start gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary">
-                    <CheckCircle2 className="h-6 w-6" />
+              <textarea
+                value={draft.customerNotes}
+                disabled={isSubmitting}
+                maxLength={1000}
+                rows={7}
+                onChange={(event) => {
+                  onCustomerNotesChange(event.target.value);
+                }}
+                placeholder="Entry instructions, pets, priority rooms, delicate surfaces, or anything the team should know..."
+                className="mt-6 w-full resize-none rounded-2xl border border-primary/15 bg-surface-soft px-5 py-4 text-base font-medium leading-7 text-navy outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <p className="text-sm font-medium text-slate-400">Maximum 1,000 characters</p>
+
+                <p
+                  className={`text-sm font-extrabold ${
+                    notesLength > 950 ? "text-red-500" : "text-slate-400"
+                  }`}
+                >
+                  {notesLength}/1000
+                </p>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-dashed border-primary/25 bg-primary-light/30 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
+                    <Tag className="h-4 w-4" />
                   </span>
 
                   <div>
-                    <p className="font-heading text-2xl font-black text-navy">
-                      Ready to confirm?
+                    <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary">
+                      Have a promo code?
                     </p>
-
-                    <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
-                      Your booking will
-                      be created with
-                      pending status.
-                      CleanNest will
-                      verify the selected
-                      time and price one
-                      final time.
+                    <p className="mt-1 text-sm font-medium text-slate-500">
+                      Apply it here and your trusted total will update automatically.
                     </p>
                   </div>
                 </div>
 
-                <motion.button
-                  type="button"
-                  disabled={
-                    !isComplete ||
-                    isSubmitting
-                  }
-                  onClick={() => {
-                    void handleCreateBooking();
-                  }}
-                  whileHover={
-                    prefersReducedMotion ||
-                    !isComplete ||
-                    isSubmitting
-                      ? undefined
-                      : {
-                          y: -3,
-                        }
-                  }
-                  whileTap={
-                    !isComplete ||
-                    isSubmitting
-                      ? undefined
-                      : {
-                          scale: 0.98,
-                        }
-                  }
-                  className="inline-flex min-h-[58px] min-w-[220px] items-center justify-center gap-3 rounded-2xl bg-primary px-7 text-base font-extrabold text-white shadow-[0_16px_35px_rgba(30,111,217,0.3)] transition hover:bg-navy disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <LoaderCircle className="h-5 w-5 animate-spin" />
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={promoInput}
+                    disabled={isApplyingPromo || Boolean(appliedPromoCodeId)}
+                    onChange={(event) => {
+                      setPromoInput(event.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""));
+                      setPromoMessage(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleApplyPromoCode();
+                      }
+                    }}
+                    placeholder="e.g. WELCOME20"
+                    maxLength={30}
+                    className="min-h-12 flex-1 rounded-xl border border-primary/15 bg-white px-4 font-mono text-sm font-black tracking-[0.1em] text-navy outline-none transition placeholder:font-sans placeholder:font-medium placeholder:tracking-normal placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:bg-slate-50"
+                  />
 
-                      Creating booking…
-                    </>
+                  {appliedPromoCodeId ? (
+                    <button
+                      type="button"
+                      onClick={handleRemovePromoCode}
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-extrabold text-red-500 transition hover:bg-red-50"
+                    >
+                      <X className="h-4 w-4" />
+                      Remove
+                    </button>
                   ) : (
-                    <>
-                      <Check className="h-5 w-5" />
-
-                      Confirm booking
-                    </>
+                    <button
+                      type="button"
+                      disabled={isApplyingPromo || !promoInput.trim()}
+                      onClick={() => void handleApplyPromoCode()}
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-navy px-5 text-sm font-extrabold text-white shadow-lg transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isApplyingPromo ? (
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Tag className="h-4 w-4" />
+                      )}
+                      {isApplyingPromo ? "Checking" : "Apply code"}
+                    </button>
                   )}
-                </motion.button>
+                </div>
+
+                {promoMessage && (
+                  <p
+                    aria-live="polite"
+                    className={`mt-3 text-sm font-bold ${
+                      promoMessage.type === "success" ? "text-emerald-600" : "text-red-500"
+                    }`}
+                  >
+                    {promoMessage.text}
+                  </p>
+                )}
               </div>
-            </section>
-          </>
-        )}
+            </div>
+
+            <div className="overflow-hidden rounded-[1.7rem] border border-primary/10 bg-white">
+              <div className="bg-navy p-6 text-white">
+                <p className="text-xs font-extrabold uppercase tracking-[0.17em] text-cyan-300">
+                  Estimated final total
+                </p>
+
+                <p className="mt-3 font-heading text-4xl font-black">
+                  {formatCurrency(finalTotalAmount)}
+                </p>
+
+                <p className="mt-2 text-sm font-medium text-blue-100/70">
+                  Rechecked by the server during confirmation
+                </p>
+              </div>
+
+              <div className="space-y-4 p-6">
+                <PriceLine label="Service base" value={quote.serviceBaseAmount} />
+
+                <PriceLine label="Property adjustment" value={quote.propertyAdjustmentAmount} />
+
+                <PriceLine label="Extra touches" value={quote.addOnsAmount} />
+
+                <PriceLine label="Service-area fee" value={draft.serviceAreaFee} />
+
+                {quote.discountAmount > 0 && (
+                  <PriceLine
+                    label={quote.promoCode ? `Discount (${quote.promoCode.code})` : "Discount"}
+                    value={-quote.discountAmount}
+                  />
+                )}
+
+                <div className="border-t border-primary/10 pt-4">
+                  <PriceLine label="Subtotal before discount" value={subtotalWithAreaFee} strong />
+                </div>
+
+                <div className="border-t border-primary/10 pt-4">
+                  <PriceLine label="Final total" value={finalTotalAmount} strong />
+                </div>
+
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+
+                    <p className="text-sm font-semibold leading-6 text-emerald-700">
+                      The server checks the service-area fee, price, duration, and availability
+                      again when the booking is created.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {!trustedEndTime && (
+            <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+
+              <p className="text-sm font-semibold leading-6 text-red-600">
+                The trusted cleaning duration extends past midnight. Return to Time Route and choose
+                an earlier arrival time.
+              </p>
+            </div>
+          )}
+
+          {submissionError && (
+            <div
+              aria-live="polite"
+              className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5"
+            >
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+
+              <div>
+                <p className="font-extrabold text-red-800">Booking could not be confirmed</p>
+
+                <p className="mt-2 text-sm font-semibold leading-6 text-red-600">
+                  {submissionError}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Confirmation */}
+          <section className="overflow-hidden rounded-[1.8rem] border border-primary/10 bg-white shadow-[0_20px_60px_rgba(11,37,69,0.09)]">
+            <div className="grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:p-8">
+              <div className="flex items-start gap-4">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary">
+                  <CheckCircle2 className="h-6 w-6" />
+                </span>
+
+                <div>
+                  <p className="font-heading text-2xl font-black text-navy">Ready to confirm?</p>
+
+                  <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
+                    Your booking will be created with pending status. CleanNest will verify the
+                    selected time and price one final time.
+                  </p>
+                </div>
+              </div>
+
+              <motion.button
+                type="button"
+                disabled={!isComplete || isSubmitting}
+                onClick={() => {
+                  void handleCreateBooking();
+                }}
+                whileHover={
+                  prefersReducedMotion || !isComplete || isSubmitting
+                    ? undefined
+                    : {
+                        y: -3,
+                      }
+                }
+                whileTap={
+                  !isComplete || isSubmitting
+                    ? undefined
+                    : {
+                        scale: 0.98,
+                      }
+                }
+                className="inline-flex min-h-[58px] min-w-[220px] items-center justify-center gap-3 rounded-2xl bg-primary px-7 text-base font-extrabold text-white shadow-[0_16px_35px_rgba(30,111,217,0.3)] transition hover:bg-navy disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              >
+                {isSubmitting ? (
+                  <>
+                    <LoaderCircle className="h-5 w-5 animate-spin" />
+                    Creating booking…
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-5 w-5" />
+                    Confirm booking
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }
@@ -2467,12 +1601,7 @@ interface ReviewCardProps {
   children: ReactNode;
 }
 
-function ReviewCard({
-  icon: Icon,
-  eyebrow,
-  title,
-  children,
-}: ReviewCardProps) {
+function ReviewCard({ icon: Icon, eyebrow, title, children }: ReviewCardProps) {
   return (
     <section className="rounded-[1.7rem] border border-primary/10 bg-white p-5 shadow-[0_12px_35px_rgba(11,37,69,0.05)] sm:p-6">
       <div className="flex items-start gap-4">
@@ -2485,15 +1614,11 @@ function ReviewCard({
             {eyebrow}
           </p>
 
-          <h3 className="mt-2 font-heading text-xl font-black text-navy">
-            {title}
-          </h3>
+          <h3 className="mt-2 font-heading text-xl font-black text-navy">{title}</h3>
         </div>
       </div>
 
-      <div className="mt-6">
-        {children}
-      </div>
+      <div className="mt-6">{children}</div>
     </section>
   );
 }
@@ -2507,11 +1632,7 @@ interface SmallStatProps {
   value: string;
 }
 
-function SmallStat({
-  icon: Icon,
-  label,
-  value,
-}: SmallStatProps) {
+function SmallStat({ icon: Icon, label, value }: SmallStatProps) {
   return (
     <div className="rounded-2xl bg-surface-soft p-4">
       <Icon className="h-4 w-4 text-primary" />
@@ -2520,9 +1641,7 @@ function SmallStat({
         {label}
       </p>
 
-      <p className="mt-2 text-base font-extrabold text-navy">
-        {value}
-      </p>
+      <p className="mt-2 text-base font-extrabold text-navy">{value}</p>
     </div>
   );
 }
@@ -2532,19 +1651,12 @@ interface ReviewLineProps {
   value: string;
 }
 
-function ReviewLine({
-  label,
-  value,
-}: ReviewLineProps) {
+function ReviewLine({ label, value }: ReviewLineProps) {
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
-      <span className="font-semibold text-slate-500">
-        {label}
-      </span>
+      <span className="font-semibold text-slate-500">{label}</span>
 
-      <span className="text-right font-extrabold text-navy">
-        {value}
-      </span>
+      <span className="text-right font-extrabold text-navy">{value}</span>
     </div>
   );
 }
@@ -2555,47 +1667,29 @@ interface PriceLineProps {
   strong?: boolean;
 }
 
-function PriceLine({
-  label,
-  value,
-  strong = false,
-}: PriceLineProps) {
+function PriceLine({ label, value, strong = false }: PriceLineProps) {
   return (
     <div className="flex items-center justify-between gap-4">
       <span
-        className={
-          strong
-            ? "font-extrabold text-navy"
-            : "text-sm font-semibold text-slate-500"
-        }
+        className={strong ? "font-extrabold text-navy" : "text-sm font-semibold text-slate-500"}
       >
         {label}
       </span>
 
       <span
         className={
-          strong
-            ? "font-heading text-xl font-black text-navy"
-            : "text-sm font-extrabold text-navy"
+          strong ? "font-heading text-xl font-black text-navy" : "text-sm font-extrabold text-navy"
         }
       >
-        {value < 0
-          ? "-"
-          : ""}
+        {value < 0 ? "-" : ""}
 
-        {formatCurrency(
-          Math.abs(value),
-        )}
+        {formatCurrency(Math.abs(value))}
       </span>
     </div>
   );
 }
 
-function SelectionCircle({
-  selected,
-}: {
-  selected: boolean;
-}) {
+function SelectionCircle({ selected }: { selected: boolean }) {
   return (
     <span
       className={`flex h-7 w-7 items-center justify-center rounded-full border ${

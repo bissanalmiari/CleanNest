@@ -12,26 +12,14 @@ import {
   checkInServiceProof,
   markCleanerOnMyWay,
 } from "@/services/serviceProofService";
-import {
-  createNotification,
-  notifyActiveAdmins,
-} from "@/services/notificationService";
+import { createNotification, notifyActiveAdmins } from "@/services/notificationService";
 import type { CleanerJob, CleanerJobsResponse } from "@/types/cleanerPortal";
 
 type JobScope = "today" | "upcoming";
-type JobAction =
-  | "accept"
-  | "decline"
-  | "on_my_way"
-  | "start"
-  | "demo_start"
-  | "complete";
+type JobAction = "accept" | "on_my_way" | "start" | "demo_start" | "complete";
 
 function demoCheckInEnabled() {
-  return (
-    process.env.NODE_ENV !== "production" ||
-    process.env.ENABLE_DEMO_CHECK_IN === "true"
-  );
+  return process.env.NODE_ENV !== "production" || process.env.ENABLE_DEMO_CHECK_IN === "true";
 }
 
 interface PopulatedBooking {
@@ -111,8 +99,7 @@ function toJob(assignment: PopulatedAssignment): CleanerJob {
     estimatedDurationMinutes: booking.estimatedDurationMinutes ?? 0,
     serviceName: booking.serviceId?.name ?? "Cleaning service",
     customerName: booking.customerId?.name ?? "Customer",
-    customerPhone:
-      address?.contactPhone ?? booking.customerId?.phone ?? null,
+    customerPhone: address?.contactPhone ?? booking.customerId?.phone ?? null,
     addressLabel: address?.label ?? "Service address",
     addressLine: addressLine || "Address details unavailable",
     city: address?.city ?? "",
@@ -159,7 +146,7 @@ async function assignmentsForCleaner(cleanerId: string) {
 
 export async function listCleanerJobs(
   cleanerId: string,
-  scope: JobScope,
+  scope: JobScope
 ): Promise<CleanerJobsResponse> {
   const today = dateKey(new Date());
   const jobs = (await assignmentsForCleaner(cleanerId))
@@ -167,15 +154,11 @@ export async function listCleanerJobs(
       const booking = assignment.bookingId;
       if (!booking || booking.status === "cancelled") return false;
       const key = dateKey(booking.bookingDate);
-      return scope === "today"
-        ? key === today
-        : key > today && booking.status !== "completed";
+      return scope === "today" ? key === today : key > today && booking.status !== "completed";
     })
     .map(toJob)
     .sort((a, b) =>
-      `${a.bookingDate}-${a.startTime}`.localeCompare(
-        `${b.bookingDate}-${b.startTime}`,
-      ),
+      `${a.bookingDate}-${a.startTime}`.localeCompare(`${b.bookingDate}-${b.startTime}`)
     );
 
   return {
@@ -227,7 +210,7 @@ export async function performCleanerJobAction(
     latitude: number;
     longitude: number;
     accuracy?: number;
-  },
+  }
 ) {
   await connectDB();
   const assignment = await CleanerAssignment.findOne({
@@ -247,31 +230,16 @@ export async function performCleanerJobAction(
     await assignment.save();
     await notifyActiveAdmins({
       type: "assignment_accepted",
-      title: "Cleaner accepted an assignment",
-      message: `Booking ${booking.bookingNumber} now has an accepted cleaner.`,
+      title: "Cleaner acknowledged an assignment",
+      message: `The assigned cleaner has seen booking ${booking.bookingNumber}.`,
       href: `/admin/bookings/${bookingId}`,
       bookingId,
       dedupeKey: `assignment-accepted:${assignment._id.toString()}`,
       email: false,
     }).catch((error) => console.error("[notification:assignment-accepted]", error));
-  } else if (action === "decline") {
-    if (assignment.status !== "assigned") {
-      throw new AppError("Only a new assignment can be declined", 409);
-    }
-    assignment.status = "declined";
-    await assignment.save();
-    await notifyActiveAdmins({
-      type: "assignment_declined",
-      title: "Cleaner declined an assignment",
-      message: `Booking ${booking.bookingNumber} needs another cleaner.`,
-      href: `/admin/bookings/${bookingId}`,
-      bookingId,
-      dedupeKey: `assignment-declined:${assignment._id.toString()}`,
-      email: true,
-    }).catch((error) => console.error("[notification:assignment-declined]", error));
   } else if (action === "on_my_way") {
     if (assignment.status !== "accepted") {
-      throw new AppError("Accept this assignment before going on the way", 409);
+      throw new AppError("Acknowledge this assignment before going on the way", 409);
     }
     if (booking.status !== "confirmed" && booking.status !== "in_progress") {
       throw new AppError("Only an approved booking can be started", 409);
@@ -286,7 +254,7 @@ export async function performCleanerJobAction(
       throw new AppError("Demo check-in is disabled in this environment", 403);
     }
     if (assignment.status !== "accepted") {
-      throw new AppError("Accept this assignment before starting", 409);
+      throw new AppError("Acknowledge this assignment before starting", 409);
     }
     if (booking.status !== "confirmed" && booking.status !== "in_progress") {
       throw new AppError("Only an approved booking can be started", 409);
@@ -319,6 +287,15 @@ export async function performCleanerJobAction(
           dedupeKey: `service-started:${bookingId}`,
           email: true,
         }).catch((error) => console.error("[notification:service-started]", error));
+        await notifyActiveAdmins({
+          type: "service_started",
+          title: "Cleaning service started",
+          message: `The cleaner checked in and started booking ${booking.bookingNumber}.`,
+          href: `/admin/bookings/${bookingId}`,
+          bookingId,
+          dedupeKey: `admin-service-started:${bookingId}`,
+          email: false,
+        }).catch((error) => console.error("[notification:admin-service-started]", error));
       }
     }
   } else {
@@ -353,6 +330,15 @@ export async function performCleanerJobAction(
         dedupeKey: `service-completed:${bookingId}`,
         email: true,
       }).catch((error) => console.error("[notification:service-completed]", error));
+      await notifyActiveAdmins({
+        type: "service_completed",
+        title: "Cleaning service completed",
+        message: `All assigned cleaners completed booking ${booking.bookingNumber}.`,
+        href: `/admin/bookings/${bookingId}`,
+        bookingId,
+        dedupeKey: `admin-service-completed:${bookingId}`,
+        email: false,
+      }).catch((error) => console.error("[notification:admin-service-completed]", error));
     }
   }
 

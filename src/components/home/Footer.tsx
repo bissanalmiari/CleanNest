@@ -19,11 +19,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  MotionConfig,
-} from "motion/react";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 
 const quickLinks = [
   {
@@ -163,38 +159,25 @@ const particles = [
 
 export default function Footer() {
   const [email, setEmail] = useState("");
-  const [newsletterError, setNewsletterError] =
-    useState("");
-  const [isSubscribed, setIsSubscribed] =
-    useState(false);
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [newsletterError, setNewsletterError] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentYear = new Date().getFullYear();
 
-  async function handleNewsletterSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
-      setNewsletterError(
-        "Please enter your email address.",
-      );
+      setNewsletterError("Please enter your email address.");
       setIsSubscribed(false);
       return;
     }
 
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        normalizedEmail,
-      )
-    ) {
-      setNewsletterError(
-        "Please enter a valid email address.",
-      );
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setNewsletterError("Please enter a valid email address.");
       setIsSubscribed(false);
       return;
     }
@@ -222,10 +205,7 @@ export default function Footer() {
 
   return (
     <MotionConfig reducedMotion="always">
-      <footer
-        id="footer"
-        className="relative isolate overflow-hidden bg-navy font-body text-white"
-      >
+      <footer id="footer" className="relative isolate overflow-hidden bg-navy font-body text-white">
         {/* Main background */}
         <div
           aria-hidden="true"
@@ -242,10 +222,7 @@ export default function Footer() {
             backgroundSize: "72px 72px",
           }}
           animate={{
-            backgroundPosition: [
-              "0px 0px",
-              "72px 72px",
-            ],
+            backgroundPosition: ["0px 0px", "72px 72px"],
           }}
           transition={{
             duration: 24,
@@ -301,10 +278,7 @@ export default function Footer() {
         />
 
         {/* Floating particles */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0"
-        >
+        <div aria-hidden="true" className="absolute inset-0">
           {particles.map((particle, index) => (
             <motion.span
               key={`${particle.top}-${particle.left}`}
@@ -316,11 +290,7 @@ export default function Footer() {
                 height: particle.size,
               }}
               animate={{
-                x: [
-                  0,
-                  index % 2 === 0 ? 20 : -20,
-                  0,
-                ],
+                x: [0, index % 2 === 0 ? 20 : -20, 0],
                 y: [0, -28, 0],
                 opacity: [0.15, 0.9, 0.15],
                 scale: [0.7, 1.4, 0.7],
@@ -421,28 +391,20 @@ export default function Footer() {
                 </div>
 
                 <h2 className="mt-4 max-w-2xl font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-                  Receive CleanNest updates and helpful
-                  cleaning tips.
+                  Receive CleanNest updates and helpful cleaning tips.
                 </h2>
 
                 <p className="mt-4 max-w-xl leading-7 text-blue-100/75">
-                  Subscribe for service updates, seasonal
-                  cleaning ideas, and important booking
+                  Subscribe for service updates, seasonal cleaning ideas, and important booking
                   information.
                 </p>
               </div>
 
               <div>
-                <form
-                  onSubmit={handleNewsletterSubmit}
-                  noValidate
-                  className="relative"
-                >
+                <form onSubmit={handleNewsletterSubmit} noValidate className="relative">
                   <div
                     className={`flex flex-col gap-3 rounded-2xl border bg-[#071a33]/60 p-2 backdrop-blur-md sm:flex-row ${
-                      newsletterError
-                        ? "border-red-300/50"
-                        : "border-white/10"
+                      newsletterError ? "border-red-300/50" : "border-white/10"
                     }`}
                   >
                     <div className="relative flex-1">
@@ -458,9 +420,7 @@ export default function Footer() {
                         }}
                         placeholder="Enter your email address"
                         aria-label="Email address"
-                        aria-invalid={Boolean(
-                          newsletterError,
-                        )}
+                        aria-invalid={Boolean(newsletterError)}
                         className="min-h-[54px] w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 pl-12 text-sm text-white outline-none transition-all placeholder:text-blue-100/50 focus:border-cyan-300/40 focus:bg-white/[0.13] focus:ring-4 focus:ring-cyan-300/10"
                       />
                     </div>
@@ -501,9 +461,7 @@ export default function Footer() {
                       )}
 
                       <span className="relative">
-                        {isSubmitting
-                          ? "Subscribing..."
-                          : "Subscribe"}
+                        {isSubmitting ? "Subscribing..." : "Subscribe"}
                       </span>
 
                       {!isSubmitting && (
@@ -559,8 +517,7 @@ export default function Footer() {
                 </form>
 
                 <p className="mt-3 text-xs leading-5 text-blue-100/50">
-                  The newsletter form is ready to connect
-                  to your backend subscription endpoint.
+                  The newsletter form is ready to connect to your backend subscription endpoint.
                 </p>
               </div>
             </div>
@@ -588,10 +545,7 @@ export default function Footer() {
                 duration: 0.8,
               }}
             >
-              <Link
-                href="/"
-                className="group inline-flex items-center gap-3"
-              >
+              <Link href="/" className="group inline-flex items-center gap-3">
                 <motion.span
                   whileHover={{
                     scale: 1.08,
@@ -627,34 +581,31 @@ export default function Footer() {
               </Link>
 
               <p className="mt-6 max-w-sm leading-7 text-blue-100/70">
-                Book trusted cleaning services in minutes.
-                CleanNest provides a simpler way to manage
-                home and office cleaning across Lebanon.
+                Book trusted cleaning services in minutes. CleanNest provides a simpler way to
+                manage home and office cleaning across Lebanon.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
-                {socialLinks.map(
-                  ({ label, href, icon: Icon }) => (
-                    <motion.a
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={label}
-                      whileHover={{
-                        y: -5,
-                        scale: 1.08,
-                        rotate: 3,
-                      }}
-                      whileTap={{
-                        scale: 0.94,
-                      }}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-blue-100 shadow-lg backdrop-blur-md transition-colors hover:bg-white/[0.14] hover:text-white"
-                    >
-                      <Icon className="h-5 w-5" />
-                    </motion.a>
-                  ),
-                )}
+                {socialLinks.map(({ label, href, icon: Icon }) => (
+                  <motion.a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={label}
+                    whileHover={{
+                      y: -5,
+                      scale: 1.08,
+                      rotate: 3,
+                    }}
+                    whileTap={{
+                      scale: 0.94,
+                    }}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-blue-100 shadow-lg backdrop-blur-md transition-colors hover:bg-white/[0.14] hover:text-white"
+                  >
+                    <Icon className="h-5 w-5" />
+                  </motion.a>
+                ))}
               </div>
 
               <div className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-emerald-300/15 bg-emerald-400/10 px-4 py-3">
@@ -695,9 +646,7 @@ export default function Footer() {
                 delay: 0.1,
               }}
             >
-              <h3 className="font-heading text-lg font-bold text-white">
-                Quick Links
-              </h3>
+              <h3 className="font-heading text-lg font-bold text-white">Quick Links</h3>
 
               <div className="mt-4 h-1 w-12 rounded-full bg-gradient-to-r from-primary to-cyan-400" />
 
@@ -736,9 +685,7 @@ export default function Footer() {
                 delay: 0.2,
               }}
             >
-              <h3 className="font-heading text-lg font-bold text-white">
-                Customer Area
-              </h3>
+              <h3 className="font-heading text-lg font-bold text-white">Customer Area</h3>
 
               <div className="mt-4 h-1 w-12 rounded-full bg-gradient-to-r from-primary to-cyan-400" />
 
@@ -777,17 +724,12 @@ export default function Footer() {
                 delay: 0.3,
               }}
             >
-              <h3 className="font-heading text-lg font-bold text-white">
-                Contact Details
-              </h3>
+              <h3 className="font-heading text-lg font-bold text-white">Contact Details</h3>
 
               <div className="mt-4 h-1 w-12 rounded-full bg-gradient-to-r from-primary to-cyan-400" />
 
               <div className="mt-6 space-y-4">
-                <a
-                  href="mailto:support@cleannest.com"
-                  className="group flex items-start gap-3"
-                >
+                <a href="mailto:support@cleannest.com" className="group flex items-start gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-cyan-300 transition-colors group-hover:bg-white/[0.14]">
                     <Mail className="h-5 w-5" />
                   </span>
@@ -803,10 +745,7 @@ export default function Footer() {
                   </span>
                 </a>
 
-                <a
-                  href="tel:+9611234567"
-                  className="group flex items-start gap-3"
-                >
+                <a href="tel:+9611234567" className="group flex items-start gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] text-emerald-300 transition-colors group-hover:bg-white/[0.14]">
                     <Phone className="h-5 w-5" />
                   </span>
@@ -899,31 +838,29 @@ export default function Footer() {
                 ease: "linear",
               }}
             >
-              {[...trustItems, ...trustItems].map(
-                ({ icon: Icon, text }, index) => (
-                  <div
-                    key={`${text}-${index}`}
-                    className="flex shrink-0 items-center gap-3 text-sm font-semibold text-blue-100"
+              {[...trustItems, ...trustItems].map(({ icon: Icon, text }, index) => (
+                <div
+                  key={`${text}-${index}`}
+                  className="flex shrink-0 items-center gap-3 text-sm font-semibold text-blue-100"
+                >
+                  <motion.span
+                    animate={{
+                      rotate: [0, 6, -6, 0],
+                      scale: [1, 1.08, 1],
+                    }}
+                    transition={{
+                      duration: 3,
+                      delay: index * 0.2,
+                      repeat: 0,
+                    }}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-cyan-300"
                   >
-                    <motion.span
-                      animate={{
-                        rotate: [0, 6, -6, 0],
-                        scale: [1, 1.08, 1],
-                      }}
-                      transition={{
-                        duration: 3,
-                        delay: index * 0.2,
-                        repeat: 0,
-                      }}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-cyan-300"
-                    >
-                      <Icon className="h-5 w-5" />
-                    </motion.span>
+                    <Icon className="h-5 w-5" />
+                  </motion.span>
 
-                    {text}
-                  </div>
-                ),
-              )}
+                  {text}
+                </div>
+              ))}
             </motion.div>
           </motion.div>
 
@@ -979,13 +916,11 @@ export default function Footer() {
 
               <div>
                 <h3 className="font-heading text-lg font-bold text-white">
-                  Ready for a cleaner and more
-                  comfortable space?
+                  Ready for a cleaner and more comfortable space?
                 </h3>
 
                 <p className="mt-1 text-sm text-blue-100/65">
-                  Choose your service and complete your
-                  booking in only a few minutes.
+                  Choose your service and complete your booking in only a few minutes.
                 </p>
               </div>
             </div>
@@ -1005,7 +940,6 @@ export default function Footer() {
                 className="group inline-flex min-h-[50px] items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-bold text-primary shadow-[0_16px_38px_rgba(0,0,0,0.2)]"
               >
                 Book Now
-
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             </motion.div>
@@ -1016,22 +950,15 @@ export default function Footer() {
         <div className="relative border-t border-white/10 bg-black/10">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-5 py-6 text-center sm:px-8 md:flex-row md:text-left lg:px-10">
             <p className="text-sm text-blue-100/55">
-              © {currentYear} CleanNest. All rights
-              reserved.
+              © {currentYear} CleanNest. All rights reserved.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm">
-              <Link
-                href="/privacy"
-                className="text-blue-100/55 transition-colors hover:text-white"
-              >
+              <Link href="/privacy" className="text-blue-100/55 transition-colors hover:text-white">
                 Privacy Policy
               </Link>
 
-              <Link
-                href="/terms"
-                className="text-blue-100/55 transition-colors hover:text-white"
-              >
+              <Link href="/terms" className="text-blue-100/55 transition-colors hover:text-white">
                 Terms of Service
               </Link>
 

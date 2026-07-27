@@ -47,8 +47,7 @@ export async function getAllUsers(filters: UserListFilters = {}) {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [users, total, roleSummary, statusSummary, newThisMonth] =
-    await Promise.all([
+  const [users, total, roleSummary, statusSummary, newThisMonth] = await Promise.all([
     User.find(match)
       .select("-passwordHash")
       .sort({ createdAt: -1 })
@@ -57,21 +56,13 @@ export async function getAllUsers(filters: UserListFilters = {}) {
       .lean()
       .exec(),
     User.countDocuments(match),
-    User.aggregate([
-      { $group: { _id: "$role", count: { $sum: 1 } } },
-    ]),
-    User.aggregate([
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]),
+    User.aggregate([{ $group: { _id: "$role", count: { $sum: 1 } } }]),
+    User.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
     User.countDocuments({ createdAt: { $gte: startOfMonth } }),
   ]);
 
-  const roleCounts = new Map(
-    roleSummary.map((item) => [String(item._id), Number(item.count)])
-  );
-  const statusCounts = new Map(
-    statusSummary.map((item) => [String(item._id), Number(item.count)])
-  );
+  const roleCounts = new Map(roleSummary.map((item) => [String(item._id), Number(item.count)]));
+  const statusCounts = new Map(statusSummary.map((item) => [String(item._id), Number(item.count)]));
 
   return {
     users,
@@ -79,10 +70,7 @@ export async function getAllUsers(filters: UserListFilters = {}) {
     page: safePage,
     limit: safeLimit,
     summary: {
-      totalUsers: roleSummary.reduce(
-        (sum, item) => sum + Number(item.count),
-        0
-      ),
+      totalUsers: roleSummary.reduce((sum, item) => sum + Number(item.count), 0),
       admins: roleCounts.get("admin") ?? 0,
       customers: roleCounts.get("customer") ?? 0,
       cleaners: roleCounts.get("cleaner") ?? 0,

@@ -18,9 +18,7 @@ function timeToMinutes(value: string) {
   return (hours ?? 0) * 60 + (minutes ?? 0);
 }
 
-export function getFullDayScheduleBlock(
-  bookingDate: string
-): RecurringScheduleBlock | null {
+export function getFullDayScheduleBlock(bookingDate: string): RecurringScheduleBlock | null {
   if (getUtcWeekday(bookingDate) === 0) {
     return {
       code: "SUNDAY_CLOSED",

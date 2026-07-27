@@ -24,8 +24,7 @@ const services: SeedService[] = [
   {
     name: "Regular Home Cleaning",
     slug: "regular-home-cleaning",
-    shortDescription:
-      "Reliable routine cleaning for a fresh and comfortable home.",
+    shortDescription: "Reliable routine cleaning for a fresh and comfortable home.",
     description:
       "Regular Home Cleaning is designed for customers who want to keep their homes consistently clean and comfortable. It includes dusting, sweeping, mopping, kitchen surface cleaning, bathroom cleaning, and trash removal.",
     category: "Home Cleaning",
@@ -44,8 +43,7 @@ const services: SeedService[] = [
   {
     name: "Deep Cleaning",
     slug: "deep-cleaning",
-    shortDescription:
-      "Detailed cleaning for spaces that need extra care and attention.",
+    shortDescription: "Detailed cleaning for spaces that need extra care and attention.",
     description:
       "Deep Cleaning provides intensive cleaning for kitchens, bathrooms, bedrooms, living spaces, furniture, corners, and difficult-to-reach areas.",
     category: "Home Cleaning",
@@ -65,8 +63,7 @@ const services: SeedService[] = [
   {
     name: "Move-In / Move-Out Cleaning",
     slug: "move-in-move-out-cleaning",
-    shortDescription:
-      "Complete cleaning before moving into or leaving a property.",
+    shortDescription: "Complete cleaning before moving into or leaving a property.",
     description:
       "Move-In and Move-Out Cleaning prepares an empty house or apartment for its next occupants. It includes detailed cleaning of rooms, kitchens, bathrooms, cabinets, floors, and interior surfaces.",
     category: "Home Cleaning",
@@ -86,8 +83,7 @@ const services: SeedService[] = [
   {
     name: "Office Cleaning",
     slug: "office-cleaning",
-    shortDescription:
-      "Professional cleaning for offices and commercial workspaces.",
+    shortDescription: "Professional cleaning for offices and commercial workspaces.",
     description:
       "Office Cleaning helps maintain a clean, organized, and comfortable working environment. It covers desks, common areas, floors, kitchens, bathrooms, and shared workspaces.",
     category: "Commercial Cleaning",
@@ -107,8 +103,7 @@ const services: SeedService[] = [
   {
     name: "Sofa and Upholstery Cleaning",
     slug: "sofa-upholstery-cleaning",
-    shortDescription:
-      "Focused cleaning for sofas, chairs, and upholstered furniture.",
+    shortDescription: "Focused cleaning for sofas, chairs, and upholstered furniture.",
     description:
       "Sofa and Upholstery Cleaning removes dust and surface dirt from upholstered furniture while helping restore a cleaner and fresher appearance.",
     category: "Specialized Cleaning",
@@ -127,8 +122,7 @@ const services: SeedService[] = [
   {
     name: "Post-Construction Cleaning",
     slug: "post-construction-cleaning",
-    shortDescription:
-      "Intensive cleaning after construction or renovation work.",
+    shortDescription: "Intensive cleaning after construction or renovation work.",
     description:
       "Post-Construction Cleaning removes construction dust, debris, marks, and surface residue after renovation or building work.",
     category: "Specialized Cleaning",
@@ -151,9 +145,7 @@ async function seedServices() {
   const mongoUri = process.env.MONGODB_URI;
 
   if (!mongoUri) {
-    throw new Error(
-      "MONGODB_URI is missing from the root .env.local file.",
-    );
+    throw new Error("MONGODB_URI is missing from the root .env.local file.");
   }
 
   try {
@@ -163,8 +155,7 @@ async function seedServices() {
 
     console.log("Connected to MongoDB Atlas.");
 
-    const servicesCollection =
-      mongoose.connection.collection("services");
+    const servicesCollection = mongoose.connection.collection("services");
 
     const currentDate = new Date();
 
@@ -186,8 +177,7 @@ async function seedServices() {
       },
     }));
 
-    const result =
-      await servicesCollection.bulkWrite(operations);
+    const result = await servicesCollection.bulkWrite(operations);
 
     console.log("Services seeded successfully.");
     console.log(`New services: ${result.upsertedCount}`);

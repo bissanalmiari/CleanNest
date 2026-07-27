@@ -16,10 +16,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import {
-  registerSchema,
-  type RegisterValues,
-} from "@/validators/authValidator";
+import { registerSchema, type RegisterValues } from "@/validators/authValidator";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
@@ -34,11 +31,7 @@ const accountBenefits = [
 ];
 
 export default function SignupPage() {
-  const {
-    register: registerUser,
-    loading,
-    error,
-  } = useAuth();
+  const { register: registerUser, loading, error } = useAuth();
 
   const {
     register,
@@ -115,9 +108,8 @@ export default function SignupPage() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-500">
-          Create your customer account and start
-          booking trusted cleaning services in only a
-          few minutes.
+          Create your customer account and start booking trusted cleaning services in only a few
+          minutes.
         </p>
       </div>
 
@@ -140,10 +132,7 @@ export default function SignupPage() {
         </motion.div>
       )}
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-7 space-y-5"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-5">
         {/* Keeps the role available for validation and submission */}
         <input type="hidden" {...register("role")} />
 
@@ -256,8 +245,7 @@ export default function SignupPage() {
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
 
             <p className="text-xs leading-5 text-emerald-700">
-              Use at least eight characters and avoid
-              sharing your password with anyone.
+              Use at least eight characters and avoid sharing your password with anyone.
             </p>
           </div>
         </motion.div>
@@ -290,17 +278,10 @@ export default function SignupPage() {
                 }
           }
         >
-          <Button
-            type="submit"
-            className="min-h-[54px] w-full"
-            isLoading={loading}
-          >
+          <Button type="submit" className="min-h-[54px] w-full" isLoading={loading}>
             <span className="inline-flex items-center justify-center gap-2">
               Create CleanNest Account
-
-              {!loading && (
-                <ArrowRight className="h-5 w-5" />
-              )}
+              {!loading && <ArrowRight className="h-5 w-5" />}
             </span>
           </Button>
         </motion.div>
@@ -329,9 +310,7 @@ export default function SignupPage() {
           >
             <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
 
-            <span className="text-[11px] font-semibold leading-4 text-slate-500">
-              {benefit}
-            </span>
+            <span className="text-[11px] font-semibold leading-4 text-slate-500">{benefit}</span>
           </motion.div>
         ))}
       </div>
@@ -345,7 +324,6 @@ export default function SignupPage() {
             className="group inline-flex items-center gap-1 font-bold text-primary transition-colors hover:text-primary-dark"
           >
             Log in
-
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </p>

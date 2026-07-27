@@ -26,7 +26,11 @@ export const Button: React.FC<ButtonProps> = ({
         : "text-primary hover:bg-primary-light";
 
   const sizeClasses =
-    size === "sm" ? "px-4 py-2 text-sm" : size === "lg" ? "px-6 py-3 text-base" : "px-5 py-2.5 text-sm";
+    size === "sm"
+      ? "px-4 py-2 text-sm"
+      : size === "lg"
+        ? "px-6 py-3 text-base"
+        : "px-5 py-2.5 text-sm";
 
   return (
     <button

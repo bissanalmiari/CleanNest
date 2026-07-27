@@ -5,76 +5,48 @@ import type {
   ServicesResponse,
 } from "@/types/service";
 
-function getErrorMessage(
-  response: ServicesErrorResponse,
-  fallbackMessage: string,
-) {
+function getErrorMessage(response: ServicesErrorResponse, fallbackMessage: string) {
   return response.message || fallbackMessage;
 }
 
 export async function fetchServices(
   filters: ServiceFilters,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ServicesResponse> {
   const searchParams = new URLSearchParams();
 
   if (filters.search.trim()) {
-    searchParams.set(
-      "search",
-      filters.search.trim(),
-    );
+    searchParams.set("search", filters.search.trim());
   }
 
   if (filters.category) {
-    searchParams.set(
-      "category",
-      filters.category,
-    );
+    searchParams.set("category", filters.category);
   }
 
   if (filters.minPrice.trim()) {
-    searchParams.set(
-      "minPrice",
-      filters.minPrice.trim(),
-    );
+    searchParams.set("minPrice", filters.minPrice.trim());
   }
 
   if (filters.maxPrice.trim()) {
-    searchParams.set(
-      "maxPrice",
-      filters.maxPrice.trim(),
-    );
+    searchParams.set("maxPrice", filters.maxPrice.trim());
   }
 
   searchParams.set("sort", filters.sort);
-  searchParams.set(
-    "page",
-    String(filters.page),
-  );
+  searchParams.set("page", String(filters.page));
   searchParams.set("limit", "6");
 
-  const response = await fetch(
-    `/api/services?${searchParams.toString()}`,
-    {
-      method: "GET",
-      signal,
-      headers: {
-        Accept: "application/json",
-      },
+  const response = await fetch(`/api/services?${searchParams.toString()}`, {
+    method: "GET",
+    signal,
+    headers: {
+      Accept: "application/json",
     },
-  );
+  });
 
-  const result = (await response.json()) as
-    | ServicesResponse
-    | ServicesErrorResponse;
+  const result = (await response.json()) as ServicesResponse | ServicesErrorResponse;
 
   if (!response.ok || !result.success) {
-    throw new Error(
-      getErrorMessage(
-        result as ServicesErrorResponse,
-        "Unable to load services.",
-      ),
-    );
+    throw new Error(getErrorMessage(result as ServicesErrorResponse, "Unable to load services."));
   }
 
   return result as ServicesResponse;
@@ -82,41 +54,27 @@ export async function fetchServices(
 
 export async function fetchServiceDetails(
   slug: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ServiceDetailsResponse> {
-  const normalizedSlug = slug
-    .trim()
-    .toLowerCase();
+  const normalizedSlug = slug.trim().toLowerCase();
 
   if (!normalizedSlug) {
-    throw new Error(
-      "Service slug is required.",
-    );
+    throw new Error("Service slug is required.");
   }
 
-  const response = await fetch(
-    `/api/services/${encodeURIComponent(
-      normalizedSlug,
-    )}`,
-    {
-      method: "GET",
-      signal,
-      headers: {
-        Accept: "application/json",
-      },
+  const response = await fetch(`/api/services/${encodeURIComponent(normalizedSlug)}`, {
+    method: "GET",
+    signal,
+    headers: {
+      Accept: "application/json",
     },
-  );
+  });
 
-  const result = (await response.json()) as
-    | ServiceDetailsResponse
-    | ServicesErrorResponse;
+  const result = (await response.json()) as ServiceDetailsResponse | ServicesErrorResponse;
 
   if (!response.ok || !result.success) {
     throw new Error(
-      getErrorMessage(
-        result as ServicesErrorResponse,
-        "Unable to load the service.",
-      ),
+      getErrorMessage(result as ServicesErrorResponse, "Unable to load the service.")
     );
   }
 

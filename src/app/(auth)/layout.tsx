@@ -97,12 +97,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               </h1>
 
               <p className="mt-5 max-w-lg text-sm font-medium leading-7 text-blue-100/65">
-                Sign in once to manage your homes, choose trusted services, and follow
-                every cleaning visit from request to completion.
+                Sign in once to manage your homes, choose trusted services, and follow every
+                cleaning visit from request to completion.
               </p>
             </div>
 
-            <div className="relative my-8 rounded-[1.8rem] border border-white/12 bg-white/[0.08] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+            <div className="border-white/12 relative my-8 rounded-[1.8rem] border bg-white/[0.08] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-cyan-300">

@@ -1,16 +1,10 @@
 import { NextRequest } from "next/server";
 
 import { requireRole } from "@/lib/auth";
-import {
-  AppError,
-  errorResponse,
-} from "@/lib/apiError";
+import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
 
-import {
-  assignCleanerNameSchema,
-  bookingIdParamsSchema,
-} from "@/validators/bookingValidator";
+import { assignCleanerNameSchema, bookingIdParamsSchema } from "@/validators/bookingValidator";
 
 import { assignCleanerNameToBooking } from "@/services/bookingCleanerAssignmentService";
 
@@ -27,15 +21,10 @@ interface ValidationIssue {
   message: string;
 }
 
-function formatValidationErrors(
-  issues: ValidationIssue[],
-) {
+function formatValidationErrors(issues: ValidationIssue[]) {
   return issues
     .map((issue) => {
-      const field =
-        issue.path.length > 0
-          ? issue.path.join(".")
-          : "booking";
+      const field = issue.path.length > 0 ? issue.path.join(".") : "booking";
 
       return `${field}: ${issue.message}`;
     })
@@ -50,33 +39,22 @@ function formatValidationErrors(
  *
  * No cleaner user account or cleaner ID is used.
  */
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext,
-) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const currentAdmin =
-      await requireRole("admin");
+    const currentAdmin = await requireRole("admin");
 
     /*
      * Validate the booking ID received from
      * the dynamic route.
      */
-    const { id } =
-      await context.params;
+    const { id } = await context.params;
 
-    const paramsValidation =
-      bookingIdParamsSchema.safeParse({
-        bookingId: id,
-      });
+    const paramsValidation = bookingIdParamsSchema.safeParse({
+      bookingId: id,
+    });
 
     if (!paramsValidation.success) {
-      throw new AppError(
-        formatValidationErrors(
-          paramsValidation.error.issues,
-        ),
-        422,
-      );
+      throw new AppError(formatValidationErrors(paramsValidation.error.issues), 422);
     }
 
     /*
@@ -85,45 +63,28 @@ export async function PATCH(
     let requestBody: unknown;
 
     try {
-      requestBody =
-        await request.json();
+      requestBody = await request.json();
     } catch {
-      throw new AppError(
-        "The request body must contain valid JSON.",
-        400,
-      );
+      throw new AppError("The request body must contain valid JSON.", 400);
     }
 
     /*
      * Validate the cleaner name and optional
      * admin assignment note.
      */
-    const bodyValidation =
-      assignCleanerNameSchema.safeParse(
-        requestBody,
-      );
+    const bodyValidation = assignCleanerNameSchema.safeParse(requestBody);
 
     if (!bodyValidation.success) {
-      throw new AppError(
-        formatValidationErrors(
-          bodyValidation.error.issues,
-        ),
-        422,
-      );
+      throw new AppError(formatValidationErrors(bodyValidation.error.issues), 422);
     }
 
-    const result =
-      await assignCleanerNameToBooking({
-        adminId:
-          currentAdmin.id,
+    const result = await assignCleanerNameToBooking({
+      adminId: currentAdmin.id,
 
-        bookingId:
-          paramsValidation.data
-            .bookingId,
+      bookingId: paramsValidation.data.bookingId,
 
-        input:
-          bodyValidation.data,
-      });
+      input: bodyValidation.data,
+    });
 
     return successResponse(result);
   } catch (error) {

@@ -1,12 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  CalendarDays,
-  Clock3,
-  DollarSign,
-  MapPin,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, DollarSign, MapPin, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 
 import { BookingStatusBadge } from "./BookingStatusBadge";
@@ -19,9 +12,7 @@ function refName(ref: DashboardBooking["serviceId"]): string {
 
 function refAddress(ref: DashboardBooking["addressId"]): string {
   if (!ref || typeof ref === "string") return "";
-  return [ref.label, [ref.area, ref.city].filter(Boolean).join(", ")]
-    .filter(Boolean)
-    .join(" · ");
+  return [ref.label, [ref.area, ref.city].filter(Boolean).join(", ")].filter(Boolean).join(" · ");
 }
 
 function formatDate(dateStr: string): string {

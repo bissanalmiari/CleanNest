@@ -1,19 +1,10 @@
-import {
-  NextRequest,
-  NextResponse,
-} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import getServices from "@/services/serviceService";
 
 export const dynamic = "force-dynamic";
 
-type ServiceSort =
-  | "newest"
-  | "oldest"
-  | "price-asc"
-  | "price-desc"
-  | "name-asc"
-  | "name-desc";
+type ServiceSort = "newest" | "oldest" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
 const allowedSortOptions = new Set<ServiceSort>([
   "newest",
@@ -24,20 +15,14 @@ const allowedSortOptions = new Set<ServiceSort>([
   "name-desc",
 ]);
 
-function parsePositiveInteger(
-  value: string | null,
-  fallbackValue: number,
-) {
+function parsePositiveInteger(value: string | null, fallbackValue: number) {
   if (value === null || value.trim() === "") {
     return fallbackValue;
   }
 
   const parsedValue = Number(value);
 
-  if (
-    !Number.isInteger(parsedValue) ||
-    parsedValue < 1
-  ) {
+  if (!Number.isInteger(parsedValue) || parsedValue < 1) {
     return null;
   }
 
@@ -51,10 +36,7 @@ function parseOptionalPrice(value: string | null) {
 
   const parsedValue = Number(value);
 
-  if (
-    !Number.isFinite(parsedValue) ||
-    parsedValue < 0
-  ) {
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
     return null;
   }
 
@@ -63,47 +45,31 @@ function parseOptionalPrice(value: string | null) {
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams =
-      request.nextUrl.searchParams;
+    const searchParams = request.nextUrl.searchParams;
 
-    const search =
-      searchParams.get("search")?.trim() ?? "";
+    const search = searchParams.get("search")?.trim() ?? "";
 
-    const category =
-      searchParams.get("category")?.trim() ?? "";
+    const category = searchParams.get("category")?.trim() ?? "";
 
-    const sortValue =
-      searchParams.get("sort")?.trim() ??
-      "newest";
+    const sortValue = searchParams.get("sort")?.trim() ?? "newest";
 
-    const page = parsePositiveInteger(
-      searchParams.get("page"),
-      1,
-    );
+    const page = parsePositiveInteger(searchParams.get("page"), 1);
 
-    const limit = parsePositiveInteger(
-      searchParams.get("limit"),
-      9,
-    );
+    const limit = parsePositiveInteger(searchParams.get("limit"), 9);
 
-    const minPrice = parseOptionalPrice(
-      searchParams.get("minPrice"),
-    );
+    const minPrice = parseOptionalPrice(searchParams.get("minPrice"));
 
-    const maxPrice = parseOptionalPrice(
-      searchParams.get("maxPrice"),
-    );
+    const maxPrice = parseOptionalPrice(searchParams.get("maxPrice"));
 
     if (search.length > 100) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Search cannot exceed 100 characters.",
+          message: "Search cannot exceed 100 characters.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -111,12 +77,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Category cannot exceed 80 characters.",
+          message: "Category cannot exceed 80 characters.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -124,12 +89,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Page must be a positive integer.",
+          message: "Page must be a positive integer.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -137,12 +101,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Limit must be a positive integer.",
+          message: "Limit must be a positive integer.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -150,12 +113,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Minimum price must be a non-negative number.",
+          message: "Minimum price must be a non-negative number.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -163,48 +125,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Maximum price must be a non-negative number.",
+          message: "Maximum price must be a non-negative number.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
-    if (
-      minPrice !== undefined &&
-      maxPrice !== undefined &&
-      minPrice > maxPrice
-    ) {
+    if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Minimum price cannot be greater than maximum price.",
+          message: "Minimum price cannot be greater than maximum price.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
-    if (
-      !allowedSortOptions.has(
-        sortValue as ServiceSort,
-      )
-    ) {
+    if (!allowedSortOptions.has(sortValue as ServiceSort)) {
       return NextResponse.json(
         {
           success: false,
           message: "Invalid sorting option.",
-          allowedSortOptions: Array.from(
-            allowedSortOptions,
-          ),
+          allowedSortOptions: Array.from(allowedSortOptions),
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -221,19 +171,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message:
-          "Services retrieved successfully.",
+        message: "Services retrieved successfully.",
         data: result,
       },
       {
         status: 200,
-      },
+      }
     );
   } catch (error) {
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : "Unknown server error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown server error";
 
     console.error("GET /api/services error:", error);
 
@@ -245,7 +191,7 @@ export async function GET(request: NextRequest) {
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }

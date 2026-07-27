@@ -1,8 +1,6 @@
 import "server-only";
 
-import mongoose, {
-  Types,
-} from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 import { AppError } from "@/lib/apiError";
 import { connectDB } from "@/lib/db";
@@ -10,9 +8,7 @@ import { connectDB } from "@/lib/db";
 import BookingModel from "@/models/Booking";
 import BookingCleanerAssignmentHistoryModel from "@/models/BookingCleanerAssignmentHistory";
 
-import type {
-  AssignCleanerNameInput,
-} from "@/validators/bookingValidator";
+import type { AssignCleanerNameInput } from "@/validators/bookingValidator";
 
 interface AssignCleanerNameOptions {
   adminId: string;
@@ -20,10 +16,7 @@ interface AssignCleanerNameOptions {
   input: AssignCleanerNameInput;
 }
 
-type AssignmentAction =
-  | "assigned"
-  | "reassigned"
-  | "removed";
+type AssignmentAction = "assigned" | "reassigned" | "removed";
 
 interface CleanerAssignmentResult {
   booking: {
@@ -51,23 +44,15 @@ interface CleanerAssignmentResult {
   };
 }
 
-function validateObjectId(
-  value: string,
-  fieldName: string,
-) {
+function validateObjectId(value: string, fieldName: string) {
   if (!Types.ObjectId.isValid(value)) {
-    throw new AppError(
-      `${fieldName} is invalid.`,
-      422,
-    );
+    throw new AppError(`${fieldName} is invalid.`, 422);
   }
 
   return new Types.ObjectId(value);
 }
 
-function normalizeCleanerName(
-  value: string | null,
-) {
+function normalizeCleanerName(value: string | null) {
   if (value === null) {
     return undefined;
   }
@@ -77,9 +62,7 @@ function normalizeCleanerName(
   return normalized || undefined;
 }
 
-function normalizeNote(
-  value?: string,
-) {
+function normalizeNote(value?: string) {
   const normalized = value?.trim();
 
   return normalized || undefined;
@@ -92,54 +75,35 @@ function determineAssignmentAction({
   previousCleanerName?: string;
   newCleanerName?: string;
 }): AssignmentAction {
-  if (
-    !previousCleanerName &&
-    newCleanerName
-  ) {
+  if (!previousCleanerName && newCleanerName) {
     return "assigned";
   }
 
-  if (
-    previousCleanerName &&
-    newCleanerName
-  ) {
+  if (previousCleanerName && newCleanerName) {
     return "reassigned";
   }
 
   return "removed";
 }
 
-function formatDateInBeirut(
-  date: Date,
-) {
-  const formatter =
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Beirut",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
+function formatDateInBeirut(date: Date) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Beirut",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 
-  const parts =
-    formatter.formatToParts(date);
+  const parts = formatter.formatToParts(date);
 
-  const year = parts.find(
-    (part) => part.type === "year",
-  )?.value;
+  const year = parts.find((part) => part.type === "year")?.value;
 
-  const month = parts.find(
-    (part) => part.type === "month",
-  )?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
 
-  const day = parts.find(
-    (part) => part.type === "day",
-  )?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
 
   if (!year || !month || !day) {
-    throw new AppError(
-      "Unable to determine the booking date.",
-      500,
-    );
+    throw new AppError("Unable to determine the booking date.", 500);
   }
 
   return `${year}-${month}-${day}`;
@@ -158,207 +122,131 @@ export async function assignCleanerNameToBooking({
 }: AssignCleanerNameOptions): Promise<CleanerAssignmentResult> {
   await connectDB();
 
-  const adminObjectId =
-    validateObjectId(
-      adminId,
-      "Admin ID",
-    );
+  const adminObjectId = validateObjectId(adminId, "Admin ID");
 
-  const bookingObjectId =
-    validateObjectId(
-      bookingId,
-      "Booking ID",
-    );
+  const bookingObjectId = validateObjectId(bookingId, "Booking ID");
 
-  const nextCleanerName =
-    normalizeCleanerName(
-      input.assignedCleanerName,
-    );
+  const nextCleanerName = normalizeCleanerName(input.assignedCleanerName);
 
-  const assignmentNote =
-    normalizeNote(input.note);
+  const assignmentNote = normalizeNote(input.note);
 
-  const session =
-    await mongoose.startSession();
+  const session = await mongoose.startSession();
 
   try {
-    const transactionResult =
-      await session.withTransaction(
-        async () => {
-          const booking =
-            await BookingModel.findById(
-              bookingObjectId,
-            )
-              .session(session)
-              .exec();
+    const transactionResult = await session.withTransaction(async () => {
+      const booking = await BookingModel.findById(bookingObjectId).session(session).exec();
 
-          if (!booking) {
-            throw new AppError(
-              "The booking could not be found.",
-              404,
-            );
-          }
+      if (!booking) {
+        throw new AppError("The booking could not be found.", 404);
+      }
 
-          /*
-           * Cleaner names are assigned before the
-           * cleaning task starts.
-           */
-          if (
-            booking.status !==
-              "pending" &&
-            booking.status !==
-              "confirmed"
-          ) {
-            throw new AppError(
-              "A cleaner name can only be assigned to a pending or confirmed booking.",
-              409,
-            );
-          }
+      /*
+       * Cleaner names are assigned before the
+       * cleaning task starts.
+       */
+      if (booking.status !== "pending" && booking.status !== "confirmed") {
+        throw new AppError(
+          "A cleaner name can only be assigned to a pending or confirmed booking.",
+          409
+        );
+      }
 
-          const previousCleanerName =
-            booking.assignedCleanerName
-              ?.trim() ||
-            undefined;
+      const previousCleanerName = booking.assignedCleanerName?.trim() || undefined;
 
-          if (
-            previousCleanerName ===
-            nextCleanerName
-          ) {
-            throw new AppError(
-              nextCleanerName
-                ? `${nextCleanerName} is already assigned to this booking.`
-                : "This booking does not currently have an assigned cleaner name.",
-              422,
-            );
-          }
+      if (previousCleanerName === nextCleanerName) {
+        throw new AppError(
+          nextCleanerName
+            ? `${nextCleanerName} is already assigned to this booking.`
+            : "This booking does not currently have an assigned cleaner name.",
+          422
+        );
+      }
 
-          const assignmentAction =
-            determineAssignmentAction({
-              previousCleanerName,
-              newCleanerName:
-                nextCleanerName,
-            });
+      const assignmentAction = determineAssignmentAction({
+        previousCleanerName,
+        newCleanerName: nextCleanerName,
+      });
 
-          booking.assignedCleanerName =
-            nextCleanerName;
+      booking.assignedCleanerName = nextCleanerName;
 
-          await booking.save({
-            session,
-          });
+      await booking.save({
+        session,
+      });
 
-          const historyDocuments =
-            await BookingCleanerAssignmentHistoryModel.create(
-              [
-                {
-                  bookingId:
-                    bookingObjectId,
+      const historyDocuments = await BookingCleanerAssignmentHistoryModel.create(
+        [
+          {
+            bookingId: bookingObjectId,
 
-                  previousCleanerName,
-
-                  newCleanerName:
-                    nextCleanerName,
-
-                  action:
-                    assignmentAction,
-
-                  changedByUserId:
-                    adminObjectId,
-
-                  note:
-                    assignmentNote,
-                },
-              ],
-              {
-                session,
-              },
-            );
-
-          const history =
-            historyDocuments.at(0);
-
-          if (!history) {
-            throw new AppError(
-              "The cleaner-assignment history could not be created.",
-              500,
-            );
-          }
-
-          return {
-            booking,
-            history,
             previousCleanerName,
-            assignmentAction,
-          };
-        },
+
+            newCleanerName: nextCleanerName,
+
+            action: assignmentAction,
+
+            changedByUserId: adminObjectId,
+
+            note: assignmentNote,
+          },
+        ],
+        {
+          session,
+        }
       );
+
+      const history = historyDocuments.at(0);
+
+      if (!history) {
+        throw new AppError("The cleaner-assignment history could not be created.", 500);
+      }
+
+      return {
+        booking,
+        history,
+        previousCleanerName,
+        assignmentAction,
+      };
+    });
 
     if (!transactionResult) {
-      throw new AppError(
-        "The cleaner-assignment transaction did not return a booking.",
-        500,
-      );
+      throw new AppError("The cleaner-assignment transaction did not return a booking.", 500);
     }
 
-    const {
-      booking,
-      history,
-      previousCleanerName,
-      assignmentAction,
-    } = transactionResult;
+    const { booking, history, previousCleanerName, assignmentAction } = transactionResult;
 
     return {
       booking: {
-        id:
-          booking._id.toString(),
+        id: booking._id.toString(),
 
-        bookingNumber:
-          booking.bookingNumber,
+        bookingNumber: booking.bookingNumber,
 
-        status:
-          booking.status,
+        status: booking.status,
 
-        bookingDate:
-          formatDateInBeirut(
-            booking.bookingDate,
-          ),
+        bookingDate: formatDateInBeirut(booking.bookingDate),
 
-        startTime:
-          booking.startTime,
+        startTime: booking.startTime,
 
-        endTime:
-          booking.endTime,
+        endTime: booking.endTime,
 
-        previousCleanerName:
-          previousCleanerName ??
-          null,
+        previousCleanerName: previousCleanerName ?? null,
 
-        assignedCleanerName:
-          booking
-            .assignedCleanerName ??
-          null,
+        assignedCleanerName: booking.assignedCleanerName ?? null,
 
         assignmentAction,
 
-        assignmentNote:
-          assignmentNote ?? null,
+        assignmentNote: assignmentNote ?? null,
 
-        customerId:
-          booking.customerId.toString(),
+        customerId: booking.customerId.toString(),
 
-        serviceId:
-          booking.serviceId.toString(),
+        serviceId: booking.serviceId.toString(),
 
-        addressId:
-          booking.addressId.toString(),
+        addressId: booking.addressId.toString(),
 
-        serviceAreaId:
-          booking.serviceAreaId.toString(),
+        serviceAreaId: booking.serviceAreaId.toString(),
 
-        historyId:
-          history._id.toString(),
+        historyId: history._id.toString(),
 
-        updatedAt:
-          booking.updatedAt.toISOString(),
+        updatedAt: booking.updatedAt.toISOString(),
       },
     };
   } finally {

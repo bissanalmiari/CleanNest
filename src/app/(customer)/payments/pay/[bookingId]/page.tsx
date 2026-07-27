@@ -43,11 +43,7 @@ function formatExpiry(value: string) {
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
-export default function PayBookingPage({
-  params,
-}: {
-  params: Promise<{ bookingId: string }>;
-}) {
+export default function PayBookingPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const { bookingId } = usePromise(params);
   const router = useRouter();
 
@@ -87,9 +83,7 @@ export default function PayBookingPage({
         }
       } catch (err) {
         if (!cancelled) {
-          setLoadError(
-            err instanceof Error ? err.message : "Could not load this booking"
-          );
+          setLoadError(err instanceof Error ? err.message : "Could not load this booking");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -108,19 +102,16 @@ export default function PayBookingPage({
     setSubmitError(null);
 
     try {
-      const res = await fetch(
-        `/api/customer/payments/booking/${bookingId}/pay`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cardholderName,
-            cardNumber,
-            expiry,
-            cvv,
-          }),
-        }
-      );
+      const res = await fetch(`/api/customer/payments/booking/${bookingId}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardholderName,
+          cardNumber,
+          expiry,
+          cvv,
+        }),
+      });
       const json: ApiEnvelope<PaymentSummary> = await res.json();
 
       if (!json.success) {
@@ -186,35 +177,28 @@ export default function PayBookingPage({
             <h1 className="font-heading text-2xl font-semibold text-navy">
               Pay for {booking.bookingNumber}
             </h1>
-            <p className="text-sm text-navy/60">
-              ${booking.totalAmount.toFixed(2)} due
-            </p>
+            <p className="text-sm text-navy/60">${booking.totalAmount.toFixed(2)} due</p>
           </div>
         </div>
 
         <div className="flex items-start gap-2 rounded-card bg-primary-light px-4 py-3 text-xs text-primary-dark">
           <Info size={16} className="mt-0.5 shrink-0" />
           <span>
-            CleanNest is running in test mode — no real card network is
-            contacted and no real money moves. Any card number works to
-            simulate success; a number ending in <strong>0000</strong>{" "}
-            simulates a declined payment.
+            CleanNest is running in test mode — no real card network is contacted and no real money
+            moves. Any card number works to simulate success; a number ending in{" "}
+            <strong>0000</strong> simulates a declined payment.
           </span>
         </div>
 
         {success ? (
-          <Alert variant="success">
-            Payment successful! Redirecting to your payments...
-          </Alert>
+          <Alert variant="success">Payment successful! Redirecting to your payments...</Alert>
         ) : (
           <form
             onSubmit={handleSubmit}
             className="space-y-4 rounded-card bg-surface p-5 shadow-card"
           >
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-navy">
-                Cardholder name
-              </label>
+              <label className="block text-sm font-medium text-navy">Cardholder name</label>
               <input
                 required
                 type="text"
@@ -226,9 +210,7 @@ export default function PayBookingPage({
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-navy">
-                Card number
-              </label>
+              <label className="block text-sm font-medium text-navy">Card number</label>
               <input
                 required
                 type="text"
@@ -242,9 +224,7 @@ export default function PayBookingPage({
 
             <div className="flex gap-4">
               <div className="flex-1 space-y-1.5">
-                <label className="block text-sm font-medium text-navy">
-                  Expiry
-                </label>
+                <label className="block text-sm font-medium text-navy">Expiry</label>
                 <input
                   required
                   type="text"
@@ -256,18 +236,14 @@ export default function PayBookingPage({
                 />
               </div>
               <div className="w-28 space-y-1.5">
-                <label className="block text-sm font-medium text-navy">
-                  CVV
-                </label>
+                <label className="block text-sm font-medium text-navy">CVV</label>
                 <input
                   required
                   type="text"
                   inputMode="numeric"
                   maxLength={4}
                   value={cvv}
-                  onChange={(e) =>
-                    setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
-                  }
+                  onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   placeholder="123"
                   className="w-full rounded-md border border-navy/15 px-3.5 py-2.5 text-sm text-navy outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
@@ -282,9 +258,7 @@ export default function PayBookingPage({
               className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
             >
               <ShieldCheck size={16} />
-              {submitting
-                ? "Processing..."
-                : `Pay $${booking.totalAmount.toFixed(2)} (test mode)`}
+              {submitting ? "Processing..." : `Pay $${booking.totalAmount.toFixed(2)} (test mode)`}
             </button>
           </form>
         )}

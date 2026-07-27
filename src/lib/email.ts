@@ -24,7 +24,7 @@ if (
   !process.env.EMAIL_FROM
 ) {
   console.warn(
-    "[email] EMAIL_FROM is not configured. Use an authenticated address on your own domain.",
+    "[email] EMAIL_FROM is not configured. Use an authenticated address on your own domain."
   );
 }
 
@@ -35,10 +35,7 @@ function getTransporter(): Transporter | null {
   if (!transporter) {
     const dkimDomain = process.env.EMAIL_DKIM_DOMAIN?.trim();
     const dkimSelector = process.env.EMAIL_DKIM_SELECTOR?.trim();
-    const dkimPrivateKey = process.env.EMAIL_DKIM_PRIVATE_KEY?.replaceAll(
-      "\\n",
-      "\n",
-    );
+    const dkimPrivateKey = process.env.EMAIL_DKIM_PRIVATE_KEY?.replaceAll("\\n", "\n");
     transporter = nodemailer.createTransport(EMAIL_SERVER, {
       ...(dkimDomain && dkimSelector && dkimPrivateKey
         ? {
@@ -93,9 +90,7 @@ export async function sendEmail({
     html,
     text: text ?? html.replace(/<[^>]+>/g, ""),
     replyTo: replyTo ?? EMAIL_REPLY_TO,
-    envelope: EMAIL_RETURN_PATH
-      ? { from: EMAIL_RETURN_PATH, to }
-      : undefined,
+    envelope: EMAIL_RETURN_PATH ? { from: EMAIL_RETURN_PATH, to } : undefined,
     messageId: `<${referenceId ?? crypto.randomUUID()}@${
       process.env.EMAIL_MESSAGE_DOMAIN?.trim() || emailFromDomain()
     }>`,
@@ -114,10 +109,7 @@ export function emailAppUrl(path: string) {
 export function isPublicEmailUrl(value: string) {
   try {
     const url = new URL(value);
-    return (
-      url.protocol === "https:" &&
-      !["localhost", "127.0.0.1", "::1"].includes(url.hostname)
-    );
+    return url.protocol === "https:" && !["localhost", "127.0.0.1", "::1"].includes(url.hostname);
   } catch {
     return false;
   }
@@ -153,13 +145,17 @@ export async function sendOtpEmail(
       <h2 style="color:#0f766e;">${heading}</h2>
       <p>${body}</p>
 
-      ${includeActionLink ? `<div style="text-align:center; margin: 24px 0;">
+      ${
+        includeActionLink
+          ? `<div style="text-align:center; margin: 24px 0;">
         <a href="${actionUrl}"
            style="display:inline-block; background:#1E6FD9; color:#ffffff; text-decoration:none;
                   font-weight:600; padding:12px 28px; border-radius:8px;">
           ${actionLabel}
         </a>
-      </div>` : ""}
+      </div>`
+          : ""
+      }
 
       <p style="color:#666; font-size: 13px; text-align:center;">
         Or enter this code manually on the ${isVerify ? "verification" : "reset"} page:

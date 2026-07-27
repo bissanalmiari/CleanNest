@@ -2,19 +2,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  Search,
-  Sparkles,
-  Tag,
-  Clock,
-  DollarSign,
-  Plus,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import ServiceFormModal, {
-  type ServiceFormData,
-} from "@/components/services/ServiceFormModal";
+import { Search, Sparkles, Tag, Clock, DollarSign, Plus, Pencil, Trash2 } from "lucide-react";
+import ServiceFormModal, { type ServiceFormData } from "@/components/services/ServiceFormModal";
 
 interface ServiceRow {
   _id: string;
@@ -77,9 +66,7 @@ export default function AdminServicesPage() {
       setTotal(json.data?.total ?? 0);
       setErrorMessage(null);
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : "Failed to load services"
-      );
+      setErrorMessage(err instanceof Error ? err.message : "Failed to load services");
     } finally {
       setLoading(false);
     }
@@ -98,9 +85,7 @@ export default function AdminServicesPage() {
   const categories = Array.from(new Set(services.map((s) => s.category)));
 
   const handleDelete = async (service: ServiceRow) => {
-    const confirmed = window.confirm(
-      `Delete "${service.name}"? This cannot be undone.`
-    );
+    const confirmed = window.confirm(`Delete "${service.name}"? This cannot be undone.`);
     if (!confirmed) return;
 
     setDeletingId(service._id);
@@ -114,9 +99,7 @@ export default function AdminServicesPage() {
       }
       await fetchServices();
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : "Failed to delete service"
-      );
+      setErrorMessage(err instanceof Error ? err.message : "Failed to delete service");
     } finally {
       setDeletingId(null);
     }
@@ -170,7 +153,7 @@ export default function AdminServicesPage() {
               placeholder="Search services..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 py-2.5 pl-10 pr-3 text-sm text-navy placeholder:text-navy/35 transition-all focus:border-primary/40 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-primary/10"
+              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 py-2.5 pl-10 pr-3 text-sm text-navy transition-all placeholder:text-navy/35 focus:border-primary/40 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-primary/10"
             />
           </div>
 
@@ -255,12 +238,8 @@ export default function AdminServicesPage() {
                       key={service._id}
                       className="border-b border-navy/[0.05] transition-colors last:border-0 hover:bg-surface-soft/60"
                     >
-                      <td className="py-3.5 pl-6 pr-3 font-semibold text-navy">
-                        {service.name}
-                      </td>
-                      <td className="px-3 py-3.5 text-navy/60">
-                        {service.category}
-                      </td>
+                      <td className="py-3.5 pl-6 pr-3 font-semibold text-navy">{service.name}</td>
+                      <td className="px-3 py-3.5 text-navy/60">{service.category}</td>
                       <td className="px-3 py-3.5 font-medium text-navy">
                         <p>${(service.price ?? 0).toLocaleString()} base</p>
                         <p className="mt-0.5 text-[11px] font-medium text-navy/40">
@@ -303,8 +282,7 @@ export default function AdminServicesPage() {
                                 category: service.category,
                                 price: service.price,
                                 durationMinutes: service.durationMinutes,
-                                includedSquareMeters:
-                                  service.includedSquareMeters ?? 60,
+                                includedSquareMeters: service.includedSquareMeters ?? 60,
                                 pricePerAdditionalSquareMeter:
                                   service.pricePerAdditionalSquareMeter ?? 0.4,
                                 minutesPerAdditionalSquareMeter:

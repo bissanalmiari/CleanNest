@@ -91,10 +91,7 @@ export async function getAllPromoCodes(filters: PromoCodeListFilters = {}) {
 export async function getPromoCodeById(id: string) {
   await connectDB();
 
-  const code = await PromoCode.findById(id)
-    .populate("applicableServiceIds", "name")
-    .lean()
-    .exec();
+  const code = await PromoCode.findById(id).populate("applicableServiceIds", "name").lean().exec();
   if (!code) throw new NotFoundError("Promo code not found");
 
   const trackedUsage = await PromoCodeUsage.find({ promoCodeId: id })
@@ -104,8 +101,7 @@ export async function getPromoCodeById(id: string) {
     .populate("bookingId", "bookingNumber")
     .lean()
     .exec();
-  let recentUsage =
-    trackedUsage as unknown as Array<Record<string, unknown>>;
+  let recentUsage = trackedUsage as unknown as Array<Record<string, unknown>>;
   const usedCount = code.usageCount ?? 0;
 
   // Older bookings predate PromoCodeUsage tracking. Keep their redemption
@@ -164,9 +160,7 @@ export async function createPromoCode(input: CreatePromoCodeInput) {
   validateDiscount(input.discountType, input.discountValue);
   await assertCodeAvailable(code);
 
-  const startDate = input.startDate
-    ? parseDate(input.startDate, "startDate")
-    : new Date();
+  const startDate = input.startDate ? parseDate(input.startDate, "startDate") : new Date();
   const expiryDate = parseDate(input.expiryDate, "expiryDate");
   if (expiryDate <= startDate) {
     throw new AppError("expiryDate must be later than startDate", 422);
@@ -185,19 +179,11 @@ export async function createPromoCode(input: CreatePromoCodeInput) {
   if ((input.minimumBookingAmount ?? 0) < 0) {
     throw new AppError("minimumBookingAmount cannot be negative", 422);
   }
-  if (
-    input.discountType === "fixed_amount" &&
-    input.maximumDiscountAmount != null
-  ) {
-    throw new AppError(
-      "maximumDiscountAmount is only available for percentage codes",
-      422,
-    );
+  if (input.discountType === "fixed_amount" && input.maximumDiscountAmount != null) {
+    throw new AppError("maximumDiscountAmount is only available for percentage codes", 422);
   }
 
-  const applicableServiceIds = await validateApplicableServices(
-    input.applicableServiceIds,
-  );
+  const applicableServiceIds = await validateApplicableServices(input.applicableServiceIds);
   const promoCode = await PromoCode.create({
     code,
     description: input.description?.trim() ?? "",
@@ -254,8 +240,7 @@ export async function updatePromoCode(id: string, input: UpdatePromoCodeInput) {
     promoCode.minimumBookingAmount = input.minimumBookingAmount;
   }
   if (input.maximumDiscountAmount !== undefined) {
-    promoCode.maximumDiscountAmount =
-      input.maximumDiscountAmount ?? undefined;
+    promoCode.maximumDiscountAmount = input.maximumDiscountAmount ?? undefined;
   }
   if (nextType === "fixed_amount") {
     promoCode.maximumDiscountAmount = undefined;
@@ -265,10 +250,7 @@ export async function updatePromoCode(id: string, input: UpdatePromoCodeInput) {
       !Number.isInteger(input.maximumUses) ||
       input.maximumUses < Math.max(1, promoCode.usageCount ?? 0)
     ) {
-      throw new AppError(
-        "maximumUses cannot be lower than the number already used",
-        422,
-      );
+      throw new AppError("maximumUses cannot be lower than the number already used", 422);
     }
     promoCode.maximumUses = input.maximumUses;
   }
@@ -279,9 +261,7 @@ export async function updatePromoCode(id: string, input: UpdatePromoCodeInput) {
     promoCode.perCustomerLimit = input.perCustomerLimit;
   }
   if (input.applicableServiceIds !== undefined) {
-    promoCode.applicableServiceIds = await validateApplicableServices(
-      input.applicableServiceIds,
-    );
+    promoCode.applicableServiceIds = await validateApplicableServices(input.applicableServiceIds);
   }
   if (input.isActive !== undefined) promoCode.isActive = input.isActive;
 

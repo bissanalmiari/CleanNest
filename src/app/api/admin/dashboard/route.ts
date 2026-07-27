@@ -88,10 +88,7 @@ export async function GET(request: NextRequest) {
       return successResponse(reports);
     }
 
-    throw new AppError(
-      "Invalid section. Use overview, stats, revenue, or reports.",
-      422
-    );
+    throw new AppError("Invalid section. Use overview, stats, revenue, or reports.", 422);
   } catch (error) {
     return errorResponse(error);
   }

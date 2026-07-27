@@ -22,9 +22,7 @@ export async function PUT(request: Request) {
     const body = (await request.json()) as {
       days?: CleanerAvailabilityDay[];
     };
-    return successResponse(
-      await updateCleanerAvailability(cleaner.id, body.days ?? []),
-    );
+    return successResponse(await updateCleanerAvailability(cleaner.id, body.days ?? []));
   } catch (error) {
     return errorResponse(error);
   }

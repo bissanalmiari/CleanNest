@@ -7,10 +7,7 @@ import {
   updateProofTask,
 } from "@/services/serviceProofService";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const cleaner = await requireRole("cleaner");
     const { id } = await params;
@@ -20,10 +17,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const cleaner = await requireRole("cleaner");
     const { id } = await params;
@@ -38,17 +32,13 @@ export async function PATCH(
       if (typeof body.key !== "string" || typeof body.completed !== "boolean") {
         throw new AppError("Checklist key and completed state are required", 422);
       }
-      return successResponse(
-        await updateProofTask(cleaner.id, id, body.key, body.completed),
-      );
+      return successResponse(await updateProofTask(cleaner.id, id, body.key, body.completed));
     }
     if (body.action === "report_issue") {
       if (typeof body.description !== "string") {
         throw new AppError("Issue description is required", 422);
       }
-      return successResponse(
-        await addProofIssue(cleaner.id, id, body.description),
-      );
+      return successResponse(await addProofIssue(cleaner.id, id, body.description));
     }
     throw new AppError("Invalid proof-of-service action", 422);
   } catch (error) {

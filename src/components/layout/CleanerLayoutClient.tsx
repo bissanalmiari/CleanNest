@@ -34,10 +34,7 @@ const cleanerNavigation: AuthenticatedNavigationItem[] = [
   },
 ];
 
-export default function CleanerLayoutClient({
-  children,
-  user,
-}: CleanerLayoutClientProps) {
+export default function CleanerLayoutClient({ children, user }: CleanerLayoutClientProps) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f3f7fb]">
       <AuthenticatedNavbar role="cleaner" items={cleanerNavigation} user={user} />

@@ -19,13 +19,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import {
-  motion,
-  MotionConfig,
-  useMotionTemplate,
-  useMotionValue,
-  useSpring,
-} from "motion/react";
+import { motion, MotionConfig, useMotionTemplate, useMotionValue, useSpring } from "motion/react";
 
 type SpotlightCardProps = {
   children: ReactNode;
@@ -33,11 +27,7 @@ type SpotlightCardProps = {
   delay?: number;
 };
 
-function SpotlightCard({
-  children,
-  className = "",
-  delay = 0,
-}: SpotlightCardProps) {
+function SpotlightCard({ children, className = "", delay = 0 }: SpotlightCardProps) {
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
 
@@ -302,7 +292,6 @@ export default function WhyChooseUsSection() {
               >
                 <BadgeCheck className="h-4 w-4" />
               </motion.span>
-
               Why Choose CleanNest
             </motion.div>
 
@@ -314,19 +303,15 @@ export default function WhyChooseUsSection() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              From easy booking to dependable service, every CleanNest feature
-              is designed to give you more confidence, convenience, and
-              control.
+              From easy booking to dependable service, every CleanNest feature is designed to give
+              you more confidence, convenience, and control.
             </p>
           </motion.div>
 
           {/* Bento grid */}
           <div className="mt-16 grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Trusted professionals */}
-            <SpotlightCard
-              delay={0.05}
-              className="min-h-[390px] p-7 md:col-span-2 lg:col-span-2"
-            >
+            <SpotlightCard delay={0.05} className="min-h-[390px] p-7 md:col-span-2 lg:col-span-2">
               <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl transition-transform duration-700 group-hover:scale-125" />
 
               <div className="relative grid h-full items-center gap-10 md:grid-cols-[1fr_0.9fr]">
@@ -344,17 +329,12 @@ export default function WhyChooseUsSection() {
                   </h3>
 
                   <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
-                    CleanNest focuses on dependable service, clear
-                    communication, and a professional experience from the
-                    moment you book until the cleaning is complete.
+                    CleanNest focuses on dependable service, clear communication, and a professional
+                    experience from the moment you book until the cleaning is complete.
                   </p>
 
                   <div className="mt-7 flex flex-wrap gap-3">
-                    {[
-                      "Reliable",
-                      "Professional",
-                      "Customer focused",
-                    ].map((item) => (
+                    {["Reliable", "Professional", "Customer focused"].map((item) => (
                       <span
                         key={item}
                         className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm"
@@ -431,9 +411,7 @@ export default function WhyChooseUsSection() {
                     <div className="flex items-center gap-2">
                       <Users className="h-5 w-5 text-primary" />
 
-                      <span className="text-xs font-bold text-navy">
-                        Trusted team
-                      </span>
+                      <span className="text-xs font-bold text-navy">Trusted team</span>
                     </div>
                   </motion.div>
 
@@ -450,16 +428,11 @@ export default function WhyChooseUsSection() {
                   >
                     <div className="flex items-center gap-1 text-amber-500">
                       {Array.from({ length: 5 }).map((_, index) => (
-                        <Star
-                          key={index}
-                          className="h-3.5 w-3.5 fill-current"
-                        />
+                        <Star key={index} className="h-3.5 w-3.5 fill-current" />
                       ))}
                     </div>
 
-                    <p className="mt-1 text-xs font-bold text-navy">
-                      Excellent service
-                    </p>
+                    <p className="mt-1 text-xs font-bold text-navy">Excellent service</p>
                   </motion.div>
                 </div>
               </div>
@@ -490,9 +463,7 @@ export default function WhyChooseUsSection() {
                   className="relative mt-7 rounded-2xl border border-dashed border-slate-200 bg-white p-5 shadow-card"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">
-                      Home cleaning
-                    </span>
+                    <span className="text-sm text-slate-500">Home cleaning</span>
 
                     <span className="font-bold text-navy">$35</span>
                   </div>
@@ -543,9 +514,7 @@ export default function WhyChooseUsSection() {
 
                 <div className="mt-7 rounded-2xl border border-primary/10 bg-white p-4 shadow-card">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-navy">
-                      Available times
-                    </span>
+                    <span className="text-sm font-bold text-navy">Available times</span>
 
                     <Clock3 className="h-4 w-4 text-violet-500" />
                   </div>
@@ -658,9 +627,7 @@ export default function WhyChooseUsSection() {
                       Customer satisfaction
                     </span>
 
-                    <span className="font-heading text-xl font-extrabold text-amber-600">
-                      98%
-                    </span>
+                    <span className="font-heading text-xl font-extrabold text-amber-600">98%</span>
                   </div>
 
                   <div className="mt-3 h-3 overflow-hidden rounded-full bg-amber-100">
@@ -685,26 +652,18 @@ export default function WhyChooseUsSection() {
                   <div className="mt-5 flex items-center gap-2">
                     <div className="flex text-amber-500">
                       {Array.from({ length: 5 }).map((_, index) => (
-                        <Star
-                          key={index}
-                          className="h-5 w-5 fill-current"
-                        />
+                        <Star key={index} className="h-5 w-5 fill-current" />
                       ))}
                     </div>
 
-                    <span className="text-sm font-bold text-navy">
-                      4.9 average rating
-                    </span>
+                    <span className="text-sm font-bold text-navy">4.9 average rating</span>
                   </div>
                 </div>
               </div>
             </SpotlightCard>
 
             {/* Easy booking — full final row */}
-            <SpotlightCard
-              delay={0.36}
-              className="min-h-[360px] p-7 md:col-span-2 lg:col-span-3"
-            >
+            <SpotlightCard delay={0.36} className="min-h-[360px] p-7 md:col-span-2 lg:col-span-3">
               <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl" />
 
               <div className="relative grid h-full items-center gap-10 lg:grid-cols-[0.75fr_1.25fr]">
@@ -722,9 +681,8 @@ export default function WhyChooseUsSection() {
                   </h3>
 
                   <p className="mt-4 max-w-xl leading-7 text-slate-600">
-                    No complicated calls or long forms. CleanNest guides you
-                    through every step, from service selection to final
-                    confirmation.
+                    No complicated calls or long forms. CleanNest guides you through every step,
+                    from service selection to final confirmation.
                   </p>
                 </div>
 
@@ -781,9 +739,7 @@ export default function WhyChooseUsSection() {
                           {step.number}
                         </motion.span>
 
-                        <span className="font-semibold text-navy sm:text-lg">
-                          {step.label}
-                        </span>
+                        <span className="font-semibold text-navy sm:text-lg">{step.label}</span>
 
                         <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />
                       </motion.div>
@@ -909,13 +865,12 @@ export default function WhyChooseUsSection() {
                 </div>
 
                 <h3 className="mt-4 max-w-3xl font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-                  Book your service today and let CleanNest take care of the
-                  rest.
+                  Book your service today and let CleanNest take care of the rest.
                 </h3>
 
                 <p className="mt-4 max-w-2xl leading-7 text-blue-100">
-                  Choose your cleaning service, preferred schedule, and
-                  property details in only a few minutes.
+                  Choose your cleaning service, preferred schedule, and property details in only a
+                  few minutes.
                 </p>
               </div>
 

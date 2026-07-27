@@ -19,26 +19,18 @@ import Payment, { type IPayment } from "@/models/Payment";
 import Booking from "@/models/Booking";
 import { AppError, NotFoundError, ForbiddenError } from "@/lib/apiError";
 import type { PaymentMethod, PaymentStatus } from "@/types/enums";
-import { createNotification } from "@/services/notificationService";
+import { createNotification, notifyActiveAdmins } from "@/services/notificationService";
 
 /* ------------------------------------------------------------------ */
 /* Shared helpers                                                       */
 /* ------------------------------------------------------------------ */
 
-async function syncBookingPaymentStatus(
-  bookingId: string,
-  status: PaymentStatus
-) {
+async function syncBookingPaymentStatus(bookingId: string, status: PaymentStatus) {
   await Booking.findByIdAndUpdate(bookingId, { paymentStatus: status });
 }
 
-async function notifyCustomerOfPayment(
-  bookingId: string,
-  status: PaymentStatus,
-) {
-  const booking = await Booking.findById(bookingId)
-    .select("customerId bookingNumber")
-    .lean();
+async function notifyCustomerOfPayment(bookingId: string, status: PaymentStatus) {
+  const booking = await Booking.findById(bookingId).select("customerId bookingNumber").lean();
   if (!booking) return;
   const labels: Record<PaymentStatus, string> = {
     unpaid: "Payment is still unpaid.",
@@ -64,6 +56,16 @@ async function notifyCustomerOfPayment(
     dedupeKey: `payment:${bookingId}:${status}`,
     email: true,
   }).catch((error) => console.error("[notification:payment]", error));
+
+  await notifyActiveAdmins({
+    type: "payment_update",
+    title: `Payment ${status}`,
+    message: `${labels[status]} Booking ${booking.bookingNumber}.`,
+    href: "/admin/payments",
+    bookingId,
+    dedupeKey: `admin-payment:${bookingId}:${status}`,
+    email: false,
+  }).catch((error) => console.error("[notification:admin-payment]", error));
 }
 
 /** Ensures a Payment record exists for a booking, creating one from the
@@ -110,9 +112,7 @@ export async function listPaymentsForCustomer(
   const page = Math.max(1, filters.page ?? 1);
   const limit = Math.min(50, Math.max(1, filters.limit ?? 10));
 
-  const customerBookingIds = await Booking.find({ customerId }).distinct(
-    "_id"
-  );
+  const customerBookingIds = await Booking.find({ customerId }).distinct("_id");
 
   const customerMatch: Record<string, unknown> = {
     bookingId: { $in: customerBookingIds },
@@ -147,10 +147,7 @@ export async function listPaymentsForCustomer(
 }
 
 /** Returns a single payment, guaranteeing it belongs to this customer. */
-export async function getPaymentForCustomer(
-  paymentId: string,
-  customerId: string
-) {
+export async function getPaymentForCustomer(paymentId: string, customerId: string) {
   await connectDB();
 
   const payment = await Payment.findById(paymentId).populate({
@@ -171,10 +168,7 @@ export async function getPaymentForCustomer(
 
 /** Retrieves (creating if needed) the payment for one of the customer's
  * own bookings — used to render the "Pay now" screen. */
-export async function getPaymentForBookingAsCustomer(
-  bookingId: string,
-  customerId: string
-) {
+export async function getPaymentForBookingAsCustomer(bookingId: string, customerId: string) {
   await connectDB();
 
   const booking = await Booking.findById(bookingId);
@@ -213,10 +207,7 @@ export async function payBookingWithTestCard(
     throw new ForbiddenError("This booking does not belong to you");
   }
   if (booking.paymentMethod !== "card") {
-    throw new AppError(
-      "This booking is not set up for card payment",
-      400
-    );
+    throw new AppError("This booking is not set up for card payment", 400);
   }
   if (booking.status === "cancelled") {
     throw new AppError("Cannot pay for a cancelled booking", 400);
@@ -248,8 +239,7 @@ export async function payBookingWithTestCard(
 
   if (isSimulatedDecline) {
     payment.status = "failed";
-    payment.failureReason =
-      "Test card declined (card number ends in 0000 — simulated decline).";
+    payment.failureReason = "Test card declined (card number ends in 0000 — simulated decline).";
     payment.metadata = {
       cardLast4: last4,
       cardholderName: card.cardholderName,
@@ -371,8 +361,7 @@ export async function getPaymentByIdForAdmin(paymentId: string) {
 
   const payment = await Payment.findById(paymentId).populate({
     path: "bookingId",
-    select:
-      "bookingNumber bookingDate status totalAmount customerId serviceId addressId",
+    select: "bookingNumber bookingDate status totalAmount customerId serviceId addressId",
     populate: [
       { path: "customerId", select: "name email phone" },
       { path: "serviceId", select: "name" },
@@ -413,10 +402,7 @@ export async function markPaymentFailed(paymentId: string, reason?: string) {
   const payment = await Payment.findById(paymentId);
   if (!payment) throw new NotFoundError("Payment not found");
   if (payment.status === "paid") {
-    throw new AppError(
-      "A paid payment cannot be marked failed — refund it instead",
-      400
-    );
+    throw new AppError("A paid payment cannot be marked failed — refund it instead", 400);
   }
 
   payment.status = "failed";

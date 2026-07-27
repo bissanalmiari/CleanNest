@@ -1,16 +1,10 @@
 import { NextRequest } from "next/server";
 
 import { requireUser } from "@/lib/auth";
-import {
-  AppError,
-  errorResponse,
-} from "@/lib/apiError";
+import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
 
-import {
-  bookingIdParamsSchema,
-  editBookingSchema,
-} from "@/validators/bookingValidator";
+import { bookingIdParamsSchema, editBookingSchema } from "@/validators/bookingValidator";
 
 import { editCustomerBooking } from "@/services/bookingEditService";
 
@@ -27,15 +21,10 @@ interface ValidationIssue {
   message: string;
 }
 
-function formatValidationErrors(
-  issues: ValidationIssue[],
-) {
+function formatValidationErrors(issues: ValidationIssue[]) {
   return issues
     .map((issue) => {
-      const field =
-        issue.path.length > 0
-          ? issue.path.join(".")
-          : "booking";
+      const field = issue.path.length > 0 ? issue.path.join(".") : "booking";
 
       return `${field}: ${issue.message}`;
     })
@@ -52,42 +41,25 @@ function formatValidationErrors(
  * Scheduling changes are handled separately by the
  * reschedule endpoint.
  */
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext,
-) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const currentUser =
-      await requireUser();
+    const currentUser = await requireUser();
 
-    if (
-      currentUser.role !==
-      "customer"
-    ) {
-      throw new AppError(
-        "Only customers can edit bookings from this endpoint.",
-        403,
-      );
+    if (currentUser.role !== "customer") {
+      throw new AppError("Only customers can edit bookings from this endpoint.", 403);
     }
 
     /*
      * Validate the dynamic booking ID.
      */
-    const { bookingId } =
-      await context.params;
+    const { bookingId } = await context.params;
 
-    const paramsValidation =
-      bookingIdParamsSchema.safeParse({
-        bookingId,
-      });
+    const paramsValidation = bookingIdParamsSchema.safeParse({
+      bookingId,
+    });
 
     if (!paramsValidation.success) {
-      throw new AppError(
-        formatValidationErrors(
-          paramsValidation.error.issues,
-        ),
-        422,
-      );
+      throw new AppError(formatValidationErrors(paramsValidation.error.issues), 422);
     }
 
     /*
@@ -96,45 +68,28 @@ export async function PATCH(
     let requestBody: unknown;
 
     try {
-      requestBody =
-        await request.json();
+      requestBody = await request.json();
     } catch {
-      throw new AppError(
-        "The request body must contain valid JSON.",
-        400,
-      );
+      throw new AppError("The request body must contain valid JSON.", 400);
     }
 
     /*
      * Only fields allowed by editBookingSchema
      * can reach the booking edit service.
      */
-    const bodyValidation =
-      editBookingSchema.safeParse(
-        requestBody,
-      );
+    const bodyValidation = editBookingSchema.safeParse(requestBody);
 
     if (!bodyValidation.success) {
-      throw new AppError(
-        formatValidationErrors(
-          bodyValidation.error.issues,
-        ),
-        422,
-      );
+      throw new AppError(formatValidationErrors(bodyValidation.error.issues), 422);
     }
 
-    const result =
-      await editCustomerBooking({
-        customerId:
-          currentUser.id,
+    const result = await editCustomerBooking({
+      customerId: currentUser.id,
 
-        bookingId:
-          paramsValidation.data
-            .bookingId,
+      bookingId: paramsValidation.data.bookingId,
 
-        input:
-          bodyValidation.data,
-      });
+      input: bodyValidation.data,
+    });
 
     return successResponse(result);
   } catch (error) {

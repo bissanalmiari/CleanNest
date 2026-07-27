@@ -15,6 +15,7 @@ import {
   ClipboardList,
   Clock3,
   LayoutDashboard,
+  Plus,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -149,38 +150,33 @@ export default function AdminBookingsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const lastRequestKey = useRef("");
 
-  const fetchBookings = useCallback(
-    async (currentFilters: FiltersState, currentPage: number) => {
-      setLoading(true);
-      setErrorMessage(null);
+  const fetchBookings = useCallback(async (currentFilters: FiltersState, currentPage: number) => {
+    setLoading(true);
+    setErrorMessage(null);
 
-      try {
-        const params = new URLSearchParams({ page: String(currentPage) });
-        if (currentFilters.status) params.set("status", currentFilters.status);
-        if (currentFilters.dateFrom) params.set("dateFrom", currentFilters.dateFrom);
-        if (currentFilters.dateTo) params.set("dateTo", currentFilters.dateTo);
-        if (currentFilters.search) params.set("search", currentFilters.search);
+    try {
+      const params = new URLSearchParams({ page: String(currentPage) });
+      if (currentFilters.status) params.set("status", currentFilters.status);
+      if (currentFilters.dateFrom) params.set("dateFrom", currentFilters.dateFrom);
+      if (currentFilters.dateTo) params.set("dateTo", currentFilters.dateTo);
+      if (currentFilters.search) params.set("search", currentFilters.search);
 
-        const response = await fetch(`/api/admin/bookings?${params.toString()}`, {
-          cache: "no-store",
-        });
-        const json: ApiEnvelope<BookingListData> = await response.json();
+      const response = await fetch(`/api/admin/bookings?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const json: ApiEnvelope<BookingListData> = await response.json();
 
-        if (!response.ok || !json.success) {
-          throw new Error(json.error ?? "Failed to load bookings");
-        }
-
-        setData(json.data ?? null);
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error ? error.message : "Failed to load bookings"
-        );
-      } finally {
-        setLoading(false);
+      if (!response.ok || !json.success) {
+        throw new Error(json.error ?? "Failed to load bookings");
       }
-    },
-    []
-  );
+
+      setData(json.data ?? null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to load bookings");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const requestKey = JSON.stringify([filters, page]);
@@ -205,16 +201,11 @@ export default function AdminBookingsPage() {
   const hasActiveFilters = Boolean(
     filters.status || filters.dateFrom || filters.dateTo || filters.search
   );
-  const pageValue = bookings.reduce(
-    (total, booking) => total + (booking.totalAmount || 0),
-    0
-  );
+  const pageValue = bookings.reduce((total, booking) => total + (booking.totalAmount || 0), 0);
   const activeOnPage = bookings.filter((booking) =>
     ["confirmed", "in_progress"].includes(booking.status)
   ).length;
-  const pendingOnPage = bookings.filter(
-    (booking) => booking.status === "pending"
-  ).length;
+  const pendingOnPage = bookings.filter((booking) => booking.status === "pending").length;
 
   function updateFilters(patch: Partial<FiltersState>) {
     setPage(1);
@@ -246,21 +237,13 @@ export default function AdminBookingsPage() {
       <motion.div
         aria-hidden
         className="pointer-events-none absolute -left-32 top-24 h-80 w-80 rounded-full bg-cyan-300/20 blur-[90px]"
-        animate={
-          reduceMotion
-            ? undefined
-            : { x: [0, 70, 0], y: [0, -24, 0], scale: [1, 1.14, 1] }
-        }
+        animate={reduceMotion ? undefined : { x: [0, 70, 0], y: [0, -24, 0], scale: [1, 1.14, 1] }}
         transition={{ duration: 14, repeat: 0, ease: "easeInOut" }}
       />
       <motion.div
         aria-hidden
         className="pointer-events-none absolute -right-32 top-[32rem] h-96 w-96 rounded-full bg-primary/15 blur-[110px]"
-        animate={
-          reduceMotion
-            ? undefined
-            : { x: [0, -60, 0], y: [0, 35, 0], scale: [1, 1.1, 1] }
-        }
+        animate={reduceMotion ? undefined : { x: [0, -60, 0], y: [0, 35, 0], scale: [1, 1.1, 1] }}
         transition={{ duration: 17, repeat: 0, ease: "easeInOut" }}
       />
 
@@ -321,8 +304,8 @@ export default function AdminBookingsPage() {
                 </span>
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-white/65 sm:text-base">
-                Review every cleaning visit, follow its progress, and open the full
-                booking record from one organized workspace.
+                Review every cleaning visit, follow its progress, and open the full booking record
+                from one organized workspace.
               </p>
               <div className="mt-5 flex flex-wrap items-center gap-4 text-xs font-medium text-white/55">
                 <span className="inline-flex items-center gap-1.5">
@@ -334,6 +317,14 @@ export default function AdminBookingsPage() {
                   Live status visibility
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => router.push("/admin/bookings/new")}
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-[#124d7a] shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-cyan-50"
+              >
+                <Plus size={17} />
+                New onsite booking
+              </button>
             </div>
 
             <motion.div
@@ -449,8 +440,7 @@ export default function AdminBookingsPage() {
                         <motion.span
                           layoutId="active-booking-status"
                           className={`absolute inset-0 bg-gradient-to-r ${
-                            STATUS_TAB_TONES[option.value] ??
-                            "from-primary to-blue-500"
+                            STATUS_TAB_TONES[option.value] ?? "from-primary to-blue-500"
                           }`}
                           transition={{ type: "spring", stiffness: 420, damping: 34 }}
                         />
@@ -525,11 +515,11 @@ export default function AdminBookingsPage() {
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-soft/70 px-3.5 py-2.5 text-xs text-navy/45">
                 <span className="inline-flex items-center gap-2">
                   <LayoutDashboard size={14} className="text-primary" />
-                  Showing{" "}
-                  <strong className="font-semibold text-navy">{bookings.length}</strong>
-                  {" "}of{" "}
-                  <strong className="font-semibold text-navy">{data?.total ?? 0}</strong>
-                  {" "}matching bookings
+                  Showing <strong className="font-semibold text-navy">
+                    {bookings.length}
+                  </strong> of{" "}
+                  <strong className="font-semibold text-navy">{data?.total ?? 0}</strong> matching
+                  bookings
                 </span>
                 <span className="inline-flex items-center gap-2">
                   <span className="relative flex h-2 w-2">
@@ -645,9 +635,7 @@ export default function AdminBookingsPage() {
 
           <div className="divide-y divide-navy/[0.06] md:hidden">
             {loading ? (
-              Array.from({ length: 4 }).map((_, index) => (
-                <BookingSkeleton key={index} />
-              ))
+              Array.from({ length: 4 }).map((_, index) => <BookingSkeleton key={index} />)
             ) : bookings.length === 0 ? (
               <EmptyBookings filtered={hasActiveFilters} onReset={clearFilters} />
             ) : (
@@ -732,13 +720,7 @@ export default function AdminBookingsPage() {
   );
 }
 
-function EmptyBookings({
-  filtered,
-  onReset,
-}: {
-  filtered: boolean;
-  onReset: () => void;
-}) {
+function EmptyBookings({ filtered, onReset }: { filtered: boolean; onReset: () => void }) {
   return (
     <div className="flex flex-col items-center px-6 py-16 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light text-primary">

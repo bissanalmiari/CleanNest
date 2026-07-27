@@ -24,9 +24,7 @@ type ProofSource = {
   _id: Types.ObjectId;
   bookingId: Types.ObjectId;
   assignmentId: Types.ObjectId;
-  cleanerId:
-    | Types.ObjectId
-    | { _id: Types.ObjectId; name?: string };
+  cleanerId: Types.ObjectId | { _id: Types.ObjectId; name?: string };
   checklist: Array<{
     key: string;
     label: string;
@@ -58,10 +56,7 @@ function taskKey(label: string, index: number) {
     .slice(0, 70)}`;
 }
 
-function defaultChecklist(
-  features: string[],
-  property: { bedrooms?: number; bathrooms?: number },
-) {
+function defaultChecklist(features: string[], property: { bedrooms?: number; bathrooms?: number }) {
   const labels = [
     ...features.slice(0, 8),
     "Dust and wipe reachable surfaces",
@@ -100,49 +95,34 @@ async function assignmentContext(cleanerId: string, bookingId: string) {
 
 function toReport(
   proof: IServiceProof | ProofSource,
-  cleanerName = "Cleaning professional",
+  cleanerName = "Cleaning professional"
 ): ServiceProofReport {
   const populatedCleaner =
-    typeof proof.cleanerId === "object" &&
-    proof.cleanerId !== null &&
-    "name" in proof.cleanerId
+    typeof proof.cleanerId === "object" && proof.cleanerId !== null && "name" in proof.cleanerId
       ? proof.cleanerId
       : null;
   const checklist = proof.checklist.map(
-    (task: {
-      key: string;
-      label: string;
-      completed: boolean;
-      completedAt?: Date;
-    }) => ({
+    (task: { key: string; label: string; completed: boolean; completedAt?: Date }) => ({
       key: task.key,
       label: task.label,
       completed: task.completed,
       completedAt: task.completedAt?.toISOString() ?? null,
-    }),
+    })
   );
   const photos = (items: Array<{ url: string; uploadedAt: Date }>) =>
     items.map((photo) => ({
       url: photo.url,
       uploadedAt: photo.uploadedAt.toISOString(),
     }));
-  const completed = checklist.filter(
-    (task: { completed: boolean }) => task.completed,
-  ).length;
+  const completed = checklist.filter((task: { completed: boolean }) => task.completed).length;
   const readyToComplete =
-    Boolean(proof.checkedInAt) &&
-    checklist.length > 0 &&
-    completed === checklist.length &&
-    proof.beforePhotos.length > 0 &&
-    proof.afterPhotos.length > 0;
+    Boolean(proof.checkedInAt) && checklist.length > 0 && completed === checklist.length;
 
   return {
     id: proof._id.toString(),
     bookingId: proof.bookingId.toString(),
     assignmentId: proof.assignmentId.toString(),
-    cleanerId: populatedCleaner
-      ? populatedCleaner._id.toString()
-      : proof.cleanerId.toString(),
+    cleanerId: populatedCleaner ? populatedCleaner._id.toString() : proof.cleanerId.toString(),
     cleanerName: populatedCleaner?.name ?? cleanerName,
     checklist,
     beforePhotos: photos(proof.beforePhotos),
@@ -156,7 +136,7 @@ function toReport(
         description: issue.description,
         photos: photos(issue.photos),
         reportedAt: issue.reportedAt.toISOString(),
-      }),
+      })
     ),
     onMyWayAt: proof.onMyWayAt?.toISOString() ?? null,
     checkedInAt: proof.checkedInAt?.toISOString() ?? null,
@@ -164,28 +144,22 @@ function toReport(
     checkInLocation:
       typeof proof.checkInLocation?.latitude === "number" &&
       typeof proof.checkInLocation?.longitude === "number"
-      ? {
-          latitude: proof.checkInLocation.latitude,
-          longitude: proof.checkInLocation.longitude,
-          accuracy: proof.checkInLocation.accuracy ?? null,
-        }
-      : null,
+        ? {
+            latitude: proof.checkInLocation.latitude,
+            longitude: proof.checkInLocation.longitude,
+            accuracy: proof.checkInLocation.accuracy ?? null,
+          }
+        : null,
     progress: {
       completed,
       total: checklist.length,
-      percentage:
-        checklist.length === 0
-          ? 0
-          : Math.round((completed / checklist.length) * 100),
+      percentage: checklist.length === 0 ? 0 : Math.round((completed / checklist.length) * 100),
       readyToComplete,
     },
   };
 }
 
-export async function getOrCreateServiceProof(
-  cleanerId: string,
-  bookingId: string,
-) {
+export async function getOrCreateServiceProof(cleanerId: string, bookingId: string) {
   const { assignment, booking } = await assignmentContext(cleanerId, bookingId);
   let proof = await ServiceProof.findOne({
     assignmentId: assignment._id,
@@ -222,7 +196,7 @@ export async function getOrCreateServiceProof(
 export async function checkInServiceProof(
   cleanerId: string,
   bookingId: string,
-  location?: LocationInput,
+  location?: LocationInput
 ) {
   await getOrCreateServiceProof(cleanerId, bookingId);
   const proof = await ServiceProof.findOne({ cleanerId, bookingId });
@@ -233,10 +207,7 @@ export async function checkInServiceProof(
   return toReport(proof);
 }
 
-export async function markCleanerOnMyWay(
-  cleanerId: string,
-  bookingId: string,
-) {
+export async function markCleanerOnMyWay(cleanerId: string, bookingId: string) {
   const { booking } = await assignmentContext(cleanerId, bookingId);
   const report = await getOrCreateServiceProof(cleanerId, bookingId);
   if (report.checkedInAt) {
@@ -258,6 +229,15 @@ export async function markCleanerOnMyWay(
     dedupeKey: `on-my-way:${bookingId}:${cleanerId}`,
     email: true,
   }).catch((error) => console.error("[notification:on-my-way]", error));
+  await notifyActiveAdmins({
+    type: "on_my_way",
+    title: "Cleaner is on the way",
+    message: `The cleaner is heading to booking ${booking.bookingNumber}.`,
+    href: `/admin/bookings/${bookingId}`,
+    bookingId,
+    dedupeKey: `admin-on-my-way:${bookingId}:${cleanerId}`,
+    email: false,
+  }).catch((error) => console.error("[notification:admin-on-my-way]", error));
   return toReport(proof);
 }
 
@@ -265,7 +245,7 @@ export async function updateProofTask(
   cleanerId: string,
   bookingId: string,
   key: string,
-  completed: boolean,
+  completed: boolean
 ) {
   await getOrCreateServiceProof(cleanerId, bookingId);
   const proof = await ServiceProof.findOne({ cleanerId, bookingId });
@@ -284,11 +264,7 @@ export async function updateProofTask(
   return toReport(proof);
 }
 
-export async function addProofIssue(
-  cleanerId: string,
-  bookingId: string,
-  description: string,
-) {
+export async function addProofIssue(cleanerId: string, bookingId: string, description: string) {
   const normalized = description.trim();
   if (!normalized || normalized.length > 1000) {
     throw new AppError("Issue description must contain 1 to 1000 characters", 422);
@@ -317,7 +293,7 @@ export async function addProofPhoto(
   cleanerId: string,
   bookingId: string,
   stage: "before" | "after",
-  url: string,
+  url: string
 ) {
   await getOrCreateServiceProof(cleanerId, bookingId);
   const proof = await ServiceProof.findOne({ cleanerId, bookingId });
@@ -337,19 +313,13 @@ export async function addProofPhoto(
   return toReport(proof);
 }
 
-export async function assertProofReadyAndCheckOut(
-  cleanerId: string,
-  bookingId: string,
-) {
+export async function assertProofReadyAndCheckOut(cleanerId: string, bookingId: string) {
   const proof = await ServiceProof.findOne({ cleanerId, bookingId });
   if (!proof?.checkedInAt) {
     throw new AppError("Check in before completing this job", 409);
   }
   if (proof.checklist.some((task) => !task.completed)) {
     throw new AppError("Complete every checklist item before finishing", 409);
-  }
-  if (proof.beforePhotos.length === 0 || proof.afterPhotos.length === 0) {
-    throw new AppError("Add at least one before and one after photo", 409);
   }
   if (!proof.checkedOutAt) {
     proof.checkedOutAt = new Date();
@@ -358,10 +328,7 @@ export async function assertProofReadyAndCheckOut(
   return toReport(proof);
 }
 
-export async function getBookingProofReports(
-  currentUser: PublicUser,
-  bookingId: string,
-) {
+export async function getBookingProofReports(currentUser: PublicUser, bookingId: string) {
   if (!Types.ObjectId.isValid(bookingId)) {
     throw new AppError("Booking ID is invalid", 422);
   }
@@ -369,10 +336,7 @@ export async function getBookingProofReports(
   const booking = await Booking.findById(bookingId).select("customerId").lean();
   if (!booking) throw new NotFoundError("Booking not found");
 
-  if (
-    currentUser.role === "customer" &&
-    booking.customerId.toString() !== currentUser.id
-  ) {
+  if (currentUser.role === "customer" && booking.customerId.toString() !== currentUser.id) {
     throw new ForbiddenError("This report belongs to another customer");
   }
   if (currentUser.role === "cleaner") {
@@ -384,14 +348,10 @@ export async function getBookingProofReports(
   }
 
   const filter =
-    currentUser.role === "cleaner"
-      ? { bookingId, cleanerId: currentUser.id }
-      : { bookingId };
+    currentUser.role === "cleaner" ? { bookingId, cleanerId: currentUser.id } : { bookingId };
   const proofs = await ServiceProof.find(filter)
     .populate({ path: "cleanerId", select: "name" })
     .sort({ createdAt: 1 })
     .lean();
-  return proofs.map((proof) =>
-    toReport(proof as unknown as ProofSource),
-  );
+  return proofs.map((proof) => toReport(proof as unknown as ProofSource));
 }

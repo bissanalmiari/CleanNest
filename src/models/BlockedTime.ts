@@ -35,19 +35,13 @@ const blockedTimeSchema = new Schema(
 
     startDatetime: {
       type: Date,
-      required: [
-        true,
-        "Blocked start date and time are required.",
-      ],
+      required: [true, "Blocked start date and time are required."],
       index: true,
     },
 
     endDatetime: {
       type: Date,
-      required: [
-        true,
-        "Blocked end date and time are required.",
-      ],
+      required: [true, "Blocked end date and time are required."],
       index: true,
     },
 
@@ -64,20 +58,14 @@ const blockedTimeSchema = new Schema(
     reason: {
       type: String,
       trim: true,
-      maxlength: [
-        500,
-        "Blocked-time reason cannot exceed 500 characters.",
-      ],
+      maxlength: [500, "Blocked-time reason cannot exceed 500 characters."],
       default: "",
     },
 
     createdByUserId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [
-        true,
-        "The admin who created the blocked period is required.",
-      ],
+      required: [true, "The admin who created the blocked period is required."],
     },
 
     isActive: {
@@ -89,33 +77,21 @@ const blockedTimeSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
 /*
  * Ensure the blocked period has a valid duration.
  */
-blockedTimeSchema.pre(
-  "validate",
-  function validateBlockedPeriod() {
-    if (
-      !this.startDatetime ||
-      !this.endDatetime
-    ) {
-      return;
-    }
+blockedTimeSchema.pre("validate", function validateBlockedPeriod() {
+  if (!this.startDatetime || !this.endDatetime) {
+    return;
+  }
 
-    if (
-      this.endDatetime.getTime() <=
-      this.startDatetime.getTime()
-    ) {
-      this.invalidate(
-        "endDatetime",
-        "Blocked end time must be later than the start time.",
-      );
-    }
-  },
-);
+  if (this.endDatetime.getTime() <= this.startDatetime.getTime()) {
+    this.invalidate("endDatetime", "Blocked end time must be later than the start time.");
+  }
+});
 
 /*
  * Used by the availability service to quickly locate
@@ -134,21 +110,12 @@ blockedTimeSchema.index({
   endDatetime: 1,
 });
 
-export type BlockedTime =
-  InferSchemaType<
-    typeof blockedTimeSchema
-  >;
+export type BlockedTime = InferSchemaType<typeof blockedTimeSchema>;
 
-export type BlockedTimeDocument =
-  HydratedDocument<BlockedTime>;
+export type BlockedTimeDocument = HydratedDocument<BlockedTime>;
 
 const BlockedTimeModel =
-  (models.BlockedTime as
-    | Model<BlockedTime>
-    | undefined) ??
-  model<BlockedTime>(
-    "BlockedTime",
-    blockedTimeSchema,
-  );
+  (models.BlockedTime as Model<BlockedTime> | undefined) ??
+  model<BlockedTime>("BlockedTime", blockedTimeSchema);
 
 export default BlockedTimeModel;

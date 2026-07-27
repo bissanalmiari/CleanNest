@@ -2,13 +2,13 @@
 
 import type { ReactNode } from "react";
 import {
+  Bell,
   CalendarDays,
   CreditCard,
   LayoutDashboard,
   Megaphone,
   MessageSquareText,
   Settings,
-  ShieldCheck,
   Sparkles,
   Tag,
   UserRoundCheck,
@@ -75,9 +75,9 @@ const adminNavigation: AuthenticatedNavigationItem[] = [
     icon: MessageSquareText,
   },
   {
-    label: "Admin Users",
-    href: "/admin/admin-users",
-    icon: ShieldCheck,
+    label: "Notifications",
+    href: "/admin/notifications",
+    icon: Bell,
   },
   {
     label: "Settings",

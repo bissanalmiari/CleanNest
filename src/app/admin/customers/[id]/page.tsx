@@ -76,30 +76,29 @@ export default function AdminCustomerDetailPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 
-  const fetchCustomer = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const response = await fetch(`/api/admin/customers/${customerId}`, {
-        cache: "no-store",
-      });
-      const json: ApiEnvelope<CustomerDetailData> = await response.json();
+  const fetchCustomer = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      try {
+        const response = await fetch(`/api/admin/customers/${customerId}`, {
+          cache: "no-store",
+        });
+        const json: ApiEnvelope<CustomerDetailData> = await response.json();
 
-      if (!response.ok || !json.success || !json.data) {
-        throw new Error(json.error ?? "Customer could not be loaded.");
+        if (!response.ok || !json.success || !json.data) {
+          throw new Error(json.error ?? "Customer could not be loaded.");
+        }
+
+        setData(json.data);
+        setErrorMessage(null);
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Customer could not be loaded.");
+      } finally {
+        setLoading(false);
       }
-
-      setData(json.data);
-      setErrorMessage(null);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Customer could not be loaded.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [customerId]);
+    },
+    [customerId]
+  );
 
   useEffect(() => {
     void fetchCustomer();
@@ -133,29 +132,24 @@ export default function AdminCustomerDetailPage() {
     const confirmed = window.confirm(
       action === "block"
         ? `Suspend ${data.user.name}? They will not be able to sign in.`
-        : `Restore account access for ${data.user.name}?`,
+        : `Restore account access for ${data.user.name}?`
     );
     if (!confirmed) return;
 
     setWorking(true);
     try {
-      const response = await fetch(
-        `/api/admin/customers/${customerId}/block`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action }),
-        },
-      );
+      const response = await fetch(`/api/admin/customers/${customerId}/block`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
       const json: ApiEnvelope<unknown> = await response.json();
       if (!response.ok || !json.success) {
         throw new Error(json.error ?? "Account status could not be changed.");
       }
       await fetchCustomer(true);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
     } finally {
       setWorking(false);
     }
@@ -163,11 +157,7 @@ export default function AdminCustomerDetailPage() {
 
   async function deleteCustomer() {
     if (!data) return;
-    if (
-      !window.confirm(
-        `Permanently delete ${data.user.name}? This action cannot be undone.`,
-      )
-    ) {
+    if (!window.confirm(`Permanently delete ${data.user.name}? This action cannot be undone.`)) {
       return;
     }
 
@@ -182,9 +172,7 @@ export default function AdminCustomerDetailPage() {
       }
       router.replace("/admin/customers");
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "The action failed.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "The action failed.");
       setWorking(false);
     }
   }
@@ -200,9 +188,7 @@ export default function AdminCustomerDetailPage() {
           <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
             <AlertCircle className="h-7 w-7" />
           </span>
-          <h1 className="mt-5 font-heading text-2xl font-black text-navy">
-            Customer unavailable
-          </h1>
+          <h1 className="mt-5 font-heading text-2xl font-black text-navy">Customer unavailable</h1>
           <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
             {errorMessage ?? "This customer could not be found."}
           </p>
@@ -264,9 +250,7 @@ export default function AdminCustomerDetailPage() {
                 {initials(customer.name) || "CU"}
                 <span
                   className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-4 border-[#0b315d] ${
-                    customer.status === "active"
-                      ? "bg-emerald-400"
-                      : "bg-red-400"
+                    customer.status === "active" ? "bg-emerald-400" : "bg-red-400"
                   }`}
                 />
               </span>
@@ -306,9 +290,7 @@ export default function AdminCustomerDetailPage() {
                 ) : (
                   <Ban className="h-4 w-4 text-amber-300" />
                 )}
-                {customer.status === "suspended"
-                  ? "Restore access"
-                  : "Suspend account"}
+                {customer.status === "suspended" ? "Restore access" : "Suspend account"}
               </button>
             </div>
           </div>
@@ -330,11 +312,7 @@ export default function AdminCustomerDetailPage() {
             </h2>
 
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              <InfoCard
-                icon={Mail}
-                label="Email address"
-                value={customer.email}
-              />
+              <InfoCard icon={Mail} label="Email address" value={customer.email} />
               <InfoCard
                 icon={Phone}
                 label="Phone number"
@@ -349,9 +327,7 @@ export default function AdminCustomerDetailPage() {
                 icon={ShieldCheck}
                 label="Account access"
                 value={
-                  customer.status === "active"
-                    ? "Active and permitted"
-                    : "Currently suspended"
+                  customer.status === "active" ? "Active and permitted" : "Currently suspended"
                 }
               />
             </div>
@@ -386,15 +362,13 @@ export default function AdminCustomerDetailPage() {
                   <Trash2 className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="font-heading text-sm font-bold text-navy">
-                    Danger zone
-                  </p>
+                  <p className="font-heading text-sm font-bold text-navy">Danger zone</p>
                   <p className="text-xs text-slate-500">Permanent action</p>
                 </div>
               </div>
               <p className="mt-4 text-xs font-medium leading-5 text-slate-500">
-                Deleting this account cannot be reversed. Use suspension when
-                temporary access control is enough.
+                Deleting this account cannot be reversed. Use suspension when temporary access
+                control is enough.
               </p>
               <button
                 type="button"

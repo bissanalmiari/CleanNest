@@ -306,10 +306,7 @@ export async function GET() {
 
           bathrooms: Math.min(30, Math.max(0, readNumber(address.bathrooms, 1))),
 
-          propertySize: Math.min(
-            2000,
-            Math.max(20, readNumber(address.propertySize, 80))
-          ),
+          propertySize: Math.min(2000, Math.max(20, readNumber(address.propertySize, 80))),
         };
       })
     );

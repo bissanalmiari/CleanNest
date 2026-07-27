@@ -4,6 +4,8 @@ import { useEffect, useMemo, type ComponentType, type ReactNode } from "react";
 
 import {
   AlertCircle,
+  Bath,
+  BedDouble,
   Building2,
   Check,
   CheckCircle2,
@@ -13,6 +15,7 @@ import {
   Map,
   MapPin,
   Navigation,
+  Ruler,
   Save,
   ShieldCheck,
   Sparkles,
@@ -50,6 +53,7 @@ interface AddressFormProps {
   error: string | null;
   submitLabel: string;
   onBeginEditing?: () => void;
+  showPropertyProfile?: boolean;
 }
 
 interface AddressFieldProps {
@@ -107,6 +111,14 @@ function createDefaultValues(address?: Address): AddressFormInput {
 
     apartment: address?.apartment ?? "",
 
+    propertyType: address?.propertyType ?? "apartment",
+
+    bedrooms: address?.bedrooms ?? 1,
+
+    bathrooms: address?.bathrooms ?? 1,
+
+    propertySize: address?.propertySize ?? 80,
+
     isDefault: address?.isDefault ?? false,
   };
 }
@@ -156,6 +168,7 @@ export function AddressForm({
   error,
   submitLabel,
   onBeginEditing,
+  showPropertyProfile = true,
 }: AddressFormProps) {
   const {
     register,
@@ -190,6 +203,14 @@ export function AddressForm({
   const watchedFloor = watch("floor") ?? "";
 
   const watchedApartment = watch("apartment") ?? "";
+
+  const watchedPropertyType = watch("propertyType") ?? "apartment";
+
+  const watchedBedrooms = Number(watch("bedrooms") ?? 1);
+
+  const watchedBathrooms = Number(watch("bathrooms") ?? 1);
+
+  const watchedPropertySize = Number(watch("propertySize") ?? 80);
 
   const watchedIsDefault = watch("isDefault") ?? false;
 
@@ -402,6 +423,101 @@ export function AddressForm({
               </div>
             </div>
           </section>
+
+          {showPropertyProfile && (
+            <section className="rounded-[1.8rem] border border-primary/10 bg-[#f8fbfe] p-5 sm:p-7">
+              <SectionHeading
+                icon={Home}
+                eyebrow="Property profile"
+                title="Tell us about the space"
+                description="These details help CleanNest recommend the right service, duration, and price during future bookings."
+              />
+
+              <div className="mt-7 grid gap-5 md:grid-cols-2">
+                <AddressField
+                  icon={Building2}
+                  label="Property type"
+                  htmlFor="address-property-type"
+                  error={errors.propertyType}
+                >
+                  <select
+                    id="address-property-type"
+                    disabled={busy}
+                    {...register("propertyType")}
+                    className={fieldClass(Boolean(errors.propertyType))}
+                  >
+                    <option value="apartment">Apartment</option>
+                    <option value="house">House</option>
+                    <option value="office">Office</option>
+                    <option value="other">Other</option>
+                  </select>
+                </AddressField>
+
+                <AddressField
+                  icon={Ruler}
+                  label="Property size"
+                  htmlFor="address-property-size"
+                  error={errors.propertySize as FieldError | undefined}
+                  description="Enter the approximate indoor area in square metres."
+                >
+                  <div className="relative">
+                    <input
+                      id="address-property-size"
+                      type="number"
+                      min={20}
+                      max={2000}
+                      step={1}
+                      inputMode="numeric"
+                      disabled={busy}
+                      {...register("propertySize", { valueAsNumber: true })}
+                      className={`${fieldClass(Boolean(errors.propertySize))} pr-14`}
+                    />
+                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-extrabold text-slate-400">
+                      m²
+                    </span>
+                  </div>
+                </AddressField>
+
+                <AddressField
+                  icon={BedDouble}
+                  label={watchedPropertyType === "office" ? "Rooms" : "Bedrooms"}
+                  htmlFor="address-bedrooms"
+                  error={errors.bedrooms as FieldError | undefined}
+                >
+                  <input
+                    id="address-bedrooms"
+                    type="number"
+                    min={0}
+                    max={30}
+                    step={1}
+                    inputMode="numeric"
+                    disabled={busy}
+                    {...register("bedrooms", { valueAsNumber: true })}
+                    className={fieldClass(Boolean(errors.bedrooms))}
+                  />
+                </AddressField>
+
+                <AddressField
+                  icon={Bath}
+                  label="Bathrooms"
+                  htmlFor="address-bathrooms"
+                  error={errors.bathrooms as FieldError | undefined}
+                >
+                  <input
+                    id="address-bathrooms"
+                    type="number"
+                    min={0}
+                    max={30}
+                    step={1}
+                    inputMode="numeric"
+                    disabled={busy}
+                    {...register("bathrooms", { valueAsNumber: true })}
+                    className={fieldClass(Boolean(errors.bathrooms))}
+                  />
+                </AddressField>
+              </div>
+            </section>
+          )}
 
           {/* Main location */}
           <section className="rounded-[1.8rem] border border-primary/10 bg-[#f8fbfe] p-5 sm:p-7">
@@ -636,6 +752,13 @@ export function AddressForm({
                   value={previewLines[2] ?? ""}
                   muted={!watchedArea && !watchedCity}
                 />
+
+                {showPropertyProfile && (
+                  <PreviewLine
+                    icon={Ruler}
+                    value={`${watchedPropertyType.charAt(0).toUpperCase()}${watchedPropertyType.slice(1)} · ${watchedBedrooms} ${watchedPropertyType === "office" ? "rooms" : "bedrooms"} · ${watchedBathrooms} bathrooms · ${watchedPropertySize} m²`}
+                  />
+                )}
               </div>
 
               <div className="mt-7 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.07] p-4">
@@ -671,6 +794,24 @@ export function AddressForm({
               <ChecklistItem label="Area" complete={Boolean(watchedArea.trim())} />
 
               <ChecklistItem label="Street" complete={Boolean(watchedStreet.trim())} />
+
+              {showPropertyProfile && (
+                <>
+                  <ChecklistItem
+                    label="Property size"
+                    complete={watchedPropertySize >= 20 && watchedPropertySize <= 2000}
+                  />
+                  <ChecklistItem
+                    label="Rooms and bathrooms"
+                    complete={
+                      watchedBedrooms >= 0 &&
+                      watchedBedrooms <= 30 &&
+                      watchedBathrooms >= 0 &&
+                      watchedBathrooms <= 30
+                    }
+                  />
+                </>
+              )}
             </div>
           </section>
         </aside>

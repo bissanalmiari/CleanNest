@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentType,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -117,7 +111,7 @@ const METHOD_OPTIONS: Array<{ value: MethodFilter; label: string }> = [
 
 function populatedValue(
   reference: PopulatedRef | string | null | undefined,
-  key: "name" | "email",
+  key: "name" | "email"
 ) {
   if (!reference || typeof reference === "string") return "Not available";
   return reference[key] ?? "Not available";
@@ -186,11 +180,7 @@ export default function AdminPaymentsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchPayments = useCallback(
-    async (
-      currentFilters: FiltersState,
-      currentPage: number,
-      isRefresh = false,
-    ) => {
+    async (currentFilters: FiltersState, currentPage: number, isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
@@ -211,10 +201,9 @@ export default function AdminPaymentsPage() {
           params.set("search", currentFilters.search);
         }
 
-        const response = await fetch(
-          `/api/admin/payments?${params.toString()}`,
-          { cache: "no-store" },
-        );
+        const response = await fetch(`/api/admin/payments?${params.toString()}`, {
+          cache: "no-store",
+        });
         const json: ApiEnvelope<PaymentListData> = await response.json();
 
         if (!response.ok || !json.success) {
@@ -224,17 +213,13 @@ export default function AdminPaymentsPage() {
         setData(json.data ?? null);
         setErrorMessage(null);
       } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Payments could not be loaded.",
-        );
+        setErrorMessage(error instanceof Error ? error.message : "Payments could not be loaded.");
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -245,9 +230,7 @@ export default function AdminPaymentsPage() {
     const timeout = window.setTimeout(() => {
       const search = searchInput.trim();
       setPage(1);
-      setFilters((current) =>
-        current.search === search ? current : { ...current, search },
-      );
+      setFilters((current) => (current.search === search ? current : { ...current, search }));
     }, 350);
 
     return () => window.clearTimeout(timeout);
@@ -255,34 +238,24 @@ export default function AdminPaymentsPage() {
 
   const summary = useMemo(() => {
     const byStatus = new Map<PaymentStatus, SummaryEntry>(
-      (data?.summary ?? []).map((entry) => [entry._id, entry]),
+      (data?.summary ?? []).map((entry) => [entry._id, entry])
     );
     const get = (status: PaymentStatus) =>
       byStatus.get(status) ?? { _id: status, count: 0, total: 0 };
 
     return {
       byStatus,
-      totalCount: Array.from(byStatus.values()).reduce(
-        (sum, entry) => sum + entry.count,
-        0,
-      ),
+      totalCount: Array.from(byStatus.values()).reduce((sum, entry) => sum + entry.count, 0),
       collected: get("paid").total,
-      openBalance:
-        get("unpaid").total + get("pending").total + get("failed").total,
+      openBalance: get("unpaid").total + get("pending").total + get("failed").total,
       refunded: get("refunded").total,
       attentionCount: get("unpaid").count + get("failed").count,
     };
   }, [data]);
 
-  const totalPages = data
-    ? Math.max(1, Math.ceil(data.total / data.limit))
-    : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
   const hasFilters = Boolean(
-    filters.status ||
-      filters.method ||
-      filters.dateFrom ||
-      filters.dateTo ||
-      filters.search,
+    filters.status || filters.method || filters.dateFrom || filters.dateTo || filters.search
   );
 
   function updateFilters(patch: Partial<FiltersState>) {
@@ -324,11 +297,7 @@ export default function AdminPaymentsPage() {
         refundAmount <= 0 ||
         refundAmount > activePayment.amount
       ) {
-        setActionError(
-          `Enter an amount between $0.01 and ${formatMoney(
-            activePayment.amount,
-          )}.`,
-        );
+        setActionError(`Enter an amount between $0.01 and ${formatMoney(activePayment.amount)}.`);
         return;
       }
     }
@@ -364,9 +333,7 @@ export default function AdminPaymentsPage() {
       setActiveAction(null);
       await fetchPayments(filters, page, true);
     } catch (error) {
-      setActionError(
-        error instanceof Error ? error.message : "Payment action failed.",
-      );
+      setActionError(error instanceof Error ? error.message : "Payment action failed.");
     } finally {
       setSubmitting(false);
     }
@@ -405,13 +372,11 @@ export default function AdminPaymentsPage() {
               </div>
               <h1 className="mt-6 max-w-xl font-heading text-4xl font-black leading-[1.04] tracking-[-0.045em] sm:text-5xl">
                 Every transaction,
-                <span className="block text-cyan-300">
-                  confidently managed.
-                </span>
+                <span className="block text-cyan-300">confidently managed.</span>
               </h1>
               <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-blue-100/70 sm:text-base">
-                Monitor incoming revenue, reconcile cash collections, and
-                manage payment exceptions from one secure workspace.
+                Monitor incoming revenue, reconcile cash collections, and manage payment exceptions
+                from one secure workspace.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-4 text-xs font-bold text-blue-100/65">
                 <span className="inline-flex items-center gap-2">
@@ -493,9 +458,7 @@ export default function AdminPaymentsPage() {
                   className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 text-xs font-extrabold text-navy transition hover:border-primary/30 hover:bg-primary-light disabled:cursor-wait disabled:opacity-60"
                 >
                   <RefreshCw
-                    className={`h-4 w-4 text-primary ${
-                      refreshing ? "animate-spin" : ""
-                    }`}
+                    className={`h-4 w-4 text-primary ${refreshing ? "animate-spin" : ""}`}
                   />
                   Refresh
                 </button>
@@ -530,9 +493,7 @@ export default function AdminPaymentsPage() {
                     {option.label}
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] ${
-                        active
-                          ? "bg-white/15 text-cyan-100"
-                          : "bg-white text-slate-400"
+                        active ? "bg-white/15 text-cyan-100" : "bg-white text-slate-400"
                       }`}
                     >
                       {count}
@@ -567,9 +528,7 @@ export default function AdminPaymentsPage() {
                 <input
                   type="date"
                   value={filters.dateFrom}
-                  onChange={(event) =>
-                    updateFilters({ dateFrom: event.target.value })
-                  }
+                  onChange={(event) => updateFilters({ dateFrom: event.target.value })}
                   className="min-w-0 flex-1 bg-transparent text-xs font-bold text-navy outline-none"
                 />
               </label>
@@ -583,9 +542,7 @@ export default function AdminPaymentsPage() {
                   type="date"
                   min={filters.dateFrom || undefined}
                   value={filters.dateTo}
-                  onChange={(event) =>
-                    updateFilters({ dateTo: event.target.value })
-                  }
+                  onChange={(event) => updateFilters({ dateTo: event.target.value })}
                   className="min-w-0 flex-1 bg-transparent text-xs font-bold text-navy outline-none"
                 />
               </label>
@@ -625,9 +582,7 @@ export default function AdminPaymentsPage() {
                         <th className="px-4 py-4">Status</th>
                         <th className="px-4 py-4">Created</th>
                         <th className="px-4 py-4 text-right">Amount</th>
-                        <th className="px-6 py-4 text-right">
-                          Finance actions
-                        </th>
+                        <th className="px-6 py-4 text-right">Finance actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -648,11 +603,7 @@ export default function AdminPaymentsPage() {
 
                 <div className="space-y-3 p-4 md:hidden">
                   {data.payments.map((payment) => (
-                    <PaymentMobileCard
-                      key={payment._id}
-                      payment={payment}
-                      onAction={openAction}
-                    />
+                    <PaymentMobileCard key={payment._id} payment={payment} onAction={openAction} />
                   ))}
                 </div>
               </>
@@ -662,8 +613,7 @@ export default function AdminPaymentsPage() {
           {data && totalPages > 1 && !loading && !errorMessage && (
             <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <p className="text-xs font-semibold text-slate-500">
-                Page <span className="font-extrabold text-navy">{data.page}</span>{" "}
-                of{" "}
+                Page <span className="font-extrabold text-navy">{data.page}</span> of{" "}
                 <span className="font-extrabold text-navy">{totalPages}</span>
                 <span className="mx-2 text-slate-300">•</span>
                 {data.total} matching payments
@@ -738,9 +688,7 @@ function FinanceMetric({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-sm">
-      <span
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}
-      >
+      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accents[accent]}`}>
         <Icon className="h-4 w-4" />
       </span>
       {loading ? (
@@ -836,9 +784,7 @@ function PaymentTableRow({
         </p>
       </td>
       <td className="px-4 py-4 text-right">
-        <p className="font-heading text-base font-black text-navy">
-          {formatMoney(payment.amount)}
-        </p>
+        <p className="font-heading text-base font-black text-navy">{formatMoney(payment.amount)}</p>
         <p className="mt-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-slate-400">
           {payment.currency}
         </p>
@@ -884,17 +830,13 @@ function PaymentMobileCard({
           <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
             Method
           </p>
-          <p className="mt-1 text-xs font-bold capitalize text-navy">
-            {payment.method}
-          </p>
+          <p className="mt-1 text-xs font-bold capitalize text-navy">{payment.method}</p>
         </div>
         <div>
           <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
             Created
           </p>
-          <p className="mt-1 text-xs font-bold text-navy">
-            {formatDate(payment.createdAt)}
-          </p>
+          <p className="mt-1 text-xs font-bold text-navy">{formatDate(payment.createdAt)}</p>
         </div>
       </div>
       <div className="mt-4 border-t border-slate-100 pt-3">
@@ -911,14 +853,10 @@ function PaymentActions({
   payment: PaymentRow;
   onAction: (payment: PaymentRow, action: ActionKind) => void;
 }) {
-  const canMarkCashPaid =
-    payment.method === "cash" && payment.status !== "paid";
-  const canRefund =
-    payment.method === "card" && payment.status === "paid";
+  const canMarkCashPaid = payment.method === "cash" && payment.status !== "paid";
+  const canRefund = payment.method === "card" && payment.status === "paid";
   const canFail =
-    payment.status !== "paid" &&
-    payment.status !== "refunded" &&
-    payment.status !== "failed";
+    payment.status !== "paid" && payment.status !== "refunded" && payment.status !== "failed";
 
   if (!canMarkCashPaid && !canRefund && !canFail) {
     return (
@@ -975,10 +913,8 @@ function ActionButton({
   const tones = {
     success:
       "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white",
-    primary:
-      "border-blue-200 bg-blue-50 text-blue-700 hover:bg-primary hover:text-white",
-    danger:
-      "border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white",
+    primary: "border-blue-200 bg-blue-50 text-blue-700 hover:bg-primary hover:text-white",
+    danger: "border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white",
   };
 
   return (
@@ -1021,8 +957,7 @@ function PaymentActionModal({
   const content = {
     "mark-cash-paid": {
       title: "Confirm cash collection",
-      description:
-        "Confirm that the cash payment was received for this booking.",
+      description: "Confirm that the cash payment was received for this booking.",
       icon: CheckCircle2,
       iconClass: "bg-emerald-100 text-emerald-700",
       buttonClass: "bg-emerald-600 hover:bg-emerald-700",
@@ -1030,8 +965,7 @@ function PaymentActionModal({
     },
     fail: {
       title: "Mark payment as failed",
-      description:
-        "Record this payment as unsuccessful and keep an audit reason.",
+      description: "Record this payment as unsuccessful and keep an audit reason.",
       icon: XCircle,
       iconClass: "bg-red-100 text-red-600",
       buttonClass: "bg-red-600 hover:bg-red-700",
@@ -1039,8 +973,7 @@ function PaymentActionModal({
     },
     refund: {
       title: "Issue card refund",
-      description:
-        "Return all or part of this paid card transaction to the customer.",
+      description: "Return all or part of this paid card transaction to the customer.",
       icon: RotateCcw,
       iconClass: "bg-blue-100 text-blue-700",
       buttonClass: "bg-primary hover:bg-primary-dark",
@@ -1168,8 +1101,8 @@ function PaymentActionModal({
             <div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
               <p className="text-xs font-medium leading-5 text-emerald-800">
-                This will mark the booking payment as paid and confirm the cash
-                was physically received.
+                This will mark the booking payment as paid and confirm the cash was physically
+                received.
               </p>
             </div>
           )}
@@ -1210,24 +1143,14 @@ function PaymentActionModal({
   );
 }
 
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
       <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
         <AlertCircle className="h-6 w-6" />
       </span>
-      <h3 className="mt-5 font-heading text-lg font-bold text-navy">
-        Payment ledger unavailable
-      </h3>
-      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-        {message}
-      </p>
+      <h3 className="mt-5 font-heading text-lg font-bold text-navy">Payment ledger unavailable</h3>
+      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{message}</p>
       <button
         type="button"
         onClick={onRetry}
@@ -1240,13 +1163,7 @@ function ErrorState({
   );
 }
 
-function EmptyState({
-  hasFilters,
-  onClear,
-}: {
-  hasFilters: boolean;
-  onClear: () => void;
-}) {
+function EmptyState({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
   return (
     <div className="flex min-h-[390px] flex-col items-center justify-center p-8 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light text-primary shadow-[0_14px_35px_rgba(11,37,69,0.08)]">

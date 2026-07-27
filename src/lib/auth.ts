@@ -3,11 +3,11 @@
 // Env: AUTH_SECRET (already in .env.local.example)
 import "server-only";
 import { cookies } from "next/headers";
-import jwt,  { type SignOptions } from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { connectDB } from "@/lib/db";
 import { User, type IUser } from "@/models/User";
 import { ForbiddenError, UnauthorizedError } from "@/lib/apiError";
-import type { PublicUser} from "@/types/user";
+import type { PublicUser } from "@/types/user";
 import { UserRole } from "@/types/enums";
 
 const AUTH_COOKIE = "cleannest_token";
@@ -103,7 +103,7 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
   await connectDB();
   const userDoc = await User.findById(payload.sub)
     .select(
-      "name email phone role status avatarUrl dateOfBirth gender preferredLanguage bio createdAt updatedAt",
+      "name email phone role status avatarUrl dateOfBirth gender preferredLanguage bio createdAt updatedAt"
     )
     .lean()
     .exec();
@@ -133,9 +133,7 @@ export async function requireUser(): Promise<PublicUser> {
 export async function requireRole(...allowedRoles: UserRole[]): Promise<PublicUser> {
   const user = await requireUser();
   if (!allowedRoles.includes(user.role)) {
-    throw new ForbiddenError(
-      `This action requires one of these roles: ${allowedRoles.join(", ")}`
-    );
+    throw new ForbiddenError(`This action requires one of these roles: ${allowedRoles.join(", ")}`);
   }
   return user;
 }

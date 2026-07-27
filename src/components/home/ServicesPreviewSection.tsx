@@ -18,13 +18,7 @@ import {
   Sparkles,
   Star,
 } from "lucide-react";
-import {
-  motion,
-  MotionConfig,
-  useMotionTemplate,
-  useMotionValue,
-  useSpring,
-} from "motion/react";
+import { motion, MotionConfig, useMotionTemplate, useMotionValue, useSpring } from "motion/react";
 
 type SpotlightCardProps = {
   children: ReactNode;
@@ -223,7 +217,7 @@ export default function ServicesPreviewSection() {
         {/* Animated background glows */}
         <motion.div
           aria-hidden="true"
-          className="absolute -left-56 top-1/4 h-[38rem] w-[38rem] rounded-full bg-primary/12 blur-3xl"
+          className="bg-primary/12 absolute -left-56 top-1/4 h-[38rem] w-[38rem] rounded-full blur-3xl"
           animate={{
             x: [0, 90, 0],
             y: [0, -45, 0],
@@ -326,7 +320,6 @@ export default function ServicesPreviewSection() {
               >
                 <Layers3 className="h-4 w-4" />
               </motion.span>
-
               Explore Our Services
             </motion.div>
 
@@ -338,9 +331,8 @@ export default function ServicesPreviewSection() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Choose the service that matches your home, move, or workplace.
-              CleanNest gives you clear details, flexible booking, and
-              professional results.
+              Choose the service that matches your home, move, or workplace. CleanNest gives you
+              clear details, flexible booking, and professional results.
             </p>
           </motion.div>
 
@@ -433,8 +425,8 @@ export default function ServicesPreviewSection() {
                   </h3>
 
                   <p className="mt-5 max-w-xl text-base leading-7 text-blue-100/80">
-                    Keep your home consistently fresh and comfortable with
-                    routine cleaning designed around the spaces you use most.
+                    Keep your home consistently fresh and comfortable with routine cleaning designed
+                    around the spaces you use most.
                   </p>
 
                   <div className="mt-7 flex flex-wrap gap-3">
@@ -464,7 +456,6 @@ export default function ServicesPreviewSection() {
                         className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-primary shadow-[0_16px_38px_rgba(0,0,0,0.2)]"
                       >
                         Book This Service
-
                         <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </Link>
                     </motion.div>
@@ -546,9 +537,7 @@ export default function ServicesPreviewSection() {
                             <Icon className="h-4 w-4" />
                           </span>
 
-                          <span className="text-sm font-semibold text-white">
-                            {label}
-                          </span>
+                          <span className="text-sm font-semibold text-white">{label}</span>
 
                           <CheckCircle2 className="ml-auto h-4 w-4 text-green-300" />
                         </motion.div>
@@ -576,13 +565,10 @@ export default function ServicesPreviewSection() {
                   Detailed care
                 </p>
 
-                <h3 className="mt-3 font-heading text-2xl font-bold text-navy">
-                  Deep Cleaning
-                </h3>
+                <h3 className="mt-3 font-heading text-2xl font-bold text-navy">Deep Cleaning</h3>
 
                 <p className="mt-4 leading-7 text-slate-600">
-                  An intensive clean for spaces that need extra attention and
-                  more detailed care.
+                  An intensive clean for spaces that need extra attention and more detailed care.
                 </p>
 
                 <div className="mt-7 space-y-3">
@@ -612,9 +598,7 @@ export default function ServicesPreviewSection() {
                         <CheckCircle2 className="h-3.5 w-3.5" />
                       </span>
 
-                      <span className="text-sm font-medium leading-6 text-slate-700">
-                        {task}
-                      </span>
+                      <span className="text-sm font-medium leading-6 text-slate-700">{task}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -624,9 +608,7 @@ export default function ServicesPreviewSection() {
                     <div>
                       <p className="text-xs text-slate-500">Starting from</p>
 
-                      <p className="mt-1 font-heading text-2xl font-extrabold text-navy">
-                        $55
-                      </p>
+                      <p className="mt-1 font-heading text-2xl font-extrabold text-navy">$55</p>
                     </div>
 
                     <motion.div
@@ -673,8 +655,7 @@ export default function ServicesPreviewSection() {
                 </h3>
 
                 <p className="mt-4 leading-7 text-slate-600">
-                  Prepare an empty property for its next chapter with focused,
-                  detailed cleaning.
+                  Prepare an empty property for its next chapter with focused, detailed cleaning.
                 </p>
 
                 <div className="mt-7 space-y-3">
@@ -701,18 +682,19 @@ export default function ServicesPreviewSection() {
                         animate={
                           task.completed
                             ? {
-                              scale: [1, 1.12, 1],
-                            }
+                                scale: [1, 1.12, 1],
+                              }
                             : undefined
                         }
                         transition={{
                           duration: 2,
                           repeat: 0,
                         }}
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${task.completed
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                          task.completed
                             ? "bg-emerald-100 text-emerald-600"
                             : "border border-slate-200 bg-white text-slate-500"
-                          }`}
+                        }`}
                       >
                         {task.completed ? (
                           <CheckCircle2 className="h-4 w-4" />
@@ -721,9 +703,7 @@ export default function ServicesPreviewSection() {
                         )}
                       </motion.span>
 
-                      <span className="text-sm font-medium text-slate-700">
-                        {task.label}
-                      </span>
+                      <span className="text-sm font-medium text-slate-700">{task.label}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -734,7 +714,6 @@ export default function ServicesPreviewSection() {
                     className="group inline-flex items-center gap-2 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700"
                   >
                     Explore service
-
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </Link>
                 </div>
@@ -764,8 +743,8 @@ export default function ServicesPreviewSection() {
                   </h3>
 
                   <p className="mt-5 max-w-xl leading-7 text-slate-600">
-                    Create a cleaner, more comfortable workplace for your team,
-                    visitors, and daily operations.
+                    Create a cleaner, more comfortable workplace for your team, visitors, and daily
+                    operations.
                   </p>
 
                   <div className="mt-7">
@@ -784,7 +763,6 @@ export default function ServicesPreviewSection() {
                         className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-5 py-3 font-semibold text-white shadow-[0_15px_35px_rgba(6,182,212,0.25)] transition-colors hover:bg-cyan-500"
                       >
                         Book Office Cleaning
-
                         <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </Link>
                     </motion.div>
@@ -834,17 +812,13 @@ export default function ServicesPreviewSection() {
                       >
                         <CheckCircle2 className="h-4 w-4 text-cyan-600" />
 
-                        <p className="mt-2 text-sm font-semibold leading-5 text-navy">
-                          {feature}
-                        </p>
+                        <p className="mt-2 text-sm font-semibold leading-5 text-navy">{feature}</p>
                       </motion.div>
                     ))}
                   </div>
 
                   <div className="mt-5 flex items-center justify-between rounded-xl bg-primary-light px-4 py-3">
-                    <span className="text-sm font-medium text-navy">
-                      Flexible schedule
-                    </span>
+                    <span className="text-sm font-medium text-navy">Flexible schedule</span>
 
                     <Clock3 className="h-5 w-5 text-primary" />
                   </div>
@@ -927,8 +901,8 @@ export default function ServicesPreviewSection() {
                 </h3>
 
                 <p className="mt-3 max-w-2xl leading-7 text-blue-100/75">
-                  Compare services, included tasks, estimated duration, and
-                  pricing before making your choice.
+                  Compare services, included tasks, estimated duration, and pricing before making
+                  your choice.
                 </p>
               </div>
 
@@ -947,7 +921,6 @@ export default function ServicesPreviewSection() {
                     className="group inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-6 py-3.5 font-semibold text-white transition-colors hover:bg-white/15"
                   >
                     View All Services
-
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </Link>
                 </motion.div>

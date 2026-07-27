@@ -1,14 +1,7 @@
 // src/app/(admin)/admin-promo-codes/page.tsx
 "use client";
 
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   Ticket,
@@ -41,9 +34,7 @@ interface PromoCodeRow {
   maximumDiscountAmount?: number | null;
   maximumUses: number;
   perCustomerLimit?: number;
-  applicableServiceIds?: Array<
-    string | { _id?: string; name?: string }
-  >;
+  applicableServiceIds?: Array<string | { _id?: string; name?: string }>;
   usedCount: number;
   usesRemaining: number;
   isExpired: boolean;
@@ -88,8 +79,7 @@ export default function AdminPromoCodesPage() {
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState<"all" | "active" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [editingCode, setEditingCode] = useState<PromoCodeFormData | undefined>();
@@ -106,15 +96,11 @@ export default function AdminPromoCodesPage() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (statusFilter !== "all") {
-        params.set(
-          "isActive",
-          String(statusFilter === "active"),
-        );
+        params.set("isActive", String(statusFilter === "active"));
       }
 
       const res = await fetch(`/api/admin/promo-codes?${params.toString()}`);
-      const json: ApiEnvelope<{ promoCodes: PromoCodeRow[]; total: number }> =
-        await res.json();
+      const json: ApiEnvelope<{ promoCodes: PromoCodeRow[]; total: number }> = await res.json();
 
       if (!json.success) {
         throw new Error(json.error ?? "Failed to load promo codes");
@@ -122,9 +108,7 @@ export default function AdminPromoCodesPage() {
       setCodes(json.data?.promoCodes ?? []);
       setErrorMessage(null);
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : "Failed to load promo codes"
-      );
+      setErrorMessage(err instanceof Error ? err.message : "Failed to load promo codes");
     } finally {
       setLoading(false);
     }
@@ -145,24 +129,13 @@ export default function AdminPromoCodesPage() {
   const campaignStats = useMemo(() => {
     const now = Date.now();
     return {
-      active: codes.filter(
-        (code) =>
-          code.isActive &&
-          !code.isExpired &&
-          !code.isScheduled,
-      ).length,
+      active: codes.filter((code) => code.isActive && !code.isExpired && !code.isScheduled).length,
       scheduled: codes.filter(
         (code) =>
           code.isActive &&
-          (code.isScheduled ||
-            (code.startDate
-              ? new Date(code.startDate).getTime() > now
-              : false)),
+          (code.isScheduled || (code.startDate ? new Date(code.startDate).getTime() > now : false))
       ).length,
-      redemptions: codes.reduce(
-        (total, code) => total + code.usedCount,
-        0,
-      ),
+      redemptions: codes.reduce((total, code) => total + code.usedCount, 0),
     };
   }, [codes]);
 
@@ -210,9 +183,7 @@ export default function AdminPromoCodesPage() {
       }
       await fetchCodes();
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : "Failed to delete promo code"
-      );
+      setErrorMessage(err instanceof Error ? err.message : "Failed to delete promo code");
     } finally {
       setDeletingId(null);
     }
@@ -234,8 +205,8 @@ export default function AdminPromoCodesPage() {
                 Offers that feel intentional.
               </h1>
               <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-blue-100/65">
-                Launch targeted discounts, protect margins with smart limits,
-                and follow every redemption from one operational workspace.
+                Launch targeted discounts, protect margins with smart limits, and follow every
+                redemption from one operational workspace.
               </p>
             </div>
 
@@ -277,16 +248,12 @@ export default function AdminPromoCodesPage() {
               placeholder="Search by code..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 py-2.5 pl-10 pr-3 font-mono text-sm tracking-wide text-navy placeholder:font-sans placeholder:text-navy/35 transition-all focus:border-primary/40 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-primary/10"
+              className="w-full rounded-xl border border-navy/10 bg-surface-soft/60 py-2.5 pl-10 pr-3 font-mono text-sm tracking-wide text-navy transition-all placeholder:font-sans placeholder:text-navy/35 focus:border-primary/40 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <select
             value={statusFilter}
-            onChange={(event) =>
-              setStatusFilter(
-                event.target.value as typeof statusFilter,
-              )
-            }
+            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
             className="min-h-11 rounded-xl border border-navy/10 bg-surface-soft/60 px-4 text-sm font-bold text-navy outline-none focus:border-primary/40"
           >
             <option value="all">All campaigns</option>
@@ -392,10 +359,8 @@ export default function AdminPromoCodesPage() {
                             })}
                           </td>
                           <td className="px-3 py-3.5 text-navy/60">
-                            <span className="font-medium text-navy">
-                              {code.usedCount}
-                            </span>{" "}
-                            / {code.maximumUses}
+                            <span className="font-medium text-navy">{code.usedCount}</span> /{" "}
+                            {code.maximumUses}
                           </td>
                           <td className="px-3 py-3.5">
                             <span
@@ -511,9 +476,7 @@ function Metric({
         </p>
         <Icon className="h-4 w-4 text-cyan-300" />
       </div>
-      <p className="mt-3 font-heading text-2xl font-black text-white">
-        {value.toLocaleString()}
-      </p>
+      <p className="mt-3 font-heading text-2xl font-black text-white">{value.toLocaleString()}</p>
     </div>
   );
 }

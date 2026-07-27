@@ -25,7 +25,6 @@ import {
   TestTube2,
   UserRound,
   WalletCards,
-  X,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -39,17 +38,10 @@ interface ApiEnvelope<T> {
   error?: string;
 }
 
-type JobAction =
-  | "accept"
-  | "decline"
-  | "on_my_way"
-  | "start"
-  | "demo_start"
-  | "complete";
+type JobAction = "accept" | "on_my_way" | "start" | "demo_start" | "complete";
 
 const DEMO_CHECK_IN_ENABLED =
-  process.env.NODE_ENV !== "production" ||
-  process.env.NEXT_PUBLIC_ENABLE_DEMO_CHECK_IN === "true";
+  process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEMO_CHECK_IN === "true";
 
 function optionalBrowserLocation(): Promise<
   | {
@@ -71,7 +63,7 @@ function optionalBrowserLocation(): Promise<
           accuracy: position.coords.accuracy,
         }),
       () => resolve(undefined),
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 },
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
     );
   });
 }
@@ -113,9 +105,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
       }
       setJob(payload.data);
     } catch (loadError) {
-      setError(
-        loadError instanceof Error ? loadError.message : "Could not load this job",
-      );
+      setError(loadError instanceof Error ? loadError.message : "Could not load this job");
     } finally {
       setLoading(false);
     }
@@ -127,13 +117,11 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
 
   async function performAction(action: JobAction) {
     if (
-      (action === "decline" &&
-        !window.confirm("Decline this assignment? Operations will need to reassign it.")) ||
       (action === "complete" &&
         !window.confirm("Confirm that your work at this job is complete?")) ||
       (action === "demo_start" &&
         !window.confirm(
-          "Use testing check-in? This bypasses only the scheduled-day restriction and starts the demo job.",
+          "Use testing check-in? This bypasses only the scheduled-day restriction and starts the demo job."
         ))
     ) {
       return;
@@ -143,9 +131,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
     setError(null);
     try {
       const location =
-        action === "start" || action === "demo_start"
-          ? await optionalBrowserLocation()
-          : undefined;
+        action === "start" || action === "demo_start" ? await optionalBrowserLocation() : undefined;
       const response = await fetch(`/api/cleaner/jobs/${bookingId}/action`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -155,18 +141,10 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
       if (!response.ok || !payload.success) {
         throw new Error(payload.error ?? "The job could not be updated");
       }
-      if (action === "decline") {
-        window.location.assign("/cleaner/upcoming");
-        return;
-      }
       await loadJob();
       setProofRevision((current) => current + 1);
     } catch (actionError) {
-      setError(
-        actionError instanceof Error
-          ? actionError.message
-          : "The job could not be updated",
-      );
+      setError(actionError instanceof Error ? actionError.message : "The job could not be updated");
     } finally {
       setWorking(null);
     }
@@ -175,11 +153,9 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
   const directionsUrl = useMemo(
     () =>
       job
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            job.addressLine,
-          )}`
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.addressLine)}`
         : "#",
-    [job],
+    [job]
   );
   const handleProofChange = useCallback((nextProof: ServiceProofReport) => {
     setProof(nextProof);
@@ -205,9 +181,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
         <CircleAlert className="mx-auto h-12 w-12 text-rose-500" />
-        <h1 className="mt-5 font-heading text-2xl font-black text-navy">
-          Job unavailable
-        </h1>
+        <h1 className="mt-5 font-heading text-2xl font-black text-navy">Job unavailable</h1>
         <p className="mt-2 text-slate-500">
           {error ?? "This job was not found in your assignments."}
         </p>
@@ -221,8 +195,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
     );
   }
 
-  const isDone =
-    job.assignmentStatus === "completed" || job.status === "completed";
+  const isDone = job.assignmentStatus === "completed" || job.status === "completed";
   const canStart =
     job.assignmentStatus === "accepted" &&
     (job.status === "confirmed" || job.status === "in_progress") &&
@@ -261,9 +234,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
                   #{job.bookingNumber}
                 </span>
                 <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em]">
-                  {job.status === "in_progress"
-                    ? "In progress"
-                    : titleCase(job.assignmentStatus)}
+                  {job.status === "in_progress" ? "In progress" : titleCase(job.assignmentStatus)}
                 </span>
               </div>
               <h1 className="mt-5 font-heading text-3xl font-black sm:text-4xl">
@@ -277,24 +248,14 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
 
             <div className="flex flex-wrap gap-3">
               {job.assignmentStatus === "assigned" && (
-                <>
-                  <ActionButton
-                    label="Accept assignment"
-                    icon={Check}
-                    loading={working === "accept"}
-                    disabled={working !== null}
-                    onClick={() => void performAction("accept")}
-                    tone="success"
-                  />
-                  <ActionButton
-                    label="Decline"
-                    icon={X}
-                    loading={working === "decline"}
-                    disabled={working !== null}
-                    onClick={() => void performAction("decline")}
-                    tone="ghost"
-                  />
-                </>
+                <ActionButton
+                  label="Acknowledge assignment"
+                  icon={Check}
+                  loading={working === "accept"}
+                  disabled={working !== null}
+                  onClick={() => void performAction("accept")}
+                  tone="success"
+                />
               )}
               {canStart && (
                 <>
@@ -308,24 +269,24 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
                       tone="ghost"
                     />
                   )}
-                <ActionButton
-                  label={job.status === "in_progress" ? "Check in" : "Check in & start"}
-                  icon={Play}
-                  loading={working === "start"}
-                  disabled={working !== null}
-                  onClick={() => void performAction("start")}
-                  tone="success"
-                />
-                {DEMO_CHECK_IN_ENABLED && (
                   <ActionButton
-                    label="Check in for testing"
-                    icon={TestTube2}
-                    loading={working === "demo_start"}
+                    label={job.status === "in_progress" ? "Check in" : "Check in & start"}
+                    icon={Play}
+                    loading={working === "start"}
                     disabled={working !== null}
-                    onClick={() => void performAction("demo_start")}
-                    tone="demo"
+                    onClick={() => void performAction("start")}
+                    tone="success"
                   />
-                )}
+                  {DEMO_CHECK_IN_ENABLED && (
+                    <ActionButton
+                      label="Check in for testing"
+                      icon={TestTube2}
+                      loading={working === "demo_start"}
+                      disabled={working !== null}
+                      onClick={() => void performAction("demo_start")}
+                      tone="demo"
+                    />
+                  )}
                 </>
               )}
               {canComplete && (
@@ -357,11 +318,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
               label="Service window"
               value={`${job.startTime} – ${job.endTime}`}
             />
-            <HeroFact
-              icon={UserRound}
-              label="Customer"
-              value={job.customerName}
-            />
+            <HeroFact icon={UserRound} label="Customer" value={job.customerName} />
           </div>
         </motion.section>
 
@@ -395,17 +352,9 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
               onProofChange={handleProofChange}
             />
 
-            <DetailSection
-              eyebrow="Arrival brief"
-              title="Customer & location"
-              icon={Navigation}
-            >
+            <DetailSection eyebrow="Arrival brief" title="Customer & location" icon={Navigation}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <InfoTile
-                  icon={UserRound}
-                  label="Customer"
-                  value={job.customerName}
-                />
+                <InfoTile icon={UserRound} label="Customer" value={job.customerName} />
                 <InfoTile
                   icon={Phone}
                   label="Contact phone"
@@ -422,13 +371,9 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
                     <p className="text-xs font-black uppercase tracking-[0.12em] text-primary">
                       {job.addressLabel}
                     </p>
-                    <p className="mt-1 text-sm font-bold leading-6 text-navy">
-                      {job.addressLine}
-                    </p>
+                    <p className="mt-1 text-sm font-bold leading-6 text-navy">{job.addressLine}</p>
                     {job.landmark && (
-                      <p className="mt-2 text-xs text-slate-500">
-                        Landmark: {job.landmark}
-                      </p>
+                      <p className="mt-2 text-xs text-slate-500">Landmark: {job.landmark}</p>
                     )}
                   </div>
                 </div>
@@ -443,17 +388,9 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
               </div>
             </DetailSection>
 
-            <DetailSection
-              eyebrow="Service scope"
-              title="Home details"
-              icon={House}
-            >
+            <DetailSection eyebrow="Service scope" title="Home details" icon={House}>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <InfoTile
-                  icon={Building2}
-                  label="Property"
-                  value={titleCase(job.propertyType)}
-                />
+                <InfoTile icon={Building2} label="Property" value={titleCase(job.propertyType)} />
                 <InfoTile
                   icon={DoorOpen}
                   label="Bedrooms"
@@ -478,21 +415,9 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
               icon={NotebookText}
             >
               <div className="space-y-3">
-                <Note
-                  icon={KeyRound}
-                  label="Access instructions"
-                  value={job.accessInstructions}
-                />
-                <Note
-                  icon={UserRound}
-                  label="Customer notes"
-                  value={job.customerNotes}
-                />
-                <Note
-                  icon={ShieldCheck}
-                  label="Operations notes"
-                  value={job.adminNotes}
-                />
+                <Note icon={KeyRound} label="Access instructions" value={job.accessInstructions} />
+                <Note icon={UserRound} label="Customer notes" value={job.customerNotes} />
+                <Note icon={ShieldCheck} label="Operations notes" value={job.adminNotes} />
               </div>
             </DetailSection>
           </div>
@@ -502,9 +427,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                 <WalletCards className="h-6 w-6" />
               </span>
-              <h2 className="mt-5 font-heading text-xl font-black text-navy">
-                Payment brief
-              </h2>
+              <h2 className="mt-5 font-heading text-xl font-black text-navy">Payment brief</h2>
               <div className="mt-5 space-y-4">
                 <SummaryRow label="Method" value={titleCase(job.paymentMethod)} />
                 <SummaryRow label="Status" value={titleCase(job.paymentStatus)} />
@@ -518,20 +441,17 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
                 />
               </div>
               <p className="mt-5 rounded-xl bg-amber-50 px-4 py-3 text-xs font-semibold leading-5 text-amber-800">
-                Never collect a different amount or change payment details
-                without contacting operations.
+                Never collect a different amount or change payment details without contacting
+                operations.
               </p>
             </div>
 
             <div className="rounded-[28px] bg-navy p-6 text-white shadow-xl shadow-navy/15">
               <Clock3 className="h-6 w-6 text-cyan-300" />
-              <h3 className="mt-4 font-heading text-lg font-black">
-                Keep the status live
-              </h3>
+              <h3 className="mt-4 font-heading text-lg font-black">Keep the status live</h3>
               <p className="mt-2 text-sm leading-6 text-blue-100/70">
-                Start the service when work begins and complete it when your
-                assigned work is finished. This keeps the customer and
-                operations in sync.
+                Start the service when work begins and complete it when your assigned work is
+                finished. This keeps the customer and operations in sync.
               </p>
             </div>
           </aside>
@@ -569,11 +489,7 @@ function ActionButton({
             : "border border-white/15 bg-white/10 text-white hover:bg-white/20"
       }`}
     >
-      {loading ? (
-        <LoaderCircle className="h-4 w-4 animate-spin" />
-      ) : (
-        <Icon className="h-4 w-4" />
-      )}
+      {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
       {label}
     </button>
   );
@@ -647,9 +563,7 @@ function InfoTile({
     <>
       <Icon className="h-4 w-4 text-primary" />
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
-          {label}
-        </p>
+        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">{label}</p>
         <p className="mt-1 text-sm font-extrabold text-navy">{value}</p>
       </div>
     </>
@@ -681,9 +595,7 @@ function Note({
     <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
-          {label}
-        </p>
+        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">{label}</p>
         <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
           {value || "No special instructions provided."}
         </p>

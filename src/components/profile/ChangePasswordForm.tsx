@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   AlertCircle,
@@ -20,18 +15,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import {
-  useForm,
-  type FieldError,
-  type UseFormRegisterReturn,
-} from "react-hook-form";
+import { useForm, type FieldError, type UseFormRegisterReturn } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import {
-  changePasswordSchema,
-  type ChangePasswordValues,
-} from "@/validators/userValidator";
+import { changePasswordSchema, type ChangePasswordValues } from "@/validators/userValidator";
 
 import { useProfile } from "@/hooks/useProfile";
 
@@ -48,56 +36,29 @@ interface PasswordFieldProps {
   id: string;
   label: string;
   placeholder: string;
-  autoComplete:
-    | "current-password"
-    | "new-password";
+  autoComplete: "current-password" | "new-password";
 
   visible: boolean;
   disabled: boolean;
   error?: FieldError;
 
-  registration:
-    UseFormRegisterReturn;
+  registration: UseFormRegisterReturn;
 
   onToggleVisibility: () => void;
 }
 
-export function ChangePasswordForm({
-  onDone,
-}: ChangePasswordFormProps) {
-  const {
-    changePassword,
-    loading,
-    error,
-    setError,
-  } = useProfile();
+export function ChangePasswordForm({ onDone }: ChangePasswordFormProps) {
+  const { changePassword, loading, error, setError } = useProfile();
 
-  const successTimerRef =
-    useRef<
-      ReturnType<
-        typeof setTimeout
-      > | null
-    >(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [
-    showCurrentPassword,
-    setShowCurrentPassword,
-  ] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
 
-  const [
-    showNewPassword,
-    setShowNewPassword,
-  ] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
-  const [
-    showConfirmPassword,
-    setShowConfirmPassword,
-  ] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [
-    passwordChanged,
-    setPasswordChanged,
-  ] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   const {
     register,
@@ -105,16 +66,9 @@ export function ChangePasswordForm({
     reset,
     watch,
 
-    formState: {
-      errors,
-      isDirty,
-      isValid,
-    },
+    formState: { errors, isDirty, isValid },
   } = useForm<ChangePasswordValues>({
-    resolver:
-      zodResolver(
-        changePasswordSchema,
-      ),
+    resolver: zodResolver(changePasswordSchema),
 
     mode: "onChange",
 
@@ -125,100 +79,57 @@ export function ChangePasswordForm({
     },
   });
 
-  const newPassword =
-    watch("newPassword") ?? "";
+  const newPassword = watch("newPassword") ?? "";
 
-  const confirmNewPassword =
-    watch(
-      "confirmNewPassword",
-    ) ?? "";
+  const confirmNewPassword = watch("confirmNewPassword") ?? "";
 
-  const passwordRequirements =
-    useMemo<
-      PasswordRequirement[]
-    >(
-      () => [
-        {
-          label:
-            "At least 8 characters",
-          satisfied:
-            newPassword.length >= 8,
-        },
-        {
-          label:
-            "Contains an uppercase letter",
-          satisfied:
-            /[A-Z]/.test(
-              newPassword,
-            ),
-        },
-        {
-          label:
-            "Contains a lowercase letter",
-          satisfied:
-            /[a-z]/.test(
-              newPassword,
-            ),
-        },
-        {
-          label:
-            "Contains a number",
-          satisfied:
-            /\d/.test(
-              newPassword,
-            ),
-        },
-        {
-          label:
-            "Passwords match",
-          satisfied:
-            confirmNewPassword.length >
-              0 &&
-            newPassword ===
-              confirmNewPassword,
-        },
-      ],
-      [
-        confirmNewPassword,
-        newPassword,
-      ],
-    );
+  const passwordRequirements = useMemo<PasswordRequirement[]>(
+    () => [
+      {
+        label: "At least 8 characters",
+        satisfied: newPassword.length >= 8,
+      },
+      {
+        label: "Contains an uppercase letter",
+        satisfied: /[A-Z]/.test(newPassword),
+      },
+      {
+        label: "Contains a lowercase letter",
+        satisfied: /[a-z]/.test(newPassword),
+      },
+      {
+        label: "Contains a number",
+        satisfied: /\d/.test(newPassword),
+      },
+      {
+        label: "Passwords match",
+        satisfied: confirmNewPassword.length > 0 && newPassword === confirmNewPassword,
+      },
+    ],
+    [confirmNewPassword, newPassword]
+  );
 
-  const completedRequirementCount =
-    passwordRequirements.filter(
-      (requirement) =>
-        requirement.satisfied,
-    ).length;
+  const completedRequirementCount = passwordRequirements.filter(
+    (requirement) => requirement.satisfied
+  ).length;
 
-  const passwordStrength =
-    Math.round(
-      (completedRequirementCount /
-        passwordRequirements.length) *
-        100,
-    );
+  const passwordStrength = Math.round(
+    (completedRequirementCount / passwordRequirements.length) * 100
+  );
 
   useEffect(() => {
     return () => {
-      if (
-        successTimerRef.current
-      ) {
-        clearTimeout(
-          successTimerRef.current,
-        );
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
       }
     };
   }, []);
 
   function clearSuccessTimer() {
-    if (
-      successTimerRef.current
-    ) {
-      clearTimeout(
-        successTimerRef.current,
-      );
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
 
-      successTimerRef.current =
-        null;
+      successTimerRef.current = null;
     }
   }
 
@@ -241,18 +152,13 @@ export function ChangePasswordForm({
     onDone();
   }
 
-  async function onSubmit(
-    values: ChangePasswordValues,
-  ) {
+  async function onSubmit(values: ChangePasswordValues) {
     setError(null);
     setPasswordChanged(false);
 
     clearSuccessTimer();
 
-    const result =
-      await changePassword(
-        values,
-      );
+    const result = await changePassword(values);
 
     /*
      * useProfile returns undefined on a successful
@@ -270,27 +176,17 @@ export function ChangePasswordForm({
     setShowNewPassword(false);
     setShowConfirmPassword(false);
 
-    successTimerRef.current =
-      setTimeout(() => {
-        setPasswordChanged(
-          false,
-        );
+    successTimerRef.current = setTimeout(() => {
+      setPasswordChanged(false);
 
-        successTimerRef.current =
-          null;
+      successTimerRef.current = null;
 
-        onDone();
-      }, 1800);
+      onDone();
+    }, 1800);
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(
-        onSubmit,
-      )}
-      className="space-y-7"
-      noValidate
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-7" noValidate>
       {error && (
         <div
           role="alert"
@@ -299,14 +195,9 @@ export function ChangePasswordForm({
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
 
           <div>
-            <p className="font-extrabold">
-              Password could not be
-              changed
-            </p>
+            <p className="font-extrabold">Password could not be changed</p>
 
-            <p className="mt-1 text-sm font-semibold leading-6">
-              {error}
-            </p>
+            <p className="mt-1 text-sm font-semibold leading-6">{error}</p>
           </div>
         </div>
       )}
@@ -322,15 +213,10 @@ export function ChangePasswordForm({
             </span>
 
             <div>
-              <p className="font-heading text-xl font-black text-emerald-900">
-                Password updated
-              </p>
+              <p className="font-heading text-xl font-black text-emerald-900">Password updated</p>
 
               <p className="mt-2 text-sm font-semibold leading-6 text-emerald-700">
-                Your account now uses
-                the new password. You
-                will return to the
-                profile overview
+                Your account now uses the new password. You will return to the profile overview
                 shortly.
               </p>
             </div>
@@ -360,10 +246,7 @@ export function ChangePasswordForm({
             </h3>
 
             <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-slate-500">
-              Confirm your current
-              password, then choose a
-              new password that is
-              difficult for other
+              Confirm your current password, then choose a new password that is difficult for other
               people to guess.
             </p>
           </div>
@@ -394,21 +277,12 @@ export function ChangePasswordForm({
             label="Current password"
             placeholder="Enter your current password"
             autoComplete="current-password"
-            visible={
-              showCurrentPassword
-            }
+            visible={showCurrentPassword}
             disabled={loading}
-            error={
-              errors.currentPassword
-            }
-            registration={register(
-              "currentPassword",
-            )}
+            error={errors.currentPassword}
+            registration={register("currentPassword")}
             onToggleVisibility={() => {
-              setShowCurrentPassword(
-                (current) =>
-                  !current,
-              );
+              setShowCurrentPassword((current) => !current);
             }}
           />
 
@@ -418,21 +292,12 @@ export function ChangePasswordForm({
               label="New password"
               placeholder="Create a new password"
               autoComplete="new-password"
-              visible={
-                showNewPassword
-              }
+              visible={showNewPassword}
               disabled={loading}
-              error={
-                errors.newPassword
-              }
-              registration={register(
-                "newPassword",
-              )}
+              error={errors.newPassword}
+              registration={register("newPassword")}
               onToggleVisibility={() => {
-                setShowNewPassword(
-                  (current) =>
-                    !current,
-                );
+                setShowNewPassword((current) => !current);
               }}
             />
 
@@ -441,21 +306,12 @@ export function ChangePasswordForm({
               label="Confirm new password"
               placeholder="Repeat the new password"
               autoComplete="new-password"
-              visible={
-                showConfirmPassword
-              }
+              visible={showConfirmPassword}
               disabled={loading}
-              error={
-                errors.confirmNewPassword
-              }
-              registration={register(
-                "confirmNewPassword",
-              )}
+              error={errors.confirmNewPassword}
+              registration={register("confirmNewPassword")}
               onToggleVisibility={() => {
-                setShowConfirmPassword(
-                  (current) =>
-                    !current,
-                );
+                setShowConfirmPassword((current) => !current);
               }}
             />
           </div>
@@ -470,31 +326,20 @@ export function ChangePasswordForm({
               Password strength
             </p>
 
-            <h3 className="mt-2 font-heading text-xl font-black text-navy">
-              Security checklist
-            </h3>
+            <h3 className="mt-2 font-heading text-xl font-black text-navy">Security checklist</h3>
           </div>
 
           <div className="rounded-full bg-primary-light px-4 py-2 text-xs font-extrabold text-primary">
-            {
-              completedRequirementCount
-            }{" "}
-            of{" "}
-            {
-              passwordRequirements.length
-            }{" "}
-            completed
+            {completedRequirementCount} of {passwordRequirements.length} completed
           </div>
         </div>
 
         <div className="mt-6 h-2.5 overflow-hidden rounded-full bg-slate-100">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              passwordStrength ===
-              100
+              passwordStrength === 100
                 ? "bg-emerald-500"
-                : passwordStrength >=
-                    60
+                : passwordStrength >= 60
                   ? "bg-primary"
                   : "bg-amber-400"
             }`}
@@ -505,42 +350,32 @@ export function ChangePasswordForm({
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          {passwordRequirements.map(
-            (requirement) => (
-              <div
-                key={
-                  requirement.label
-                }
-                className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${
-                  requirement.satisfied
-                    ? "border-emerald-100 bg-emerald-50"
-                    : "border-slate-200 bg-slate-50"
+          {passwordRequirements.map((requirement) => (
+            <div
+              key={requirement.label}
+              className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${
+                requirement.satisfied
+                  ? "border-emerald-100 bg-emerald-50"
+                  : "border-slate-200 bg-slate-50"
+              }`}
+            >
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                  requirement.satisfied ? "bg-emerald-500 text-white" : "bg-white text-slate-300"
                 }`}
               >
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                    requirement.satisfied
-                      ? "bg-emerald-500 text-white"
-                      : "bg-white text-slate-300"
-                  }`}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                </span>
+                <Check className="h-3.5 w-3.5" />
+              </span>
 
-                <span
-                  className={`text-sm font-bold ${
-                    requirement.satisfied
-                      ? "text-emerald-700"
-                      : "text-slate-500"
-                  }`}
-                >
-                  {
-                    requirement.label
-                  }
-                </span>
-              </div>
-            ),
-          )}
+              <span
+                className={`text-sm font-bold ${
+                  requirement.satisfied ? "text-emerald-700" : "text-slate-500"
+                }`}
+              >
+                {requirement.label}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -550,14 +385,10 @@ export function ChangePasswordForm({
           <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
 
           <div>
-            <p className="font-heading text-lg font-black text-navy">
-              Confirm security update
-            </p>
+            <p className="font-heading text-lg font-black text-navy">Confirm security update</p>
 
             <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
-              You will use the new
-              password the next time
-              you sign in.
+              You will use the new password the next time you sign in.
             </p>
           </div>
         </div>
@@ -574,38 +405,27 @@ export function ChangePasswordForm({
 
           <button
             type="button"
-            disabled={
-              loading ||
-              !isDirty
-            }
+            disabled={loading || !isDirty}
             onClick={handleReset}
             className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-2xl border border-primary/15 bg-primary-light px-5 text-sm font-extrabold text-primary transition hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
             <RotateCcw className="h-4 w-4" />
-
             Reset
           </button>
 
           <button
             type="submit"
-            disabled={
-              loading ||
-              !isDirty ||
-              !isValid ||
-              passwordChanged
-            }
+            disabled={loading || !isDirty || !isValid || passwordChanged}
             className="inline-flex min-h-[50px] min-w-[205px] items-center justify-center gap-3 rounded-2xl bg-primary px-6 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(30,111,217,0.25)] transition hover:-translate-y-0.5 hover:bg-navy disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           >
             {loading ? (
               <>
                 <LoaderCircle className="h-5 w-5 animate-spin" />
-
                 Updating…
               </>
             ) : (
               <>
                 <ShieldCheck className="h-5 w-5" />
-
                 Update password
               </>
             )}
@@ -629,10 +449,7 @@ function PasswordField({
 }: PasswordFieldProps) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="mb-2 flex items-center gap-2 text-sm font-extrabold text-navy"
-      >
+      <label htmlFor={id} className="mb-2 flex items-center gap-2 text-sm font-extrabold text-navy">
         <LockKeyhole className="h-4 w-4 text-primary" />
 
         {label}
@@ -641,14 +458,8 @@ function PasswordField({
       <div className="relative">
         <input
           id={id}
-          type={
-            visible
-              ? "text"
-              : "password"
-          }
-          autoComplete={
-            autoComplete
-          }
+          type={visible ? "text" : "password"}
+          autoComplete={autoComplete}
           disabled={disabled}
           placeholder={placeholder}
           {...registration}
@@ -662,21 +473,11 @@ function PasswordField({
         <button
           type="button"
           disabled={disabled}
-          onClick={
-            onToggleVisibility
-          }
-          aria-label={
-            visible
-              ? `Hide ${label.toLowerCase()}`
-              : `Show ${label.toLowerCase()}`
-          }
+          onClick={onToggleVisibility}
+          aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
           className="absolute right-2.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:bg-primary-light hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {visible ? (
-            <EyeOff className="h-5 w-5" />
-          ) : (
-            <Eye className="h-5 w-5" />
-          )}
+          {visible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       </div>
 

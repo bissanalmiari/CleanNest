@@ -1,11 +1,6 @@
 import "server-only";
 
-import mongoose, {
-  Schema,
-  type Document,
-  type Model,
-  type Types,
-} from "mongoose";
+import mongoose, { Schema, type Document, type Model, type Types } from "mongoose";
 
 export interface IPromoCodeUsage extends Document {
   promoCodeId: Types.ObjectId; // -> PROMO_CODES.id

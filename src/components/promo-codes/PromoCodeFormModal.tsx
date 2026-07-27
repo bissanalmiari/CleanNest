@@ -25,9 +25,7 @@ export interface PromoCodeFormData {
   maximumDiscountAmount?: number | null;
   maximumUses: number;
   perCustomerLimit?: number;
-  applicableServiceIds?: Array<
-    string | { _id?: string; name?: string }
-  >;
+  applicableServiceIds?: Array<string | { _id?: string; name?: string }>;
   isActive: boolean;
 }
 
@@ -64,18 +62,12 @@ function localDateValue(value?: string) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const local = new Date(
-    date.getTime() - date.getTimezoneOffset() * 60_000,
-  );
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 10);
 }
 
-function serviceId(
-  value: string | { _id?: string },
-) {
-  return typeof value === "string"
-    ? value
-    : value._id ?? "";
+function serviceId(value: string | { _id?: string }) {
+  return typeof value === "string" ? value : (value._id ?? "");
 }
 
 function initialState(data?: PromoCodeFormData): FormState {
@@ -87,40 +79,21 @@ function initialState(data?: PromoCodeFormData): FormState {
     code: data?.code ?? "",
     description: data?.description ?? "",
     discountType: data?.discountType ?? "percentage",
-    discountValue:
-      data?.discountValue !== undefined
-        ? String(data.discountValue)
-        : "",
-    startDate:
-      localDateValue(data?.startDate) ||
-      localDateValue(today.toISOString()),
-    expiryDate:
-      localDateValue(data?.expiryDate) ||
-      localDateValue(nextMonth.toISOString()),
+    discountValue: data?.discountValue !== undefined ? String(data.discountValue) : "",
+    startDate: localDateValue(data?.startDate) || localDateValue(today.toISOString()),
+    expiryDate: localDateValue(data?.expiryDate) || localDateValue(nextMonth.toISOString()),
     minimumBookingAmount: String(data?.minimumBookingAmount ?? 0),
     maximumDiscountAmount:
-      data?.maximumDiscountAmount != null
-        ? String(data.maximumDiscountAmount)
-        : "",
+      data?.maximumDiscountAmount != null ? String(data.maximumDiscountAmount) : "",
     maximumUses: String(data?.maximumUses ?? 100),
     perCustomerLimit: String(data?.perCustomerLimit ?? 1),
-    applicableServiceIds:
-      data?.applicableServiceIds
-        ?.map(serviceId)
-        .filter(Boolean) ?? [],
+    applicableServiceIds: data?.applicableServiceIds?.map(serviceId).filter(Boolean) ?? [],
     isActive: data?.isActive ?? true,
   };
 }
 
-export default function PromoCodeFormModal({
-  mode,
-  initialData,
-  onClose,
-  onSuccess,
-}: Props) {
-  const [form, setForm] = useState<FormState>(() =>
-    initialState(initialData),
-  );
+export default function PromoCodeFormModal({ mode, initialData, onClose, onSuccess }: Props) {
+  const [form, setForm] = useState<FormState>(() => initialState(initialData));
   const [services, setServices] = useState<ServiceOption[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -131,10 +104,9 @@ export default function PromoCodeFormModal({
     let cancelled = false;
     async function loadServices() {
       try {
-        const response = await fetch(
-          "/api/admin/services?isActive=true&limit=100",
-          { cache: "no-store" },
-        );
+        const response = await fetch("/api/admin/services?isActive=true&limit=100", {
+          cache: "no-store",
+        });
         const json = (await response.json()) as {
           success?: boolean;
           data?: { services?: ServiceOption[] };
@@ -153,14 +125,11 @@ export default function PromoCodeFormModal({
   }, []);
 
   const allServicesSelected =
-    services.length > 0 &&
-    form.applicableServiceIds.length === services.length;
+    services.length > 0 && form.applicableServiceIds.length === services.length;
 
   const preview = useMemo(() => {
     const value = Number(form.discountValue || 0);
-    return form.discountType === "percentage"
-      ? `${value || 0}% OFF`
-      : `$${value.toFixed(2)} OFF`;
+    return form.discountType === "percentage" ? `${value || 0}% OFF` : `$${value.toFixed(2)} OFF`;
   }, [form.discountType, form.discountValue]);
 
   function patch(values: Partial<FormState>) {
@@ -202,16 +171,10 @@ export default function PromoCodeFormModal({
     ) {
       next.maximumDiscountAmount = "The cap must be greater than zero.";
     }
-    if (
-      !Number.isInteger(Number(form.maximumUses)) ||
-      Number(form.maximumUses) < 1
-    ) {
+    if (!Number.isInteger(Number(form.maximumUses)) || Number(form.maximumUses) < 1) {
       next.maximumUses = "Enter at least one use.";
     }
-    if (
-      !Number.isInteger(Number(form.perCustomerLimit)) ||
-      Number(form.perCustomerLimit) < 1
-    ) {
+    if (!Number.isInteger(Number(form.perCustomerLimit)) || Number(form.perCustomerLimit) < 1) {
       next.perCustomerLimit = "Enter at least one use per customer.";
     }
 
@@ -235,8 +198,7 @@ export default function PromoCodeFormModal({
         expiryDate: new Date(`${form.expiryDate}T23:59:59`).toISOString(),
         minimumBookingAmount: Number(form.minimumBookingAmount || 0),
         maximumDiscountAmount:
-          form.discountType === "percentage" &&
-          form.maximumDiscountAmount
+          form.discountType === "percentage" && form.maximumDiscountAmount
             ? Number(form.maximumDiscountAmount)
             : null,
         maximumUses: Number(form.maximumUses),
@@ -245,14 +207,12 @@ export default function PromoCodeFormModal({
         isActive: form.isActive,
       };
       const response = await fetch(
-        mode === "create"
-          ? "/api/admin/promo-codes"
-          : `/api/admin/promo-codes/${initialData?._id}`,
+        mode === "create" ? "/api/admin/promo-codes" : `/api/admin/promo-codes/${initialData?._id}`,
         {
           method: mode === "create" ? "POST" : "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
+        }
       );
       const json = (await response.json()) as {
         success?: boolean;
@@ -263,11 +223,7 @@ export default function PromoCodeFormModal({
       }
       onSuccess();
     } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Unable to save this campaign.",
-      );
+      setSubmitError(error instanceof Error ? error.message : "Unable to save this campaign.");
     } finally {
       setSaving(false);
     }
@@ -336,9 +292,7 @@ export default function PromoCodeFormModal({
                       maxLength={30}
                       onChange={(event) =>
                         patch({
-                          code: event.target.value
-                            .toUpperCase()
-                            .replace(/[^A-Z0-9_-]/g, ""),
+                          code: event.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""),
                         })
                       }
                       placeholder="WELCOME20"
@@ -366,9 +320,7 @@ export default function PromoCodeFormModal({
                         patch({
                           discountType: event.target.value as FormState["discountType"],
                           maximumDiscountAmount:
-                            event.target.value === "fixed_amount"
-                              ? ""
-                              : form.maximumDiscountAmount,
+                            event.target.value === "fixed_amount" ? "" : form.maximumDiscountAmount,
                         })
                       }
                       className={inputClass}
@@ -398,9 +350,7 @@ export default function PromoCodeFormModal({
                   >
                     <NumberInput
                       value={form.maximumDiscountAmount}
-                      onChange={(maximumDiscountAmount) =>
-                        patch({ maximumDiscountAmount })
-                      }
+                      onChange={(maximumDiscountAmount) => patch({ maximumDiscountAmount })}
                       prefix="$"
                       disabled={form.discountType === "fixed_amount"}
                     />
@@ -584,9 +534,7 @@ function Section({
     <section>
       <div className="mb-4 flex items-center gap-2">
         <Icon className="h-4 w-4 text-primary" />
-        <h3 className="text-xs font-black uppercase tracking-[0.14em] text-navy">
-          {title}
-        </h3>
+        <h3 className="text-xs font-black uppercase tracking-[0.14em] text-navy">{title}</h3>
       </div>
       {children}
     </section>

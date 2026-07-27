@@ -1,176 +1,89 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
-import {
-  AlertCircle,
-  Camera,
-  CheckCircle2,
-  ImagePlus,
-  LoaderCircle,
-  Upload,
-} from "lucide-react";
+import { AlertCircle, Camera, CheckCircle2, ImagePlus, LoaderCircle, Upload } from "lucide-react";
 
 import { useProfile } from "@/hooks/useProfile";
 
 import type { PublicUser } from "@/types/user";
 
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-const MAX_SIZE_BYTES =
-  5 * 1024 * 1024;
+const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 interface AvatarUploadProps {
   user: PublicUser;
 
-  onUploaded: (
-    updatedUser: PublicUser,
-  ) => void;
+  onUploaded: (updatedUser: PublicUser) => void;
 }
 
-function getInitials(
-  name: string,
-): string {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
 
   if (parts.length === 0) {
     return "CN";
   }
 
-  const firstPart =
-    parts[0] ?? "";
+  const firstPart = parts[0] ?? "";
 
   if (parts.length === 1) {
-    return (
-      firstPart
-        .slice(0, 2)
-        .toUpperCase() || "CN"
-    );
+    return firstPart.slice(0, 2).toUpperCase() || "CN";
   }
 
-  const lastPart =
-    parts[
-      parts.length - 1
-    ] ?? "";
+  const lastPart = parts[parts.length - 1] ?? "";
 
-  const firstInitial =
-    firstPart.charAt(0);
+  const firstInitial = firstPart.charAt(0);
 
-  const lastInitial =
-    lastPart.charAt(0);
+  const lastInitial = lastPart.charAt(0);
 
-  return (
-    `${firstInitial}${lastInitial}`
-      .toUpperCase() || "CN"
-  );
+  return `${firstInitial}${lastInitial}`.toUpperCase() || "CN";
 }
 
-export function AvatarUpload({
-  user,
-  onUploaded,
-}: AvatarUploadProps) {
-  const inputRef =
-    useRef<HTMLInputElement>(
-      null,
-    );
+export function AvatarUpload({ user, onUploaded }: AvatarUploadProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const temporaryPreviewRef =
-    useRef<string | null>(
-      null,
-    );
+  const temporaryPreviewRef = useRef<string | null>(null);
 
-  const successTimerRef =
-    useRef<
-      ReturnType<
-        typeof setTimeout
-      > | null
-    >(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const {
-    uploadAvatar,
-    loading,
-    error,
-    setError,
-  } = useProfile();
+  const { uploadAvatar, loading, error, setError } = useProfile();
 
-  const [preview, setPreview] =
-    useState<string | null>(
-      user.avatarUrl,
-    );
+  const [preview, setPreview] = useState<string | null>(user.avatarUrl);
 
-  const [
-    localError,
-    setLocalError,
-  ] = useState<
-    string | null
-  >(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  const [
-    uploadSucceeded,
-    setUploadSucceeded,
-  ] = useState(false);
+  const [uploadSucceeded, setUploadSucceeded] = useState(false);
 
   useEffect(() => {
-    setPreview(
-      user.avatarUrl,
-    );
+    setPreview(user.avatarUrl);
   }, [user.avatarUrl]);
 
   useEffect(() => {
     return () => {
-      if (
-        temporaryPreviewRef.current
-      ) {
-        URL.revokeObjectURL(
-          temporaryPreviewRef.current,
-        );
+      if (temporaryPreviewRef.current) {
+        URL.revokeObjectURL(temporaryPreviewRef.current);
       }
 
-      if (
-        successTimerRef.current
-      ) {
-        clearTimeout(
-          successTimerRef.current,
-        );
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
       }
     };
   }, []);
 
   function clearTemporaryPreview() {
-    if (
-      temporaryPreviewRef.current
-    ) {
-      URL.revokeObjectURL(
-        temporaryPreviewRef.current,
-      );
+    if (temporaryPreviewRef.current) {
+      URL.revokeObjectURL(temporaryPreviewRef.current);
 
-      temporaryPreviewRef.current =
-        null;
+      temporaryPreviewRef.current = null;
     }
   }
 
   function clearSuccessTimer() {
-    if (
-      successTimerRef.current
-    ) {
-      clearTimeout(
-        successTimerRef.current,
-      );
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
 
-      successTimerRef.current =
-        null;
+      successTimerRef.current = null;
     }
   }
 
@@ -188,12 +101,8 @@ export function AvatarUpload({
     inputRef.current?.click();
   }
 
-  async function handleFileChange(
-    event:
-      ChangeEvent<HTMLInputElement>,
-  ) {
-    const file =
-      event.target.files?.[0];
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
@@ -205,26 +114,15 @@ export function AvatarUpload({
 
     clearSuccessTimer();
 
-    if (
-      !ALLOWED_TYPES.includes(
-        file.type,
-      )
-    ) {
-      setLocalError(
-        "Choose a JPEG, PNG, or WEBP image.",
-      );
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setLocalError("Choose a JPEG, PNG, or WEBP image.");
 
       event.target.value = "";
       return;
     }
 
-    if (
-      file.size >
-      MAX_SIZE_BYTES
-    ) {
-      setLocalError(
-        "The image must be smaller than 5 MB.",
-      );
+    if (file.size > MAX_SIZE_BYTES) {
+      setLocalError("The image must be smaller than 5 MB.");
 
       event.target.value = "";
       return;
@@ -232,61 +130,40 @@ export function AvatarUpload({
 
     clearTemporaryPreview();
 
-    const temporaryPreview =
-      URL.createObjectURL(
-        file,
-      );
+    const temporaryPreview = URL.createObjectURL(file);
 
-    temporaryPreviewRef.current =
-      temporaryPreview;
+    temporaryPreviewRef.current = temporaryPreview;
 
-    setPreview(
-      temporaryPreview,
-    );
+    setPreview(temporaryPreview);
 
-    const updatedUser =
-      await uploadAvatar(file);
+    const updatedUser = await uploadAvatar(file);
 
     if (updatedUser) {
       clearTemporaryPreview();
 
-      setPreview(
-        updatedUser.avatarUrl,
-      );
+      setPreview(updatedUser.avatarUrl);
 
       setUploadSucceeded(true);
 
-      onUploaded(
-        updatedUser,
-      );
+      onUploaded(updatedUser);
 
-      successTimerRef.current =
-        setTimeout(() => {
-          setUploadSucceeded(
-            false,
-          );
+      successTimerRef.current = setTimeout(() => {
+        setUploadSucceeded(false);
 
-          successTimerRef.current =
-            null;
-        }, 2500);
+        successTimerRef.current = null;
+      }, 2500);
     } else {
       clearTemporaryPreview();
 
-      setPreview(
-        user.avatarUrl,
-      );
+      setPreview(user.avatarUrl);
     }
 
     event.target.value = "";
   }
 
-  const visibleError =
-    localError ?? error;
+  const visibleError = localError ?? error;
 
-  const initials =
-    getInitials(
-      user.name,
-    );
+  const initials = getInitials(user.name);
 
   return (
     <div className="w-full">
@@ -295,9 +172,7 @@ export function AvatarUpload({
         <button
           type="button"
           disabled={loading}
-          onClick={
-            openFilePicker
-          }
+          onClick={openFilePicker}
           aria-label="Change profile picture"
           className="group relative block rounded-full outline-none disabled:cursor-wait"
         >
@@ -371,13 +246,9 @@ export function AvatarUpload({
         <input
           ref={inputRef}
           type="file"
-          accept={ALLOWED_TYPES.join(
-            ",",
-          )}
+          accept={ALLOWED_TYPES.join(",")}
           disabled={loading}
-          onChange={
-            handleFileChange
-          }
+          onChange={handleFileChange}
           className="hidden"
         />
 
@@ -385,21 +256,17 @@ export function AvatarUpload({
         <button
           type="button"
           disabled={loading}
-          onClick={
-            openFilePicker
-          }
+          onClick={openFilePicker}
           className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 text-xs font-extrabold text-white backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-white/15 disabled:cursor-wait disabled:opacity-60"
         >
           {loading ? (
             <>
               <LoaderCircle className="h-4 w-4 animate-spin text-cyan-300" />
-
               Uploading photo…
             </>
           ) : (
             <>
               <ImagePlus className="h-4 w-4 text-cyan-300" />
-
               Upload new photo
             </>
           )}
@@ -407,7 +274,6 @@ export function AvatarUpload({
 
         <div className="mt-3 flex items-center gap-2 text-center text-[10px] font-bold uppercase tracking-[0.11em] text-blue-100/50">
           <Upload className="h-3.5 w-3.5" />
-
           JPG, PNG or WEBP · Max 5 MB
         </div>
 
@@ -417,7 +283,6 @@ export function AvatarUpload({
             className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-xs font-extrabold text-emerald-200"
           >
             <CheckCircle2 className="h-4 w-4" />
-
             Profile photo updated
           </div>
         )}
@@ -429,9 +294,7 @@ export function AvatarUpload({
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
 
-            <span>
-              {visibleError}
-            </span>
+            <span>{visibleError}</span>
           </div>
         )}
       </div>

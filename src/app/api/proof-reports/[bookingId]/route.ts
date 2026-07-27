@@ -5,14 +5,12 @@ import { getBookingProofReports } from "@/services/serviceProofService";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ bookingId: string }> },
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     const currentUser = await requireUser();
     const { bookingId } = await params;
-    return successResponse(
-      await getBookingProofReports(currentUser, bookingId),
-    );
+    return successResponse(await getBookingProofReports(currentUser, bookingId));
   } catch (error) {
     return errorResponse(error);
   }

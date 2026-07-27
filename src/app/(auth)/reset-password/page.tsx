@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Suspense,
-  useState,
-} from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,10 +18,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
-import {
-  resetPasswordSchema,
-  type ResetPasswordValues,
-} from "@/validators/authValidator";
+import { resetPasswordSchema, type ResetPasswordValues } from "@/validators/authValidator";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/Input";
 import { OtpInput } from "@/components/ui/OtpInput";
@@ -40,24 +34,17 @@ const passwordRequirements = [
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
 
-  const emailFromQuery =
-    searchParams.get("email") ?? "";
+  const emailFromQuery = searchParams.get("email") ?? "";
 
   /*
     When the user opens the email reset link,
     the OTP can already be included in the URL.
   */
-  const otpFromQuery =
-    searchParams.get("otp") ?? "";
+  const otpFromQuery = searchParams.get("otp") ?? "";
 
-  const {
-    resetPassword,
-    loading,
-    error,
-  } = useAuth();
+  const { resetPassword, loading, error } = useAuth();
 
-  const [otp, setOtp] =
-    useState(otpFromQuery);
+  const [otp, setOtp] = useState(otpFromQuery);
 
   const {
     register,
@@ -65,9 +52,7 @@ function ResetPasswordForm() {
     setValue,
     formState: { errors },
   } = useForm<ResetPasswordValues>({
-    resolver: zodResolver(
-      resetPasswordSchema,
-    ),
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       email: emailFromQuery,
       otp: otpFromQuery,
@@ -83,9 +68,7 @@ function ResetPasswordForm() {
     });
   }
 
-  async function onSubmit(
-    values: ResetPasswordValues,
-  ) {
+  async function onSubmit(values: ResetPasswordValues) {
     await resetPassword({
       ...values,
       otp,
@@ -149,9 +132,8 @@ function ResetPasswordForm() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-500">
-          Enter the six-digit code sent to your
-          email, then create a new secure password
-          for your CleanNest account.
+          Enter the six-digit code sent to your email, then create a new secure password for your
+          CleanNest account.
         </p>
       </div>
 
@@ -170,16 +152,11 @@ function ResetPasswordForm() {
           }}
           className="mt-7"
         >
-          <Alert variant="error">
-            {error}
-          </Alert>
+          <Alert variant="error">{error}</Alert>
         </motion.div>
       )}
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-7 space-y-5"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-5">
         {/* Account email */}
         <motion.div
           initial={{
@@ -215,10 +192,7 @@ function ResetPasswordForm() {
 
               <p className="break-all text-xs leading-5 text-slate-500">
                 The reset request is connected to{" "}
-                <span className="font-semibold text-navy">
-                  {emailFromQuery}
-                </span>
-                .
+                <span className="font-semibold text-navy">{emailFromQuery}</span>.
               </p>
             </div>
           )}
@@ -250,26 +224,20 @@ function ResetPasswordForm() {
               </p>
 
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Enter the six-digit code from your
-                password-reset email.
+                Enter the six-digit code from your password-reset email.
               </p>
             </div>
           </div>
 
           <div className="mt-5">
-            <OtpInput
-              value={otp}
-              onChange={handleOtpChange}
-              error={errors.otp?.message}
-            />
+            <OtpInput value={otp} onChange={handleOtpChange} error={errors.otp?.message} />
           </div>
 
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2.5">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
 
             <p className="text-xs leading-5 text-amber-800/75">
-              Do not share this verification code
-              with anyone.
+              Do not share this verification code with anyone.
             </p>
           </div>
         </motion.div>
@@ -300,9 +268,7 @@ function ResetPasswordForm() {
               type="password"
               autoComplete="new-password"
               placeholder="At least 8 characters"
-              error={
-                errors.newPassword?.message
-              }
+              error={errors.newPassword?.message}
               {...register("newPassword")}
             />
 
@@ -311,44 +277,33 @@ function ResetPasswordForm() {
               type="password"
               autoComplete="new-password"
               placeholder="Re-enter your new password"
-              error={
-                errors.confirmNewPassword
-                  ?.message
-              }
-              {...register(
-                "confirmNewPassword",
-              )}
+              error={errors.confirmNewPassword?.message}
+              {...register("confirmNewPassword")}
             />
           </div>
 
           <div className="mt-4 space-y-2">
-            {passwordRequirements.map(
-              (requirement, index) => (
-                <motion.div
-                  key={requirement}
-                  initial={{
-                    opacity: 0,
-                    x: -10,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  transition={{
-                    delay:
-                      0.3 +
-                      index * 0.07,
-                  }}
-                  className="flex items-center gap-2 rounded-xl bg-white px-3 py-2.5"
-                >
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+            {passwordRequirements.map((requirement, index) => (
+              <motion.div
+                key={requirement}
+                initial={{
+                  opacity: 0,
+                  x: -10,
+                }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                transition={{
+                  delay: 0.3 + index * 0.07,
+                }}
+                className="flex items-center gap-2 rounded-xl bg-white px-3 py-2.5"
+              >
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
 
-                  <span className="text-xs font-medium text-slate-500">
-                    {requirement}
-                  </span>
-                </motion.div>
-              ),
-            )}
+                <span className="text-xs font-medium text-slate-500">{requirement}</span>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
 
@@ -380,19 +335,11 @@ function ResetPasswordForm() {
                 }
           }
         >
-          <Button
-            type="submit"
-            className="min-h-[54px] w-full"
-            isLoading={loading}
-          >
+          <Button type="submit" className="min-h-[54px] w-full" isLoading={loading}>
             <span className="inline-flex items-center justify-center gap-2">
               <KeyRound className="h-5 w-5" />
-
               Reset Password
-
-              {!loading && (
-                <ArrowRight className="h-5 w-5" />
-              )}
+              {!loading && <ArrowRight className="h-5 w-5" />}
             </span>
           </Button>
         </motion.div>
@@ -418,13 +365,10 @@ function ResetPasswordForm() {
         </span>
 
         <div>
-          <p className="text-sm font-bold text-emerald-800">
-            Your new password is protected
-          </p>
+          <p className="text-sm font-bold text-emerald-800">Your new password is protected</p>
 
           <p className="mt-1 text-xs leading-5 text-emerald-700/70">
-            After the reset succeeds, use your new
-            password the next time you sign in.
+            After the reset succeeds, use your new password the next time you sign in.
           </p>
         </div>
       </motion.div>
@@ -436,7 +380,6 @@ function ResetPasswordForm() {
           className="group inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-colors hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-
           Request another code
         </Link>
 
@@ -445,7 +388,6 @@ function ResetPasswordForm() {
           className="group inline-flex items-center gap-1.5 text-sm font-bold text-primary transition-colors hover:text-primary-dark"
         >
           Back to login
-
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
         </Link>
       </div>
@@ -477,11 +419,7 @@ function ResetPasswordLoadingFallback() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <ResetPasswordLoadingFallback />
-      }
-    >
+    <Suspense fallback={<ResetPasswordLoadingFallback />}>
       <ResetPasswordForm />
     </Suspense>
   );

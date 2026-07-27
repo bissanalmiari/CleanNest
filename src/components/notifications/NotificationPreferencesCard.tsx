@@ -48,8 +48,7 @@ const rows = [
 ] as const;
 
 export default function NotificationPreferencesCard() {
-  const [preferences, setPreferences] =
-    useState<NotificationPreferences | null>(null);
+  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -69,11 +68,7 @@ export default function NotificationPreferencesCard() {
         if (active) setPreferences(payload.data);
       } catch (loadError) {
         if (active) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load preferences",
-          );
+          setError(loadError instanceof Error ? loadError.message : "Could not load preferences");
         }
       } finally {
         if (active) setLoading(false);
@@ -103,11 +98,7 @@ export default function NotificationPreferencesCard() {
       setPreferences(payload.data);
       setSaved(true);
     } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Preferences could not be saved",
-      );
+      setError(saveError instanceof Error ? saveError.message : "Preferences could not be saved");
     } finally {
       setSaving(false);
     }
@@ -132,12 +123,9 @@ export default function NotificationPreferencesCard() {
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">
             Communication preferences
           </p>
-          <h2 className="mt-1 font-heading text-2xl font-black">
-            Choose your email alerts
-          </h2>
+          <h2 className="mt-1 font-heading text-2xl font-black">Choose your email alerts</h2>
           <p className="mt-2 text-sm text-blue-100/70">
-            In-app safety and account notifications remain available in your
-            notification bell.
+            In-app safety and account notifications remain available in your notification bell.
           </p>
         </div>
         <Toggle
@@ -146,7 +134,7 @@ export default function NotificationPreferencesCard() {
           onChange={(checked) => {
             setSaved(false);
             setPreferences((current) =>
-              current ? { ...current, emailEnabled: checked } : current,
+              current ? { ...current, emailEnabled: checked } : current
             );
           }}
           dark
@@ -176,9 +164,7 @@ export default function NotificationPreferencesCard() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-black text-navy">{row.label}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    {row.description}
-                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{row.description}</p>
                 </div>
                 <Toggle
                   checked={preferences[row.key]}
@@ -187,7 +173,7 @@ export default function NotificationPreferencesCard() {
                   onChange={(checked) => {
                     setSaved(false);
                     setPreferences((current) =>
-                      current ? { ...current, [row.key]: checked } : current,
+                      current ? { ...current, [row.key]: checked } : current
                     );
                   }}
                 />

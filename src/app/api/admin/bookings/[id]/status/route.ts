@@ -27,10 +27,7 @@ async function requireAdmin() {
   return user;
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin();
     const { id } = await params;
@@ -42,12 +39,7 @@ export async function PATCH(
       throw new AppError("A valid status is required", 422);
     }
 
-    const booking = await changeBookingStatus(
-      id,
-      status as BookingStatus,
-      admin.id,
-      note
-    );
+    const booking = await changeBookingStatus(id, status as BookingStatus, admin.id, note);
 
     return successResponse(booking);
   } catch (error) {

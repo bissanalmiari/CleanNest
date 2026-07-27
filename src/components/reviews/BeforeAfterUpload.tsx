@@ -139,7 +139,7 @@ function ImageSlot({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="relative h-20 w-20 overflow-hidden rounded-card border border-navy/15 bg-surface-soft flex items-center justify-center hover:border-primary transition disabled:opacity-60"
+        className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-card border border-navy/15 bg-surface-soft transition hover:border-primary disabled:opacity-60"
       >
         {url ? (
           <Image src={url} alt={label} fill className="object-cover" />

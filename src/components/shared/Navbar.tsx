@@ -140,11 +140,7 @@ export default function Navbar() {
           className="relative mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-5 sm:px-8 lg:px-10"
         >
           {/* Logo */}
-          <Link
-            href="/"
-            onClick={closeMenu}
-            className="group flex shrink-0 items-center gap-3"
-          >
+          <Link href="/" onClick={closeMenu} className="group flex shrink-0 items-center gap-3">
             <motion.span
               whileHover={{
                 scale: 1.08,
@@ -206,14 +202,10 @@ export default function Navbar() {
                   key={link.label}
                   href={link.href}
                   className={`group relative rounded-xl px-2.5 py-2.5 text-sm font-semibold transition-colors ${
-                    isActive
-                      ? "text-primary"
-                      : "text-slate-600 hover:text-primary"
+                    isActive ? "text-primary" : "text-slate-600 hover:text-primary"
                   }`}
                 >
-                  <span className="relative z-10">
-                    {link.label}
-                  </span>
+                  <span className="relative z-10">{link.label}</span>
 
                   <motion.span
                     aria-hidden="true"
@@ -320,11 +312,7 @@ export default function Navbar() {
             whileTap={{
               scale: 0.92,
             }}
-            aria-label={
-              isMenuOpen
-                ? "Close navigation menu"
-                : "Open navigation menu"
-            }
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
             className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/15 bg-white text-navy shadow-sm transition-colors hover:bg-primary-light hover:text-primary xl:hidden"
@@ -548,9 +536,7 @@ export default function Navbar() {
 
                         <CalendarCheck2 className="relative h-5 w-5" />
 
-                        <span className="relative">
-                          Book Now
-                        </span>
+                        <span className="relative">Book Now</span>
 
                         <ArrowRight className="relative h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>

@@ -1,13 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  CalendarCheck2,
-  Home,
-  ShieldCheck,
-  Sparkles,
-  Star,
-} from "lucide-react";
+import { CalendarCheck2, Home, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { motion, MotionConfig } from "motion/react";
 
 const orbitParticles = [
@@ -67,13 +61,9 @@ export default function FloatingBookingOrb() {
                 </span>
 
                 <div>
-                  <p className="font-heading text-sm font-bold text-navy">
-                    Book a Cleaning
-                  </p>
+                  <p className="font-heading text-sm font-bold text-navy">Book a Cleaning</p>
 
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Schedule in minutes
-                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">Schedule in minutes</p>
                 </div>
               </div>
 

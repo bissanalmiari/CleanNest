@@ -7,10 +7,7 @@ import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { AppError, errorResponse } from "@/lib/apiError";
 import { successResponse } from "@/lib/apiResponse";
-import {
-  blockUser,
-  unblockUser,
-} from "@/services/userManagementService";
+import { blockUser, unblockUser } from "@/services/userManagementService";
 
 async function requireAdmin() {
   const user = await requireUser();
@@ -20,10 +17,7 @@ async function requireAdmin() {
   return user;
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin();
     const { id } = await params;
@@ -35,10 +29,7 @@ export async function PATCH(
       throw new AppError('action must be "block" or "unblock"', 422);
     }
 
-    const user =
-      action === "block"
-        ? await blockUser(id, admin.id)
-        : await unblockUser(id);
+    const user = action === "block" ? await blockUser(id, admin.id) : await unblockUser(id);
 
     return successResponse(user);
   } catch (error) {

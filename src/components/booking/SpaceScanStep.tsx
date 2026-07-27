@@ -15,16 +15,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import {
-  motion,
-  useReducedMotion,
-} from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 
-export type SpaceScanPropertyType =
-  | "apartment"
-  | "house"
-  | "office"
-  | "other";
+export type SpaceScanPropertyType = "apartment" | "house" | "office" | "other";
 
 export interface SpaceScanValue {
   propertyType: SpaceScanPropertyType;
@@ -36,9 +29,7 @@ export interface SpaceScanValue {
 interface SpaceScanStepProps {
   value: SpaceScanValue;
 
-  onChange: (
-    update: Partial<SpaceScanValue>,
-  ) => void;
+  onChange: (update: Partial<SpaceScanValue>) => void;
 }
 
 interface PropertyOption {
@@ -59,32 +50,28 @@ const PROPERTY_OPTIONS: PropertyOption[] = [
     id: "apartment",
     name: "Apartment",
     code: "CN-APT",
-    description:
-      "Best for flats and compact residential spaces with connected rooms.",
+    description: "Best for flats and compact residential spaces with connected rooms.",
     icon: Building2,
   },
   {
     id: "house",
     name: "House",
     code: "CN-HSE",
-    description:
-      "Designed for larger homes with multiple rooms and living areas.",
+    description: "Designed for larger homes with multiple rooms and living areas.",
     icon: Home,
   },
   {
     id: "office",
     name: "Office",
     code: "CN-OFF",
-    description:
-      "Suitable for workplaces, shared areas, desks, and meeting rooms.",
+    description: "Suitable for workplaces, shared areas, desks, and meeting rooms.",
     icon: Briefcase,
   },
   {
     id: "other",
     name: "Other",
     code: "CN-CUS",
-    description:
-      "Choose this for a custom property that does not fit another category.",
+    description: "Choose this for a custom property that does not fit another category.",
     icon: Shapes,
   },
 ];
@@ -111,58 +98,43 @@ const SIZE_PRESETS: SizePreset[] = [
 const MIN_PROPERTY_SIZE = 20;
 const MAX_PROPERTY_SIZE = 2000;
 
-function clampNumber(
-  value: number,
-  minimum: number,
-  maximum: number,
-) {
+function clampNumber(value: number, minimum: number, maximum: number) {
   if (!Number.isFinite(value)) {
     return minimum;
   }
 
-  return Math.min(
-    maximum,
-    Math.max(minimum, value),
-  );
+  return Math.min(maximum, Math.max(minimum, value));
 }
 
-function getSizeProfile(
-  propertySize: number,
-) {
+function getSizeProfile(propertySize: number) {
   if (propertySize <= 70) {
     return {
       label: "Compact route",
-      description:
-        "A focused cleaning route for a smaller property.",
+      description: "A focused cleaning route for a smaller property.",
     };
   }
 
   if (propertySize <= 140) {
     return {
       label: "Standard route",
-      description:
-        "A balanced route for an average-sized property.",
+      description: "A balanced route for an average-sized property.",
     };
   }
 
   if (propertySize <= 250) {
     return {
       label: "Extended route",
-      description:
-        "A longer route covering more rooms and surfaces.",
+      description: "A longer route covering more rooms and surfaces.",
     };
   }
 
   return {
     label: "Large-property route",
-    description:
-      "A detailed route designed for a large home or workplace.",
+    description: "A detailed route designed for a large home or workplace.",
   };
 }
 
-function getRoomLabel(
-  propertyType: SpaceScanPropertyType,
-) {
+function getRoomLabel(propertyType: SpaceScanPropertyType) {
   if (propertyType === "office") {
     return "Work areas";
   }
@@ -174,84 +146,39 @@ function getRoomLabel(
   return "Bedrooms";
 }
 
-function getPropertyLabel(
-  propertyType: SpaceScanPropertyType,
-) {
-  return (
-    PROPERTY_OPTIONS.find(
-      (property) =>
-        property.id === propertyType,
-    )?.name ?? "Property"
-  );
+function getPropertyLabel(propertyType: SpaceScanPropertyType) {
+  return PROPERTY_OPTIONS.find((property) => property.id === propertyType)?.name ?? "Property";
 }
 
-export default function SpaceScanStep({
-  value,
-  onChange,
-}: SpaceScanStepProps) {
-  const prefersReducedMotion =
-    useReducedMotion();
+export default function SpaceScanStep({ value, onChange }: SpaceScanStepProps) {
+  const prefersReducedMotion = useReducedMotion();
 
-  const sizeProfile =
-    getSizeProfile(value.propertySize);
+  const sizeProfile = getSizeProfile(value.propertySize);
 
-  const roomLabel =
-    getRoomLabel(value.propertyType);
+  const roomLabel = getRoomLabel(value.propertyType);
 
-  const propertyLabel =
-    getPropertyLabel(
-      value.propertyType,
-    );
+  const propertyLabel = getPropertyLabel(value.propertyType);
 
   const sizePercentage =
-    ((value.propertySize -
-      MIN_PROPERTY_SIZE) /
-      (MAX_PROPERTY_SIZE -
-        MIN_PROPERTY_SIZE)) *
-    100;
+    ((value.propertySize - MIN_PROPERTY_SIZE) / (MAX_PROPERTY_SIZE - MIN_PROPERTY_SIZE)) * 100;
 
-  const safeMarkerPosition =
-    Math.min(
-      97,
-      Math.max(
-        3,
-        sizePercentage,
-      ),
-    );
+  const safeMarkerPosition = Math.min(97, Math.max(3, sizePercentage));
 
-  function updateBedrooms(
-    nextValue: number,
-  ) {
+  function updateBedrooms(nextValue: number) {
     onChange({
-      bedrooms: clampNumber(
-        nextValue,
-        0,
-        30,
-      ),
+      bedrooms: clampNumber(nextValue, 0, 30),
     });
   }
 
-  function updateBathrooms(
-    nextValue: number,
-  ) {
+  function updateBathrooms(nextValue: number) {
     onChange({
-      bathrooms: clampNumber(
-        nextValue,
-        0,
-        30,
-      ),
+      bathrooms: clampNumber(nextValue, 0, 30),
     });
   }
 
-  function updatePropertySize(
-    nextValue: number,
-  ) {
+  function updatePropertySize(nextValue: number) {
     onChange({
-      propertySize: clampNumber(
-        nextValue,
-        MIN_PROPERTY_SIZE,
-        MAX_PROPERTY_SIZE,
-      ),
+      propertySize: clampNumber(nextValue, MIN_PROPERTY_SIZE, MAX_PROPERTY_SIZE),
     });
   }
 
@@ -271,100 +198,86 @@ export default function SpaceScanStep({
           </div>
 
           <p className="max-w-sm text-sm font-medium leading-6 text-slate-500 md:text-right">
-            Select the property that most
-            closely matches the space that
-            needs cleaning.
+            Select the property that most closely matches the space that needs cleaning.
           </p>
         </div>
 
         <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(min(100%,270px),1fr))] gap-4">
-          {PROPERTY_OPTIONS.map(
-            (property) => {
-              const Icon =
-                property.icon;
+          {PROPERTY_OPTIONS.map((property) => {
+            const Icon = property.icon;
 
-              const isSelected =
-                value.propertyType ===
-                property.id;
+            const isSelected = value.propertyType === property.id;
 
-              return (
-                <motion.button
-                  key={property.id}
-                  type="button"
-                  onClick={() => {
-                    onChange({
-                      propertyType:
-                        property.id,
-                    });
-                  }}
-                  whileHover={
-                    prefersReducedMotion
-                      ? undefined
-                      : {
-                          y: -3,
-                        }
-                  }
-                  whileTap={{
-                    scale: 0.985,
-                  }}
-                  className={`relative min-h-[190px] overflow-hidden rounded-[1.5rem] border p-5 text-left transition-all ${
-                    isSelected
-                      ? "border-primary bg-primary-light/80 shadow-[0_16px_40px_rgba(30,111,217,0.15)]"
-                      : "border-slate-200 bg-white hover:border-primary/35 hover:shadow-[0_14px_35px_rgba(11,37,69,0.08)]"
-                  }`}
-                >
-                  <div
-                    aria-hidden="true"
-                    className={`absolute -right-10 -top-10 h-32 w-32 rounded-full ${
-                      isSelected
-                        ? "bg-primary/10"
-                        : "bg-slate-50"
-                    }`}
-                  />
-
-                  <div className="relative flex h-full flex-col">
-                    <div className="flex items-start justify-between gap-4">
-                      <span
-                        className={`flex h-13 w-13 h-[52px] shrink-0 items-center justify-center rounded-2xl transition ${
-                          isSelected
-                            ? "bg-primary text-white shadow-[0_10px_25px_rgba(30,111,217,0.28)]"
-                            : "bg-surface-soft text-slate-500"
-                        }`}
-                      >
-                        <Icon className="h-6 w-6" />
-                      </span>
-
-                      <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${
-                          isSelected
-                            ? "border-primary bg-primary text-white"
-                            : "border-slate-200 bg-white text-transparent"
-                        }`}
-                      >
-                        <Check className="h-4 w-4" />
-                      </span>
-                    </div>
-
-                    <div className="mt-5">
-                      <h4 className="font-heading text-xl font-black text-navy">
-                        {property.name}
-                      </h4>
-
-                      <p className="mt-1 font-mono text-[11px] font-extrabold tracking-[0.13em] text-primary/55">
-                        {property.code}
-                      </p>
-                    </div>
-
-                    <p className="mt-4 text-sm font-medium leading-6 text-slate-500">
-                      {
-                        property.description
+            return (
+              <motion.button
+                key={property.id}
+                type="button"
+                onClick={() => {
+                  onChange({
+                    propertyType: property.id,
+                  });
+                }}
+                whileHover={
+                  prefersReducedMotion
+                    ? undefined
+                    : {
+                        y: -3,
                       }
+                }
+                whileTap={{
+                  scale: 0.985,
+                }}
+                className={`relative min-h-[190px] overflow-hidden rounded-[1.5rem] border p-5 text-left transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary-light/80 shadow-[0_16px_40px_rgba(30,111,217,0.15)]"
+                    : "border-slate-200 bg-white hover:border-primary/35 hover:shadow-[0_14px_35px_rgba(11,37,69,0.08)]"
+                }`}
+              >
+                <div
+                  aria-hidden="true"
+                  className={`absolute -right-10 -top-10 h-32 w-32 rounded-full ${
+                    isSelected ? "bg-primary/10" : "bg-slate-50"
+                  }`}
+                />
+
+                <div className="relative flex h-full flex-col">
+                  <div className="flex items-start justify-between gap-4">
+                    <span
+                      className={`h-13 w-13 flex h-[52px] shrink-0 items-center justify-center rounded-2xl transition ${
+                        isSelected
+                          ? "bg-primary text-white shadow-[0_10px_25px_rgba(30,111,217,0.28)]"
+                          : "bg-surface-soft text-slate-500"
+                      }`}
+                    >
+                      <Icon className="h-6 w-6" />
+                    </span>
+
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${
+                        isSelected
+                          ? "border-primary bg-primary text-white"
+                          : "border-slate-200 bg-white text-transparent"
+                      }`}
+                    >
+                      <Check className="h-4 w-4" />
+                    </span>
+                  </div>
+
+                  <div className="mt-5">
+                    <h4 className="font-heading text-xl font-black text-navy">{property.name}</h4>
+
+                    <p className="mt-1 font-mono text-[11px] font-extrabold tracking-[0.13em] text-primary/55">
+                      {property.code}
                     </p>
                   </div>
-                </motion.button>
-              );
-            },
-          )}
+
+                  <p className="mt-4 text-sm font-medium leading-6 text-slate-500">
+                    {property.description}
+                  </p>
+                </div>
+              </motion.button>
+            );
+          })}
         </div>
       </section>
 
@@ -380,9 +293,7 @@ export default function SpaceScanStep({
           </h3>
 
           <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-            These numbers help CleanNest
-            estimate the cleaning duration
-            more accurately.
+            These numbers help CleanNest estimate the cleaning duration more accurately.
           </p>
         </div>
 
@@ -391,21 +302,16 @@ export default function SpaceScanStep({
             icon={BedDouble}
             label={roomLabel}
             description={
-              value.propertyType ===
-              "office"
+              value.propertyType === "office"
                 ? "Separate rooms or work zones that require cleaning."
                 : "Sleeping or main rooms included in the cleaning route."
             }
             value={value.bedrooms}
             onDecrease={() => {
-              updateBedrooms(
-                value.bedrooms - 1,
-              );
+              updateBedrooms(value.bedrooms - 1);
             }}
             onIncrease={() => {
-              updateBedrooms(
-                value.bedrooms + 1,
-              );
+              updateBedrooms(value.bedrooms + 1);
             }}
           />
 
@@ -415,14 +321,10 @@ export default function SpaceScanStep({
             description="Bathrooms or washrooms included in the cleaning route."
             value={value.bathrooms}
             onDecrease={() => {
-              updateBathrooms(
-                value.bathrooms - 1,
-              );
+              updateBathrooms(value.bathrooms - 1);
             }}
             onIncrease={() => {
-              updateBathrooms(
-                value.bathrooms + 1,
-              );
+              updateBathrooms(value.bathrooms + 1);
             }}
           />
         </div>
@@ -447,11 +349,8 @@ export default function SpaceScanStep({
                 </h3>
 
                 <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-slate-500">
-                  Enter a close estimate in
-                  square metres. CleanNest
-                  uses this value when
-                  calculating duration and
-                  price.
+                  Enter a close estimate in square metres. CleanNest uses this value when
+                  calculating duration and price.
                 </p>
               </div>
             </div>
@@ -459,85 +358,49 @@ export default function SpaceScanStep({
             <div className="mt-7">
               <input
                 type="range"
-                min={
-                  MIN_PROPERTY_SIZE
-                }
-                max={
-                  MAX_PROPERTY_SIZE
-                }
+                min={MIN_PROPERTY_SIZE}
+                max={MAX_PROPERTY_SIZE}
                 step={10}
-                value={
-                  value.propertySize
-                }
+                value={value.propertySize}
                 onChange={(event) => {
-                  updatePropertySize(
-                    Number(
-                      event.target
-                        .value,
-                    ),
-                  );
+                  updatePropertySize(Number(event.target.value));
                 }}
                 className="h-3 w-full cursor-pointer appearance-none rounded-full bg-primary-light accent-primary"
                 aria-label="Property size"
               />
 
               <div className="mt-3 flex justify-between text-xs font-bold text-slate-400">
-                <span>
-                  {
-                    MIN_PROPERTY_SIZE
-                  }{" "}
-                  m²
-                </span>
+                <span>{MIN_PROPERTY_SIZE} m²</span>
 
-                <span>
-                  {
-                    MAX_PROPERTY_SIZE
-                  }{" "}
-                  m²
-                </span>
+                <span>{MAX_PROPERTY_SIZE} m²</span>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {SIZE_PRESETS.map(
-                (preset) => {
-                  const isSelected =
-                    value.propertySize ===
-                    preset.value;
+              {SIZE_PRESETS.map((preset) => {
+                const isSelected = value.propertySize === preset.value;
 
-                  return (
-                    <button
-                      key={
-                        preset.value
-                      }
-                      type="button"
-                      onClick={() => {
-                        updatePropertySize(
-                          preset.value,
-                        );
-                      }}
-                      className={`rounded-xl border px-3 py-3 text-left transition ${
-                        isSelected
-                          ? "border-primary bg-primary-light text-primary"
-                          : "border-slate-200 bg-white text-slate-500 hover:border-primary/30"
-                      }`}
-                    >
-                      <span className="block text-sm font-extrabold">
-                        {
-                          preset.label
-                        }
-                      </span>
+                return (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => {
+                      updatePropertySize(preset.value);
+                    }}
+                    className={`rounded-xl border px-3 py-3 text-left transition ${
+                      isSelected
+                        ? "border-primary bg-primary-light text-primary"
+                        : "border-slate-200 bg-white text-slate-500 hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="block text-sm font-extrabold">{preset.label}</span>
 
-                      <span className="mt-1 block text-xs font-semibold opacity-70">
-                        {
-                          preset.value
-                        }{" "}
-                        m²
-                      </span>
-                    </button>
-                  );
-                },
-              )}
+                    <span className="mt-1 block text-xs font-semibold opacity-70">
+                      {preset.value} m²
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="relative mt-6 h-16 overflow-hidden rounded-2xl border border-primary/10 bg-surface-soft">
@@ -568,44 +431,25 @@ export default function SpaceScanStep({
               <div className="mt-4 flex items-end gap-2">
                 <input
                   type="number"
-                  min={
-                    MIN_PROPERTY_SIZE
-                  }
-                  max={
-                    MAX_PROPERTY_SIZE
-                  }
-                  value={
-                    value.propertySize
-                  }
+                  min={MIN_PROPERTY_SIZE}
+                  max={MAX_PROPERTY_SIZE}
+                  value={value.propertySize}
                   onChange={(event) => {
-                    updatePropertySize(
-                      Number(
-                        event.target
-                          .value,
-                      ),
-                    );
+                    updatePropertySize(Number(event.target.value));
                   }}
                   className="w-full min-w-0 border-0 bg-transparent p-0 font-heading text-4xl font-black text-white outline-none"
                   aria-label="Property size in square metres"
                 />
 
-                <span className="pb-1 text-base font-bold text-blue-100/60">
-                  m²
-                </span>
+                <span className="pb-1 text-base font-bold text-blue-100/60">m²</span>
               </div>
             </div>
 
             <div className="mt-8 border-t border-white/10 pt-5">
-              <p className="text-base font-extrabold text-white">
-                {
-                  sizeProfile.label
-                }
-              </p>
+              <p className="text-base font-extrabold text-white">{sizeProfile.label}</p>
 
               <p className="mt-2 text-sm font-medium leading-6 text-blue-100/65">
-                {
-                  sizeProfile.description
-                }
+                {sizeProfile.description}
               </p>
             </div>
           </div>
@@ -620,16 +464,11 @@ export default function SpaceScanStep({
           </span>
 
           <div>
-            <p className="text-base font-extrabold text-emerald-900">
-              Space route completed
-            </p>
+            <p className="text-base font-extrabold text-emerald-900">Space route completed</p>
 
             <p className="mt-2 text-sm font-semibold leading-6 text-emerald-700">
-              {propertyLabel} ·{" "}
-              {value.bedrooms}{" "}
-              {roomLabel.toLowerCase()} ·{" "}
-              {value.bathrooms} bathrooms ·{" "}
-              {value.propertySize} m²
+              {propertyLabel} · {value.bedrooms} {roomLabel.toLowerCase()} · {value.bathrooms}{" "}
+              bathrooms · {value.propertySize} m²
             </p>
           </div>
         </div>
@@ -668,19 +507,13 @@ function RoomCounter({
           </span>
 
           <div className="min-w-0">
-            <h4 className="font-heading text-xl font-black text-navy">
-              {label}
-            </h4>
+            <h4 className="font-heading text-xl font-black text-navy">{label}</h4>
 
-            <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-              {description}
-            </p>
+            <p className="mt-2 text-sm font-medium leading-6 text-slate-500">{description}</p>
           </div>
         </div>
 
-        <span className="shrink-0 font-heading text-4xl font-black text-navy">
-          {value}
-        </span>
+        <span className="shrink-0 font-heading text-4xl font-black text-navy">{value}</span>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3">

@@ -41,9 +41,7 @@ export default function ServiceProofReportPanel({
         const response = await fetch(`/api/proof-reports/${bookingId}`, {
           cache: "no-store",
         });
-        const payload = (await response.json()) as ApiEnvelope<
-          ServiceProofReport[]
-        >;
+        const payload = (await response.json()) as ApiEnvelope<ServiceProofReport[]>;
         if (!response.ok || !payload.success || !payload.data) {
           throw new Error(payload.error ?? "Could not load service report");
         }
@@ -51,15 +49,13 @@ export default function ServiceProofReportPanel({
           setReports(
             audience === "customer"
               ? payload.data.filter((report) => report.checkedOutAt)
-              : payload.data,
+              : payload.data
           );
         }
       } catch (loadError) {
         if (active) {
           setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load service report",
+            loadError instanceof Error ? loadError.message : "Could not load service report"
           );
         }
       } finally {
@@ -115,9 +111,7 @@ export default function ServiceProofReportPanel({
               <p className="text-[10px] font-black uppercase tracking-[0.15em] text-cyan-200">
                 Cleaning professional
               </p>
-              <h3 className="mt-1 font-heading text-lg font-black">
-                {report.cleanerName}
-              </h3>
+              <h3 className="mt-1 font-heading text-lg font-black">{report.cleanerName}</h3>
             </div>
             <span
               className={`inline-flex items-center gap-2 self-start rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wider ${
@@ -225,9 +219,7 @@ function ReportFact({
     <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-3">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
       <div>
-        <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
-          {label}
-        </p>
+        <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{label}</p>
         <p className="mt-1 text-xs font-extrabold text-navy">{value}</p>
       </div>
     </div>
@@ -266,9 +258,7 @@ function EvidenceGallery({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-xs font-semibold text-slate-400">
-          No photos uploaded.
-        </p>
+        <p className="mt-3 text-xs font-semibold text-slate-400">No photos uploaded.</p>
       )}
     </div>
   );

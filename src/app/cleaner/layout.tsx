@@ -4,18 +4,12 @@ import { redirect } from "next/navigation";
 import CleanerLayoutClient from "@/components/layout/CleanerLayoutClient";
 import { getCurrentUser } from "@/lib/auth";
 
-export default async function CleanerLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default async function CleanerLayout({ children }: { children: ReactNode }) {
   const currentUser = await getCurrentUser();
 
   if (!currentUser) redirect("/login");
   if (currentUser.role !== "cleaner") {
-    redirect(
-      currentUser.role === "admin" ? "/admin/dashboard" : "/dashboard",
-    );
+    redirect(currentUser.role === "admin" ? "/admin/dashboard" : "/dashboard");
   }
 
   return (

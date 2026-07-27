@@ -1,9 +1,6 @@
 "use client";
 
-import type {
-  ChangeEvent,
-  FormEvent,
-} from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -21,11 +18,7 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  MotionConfig,
-} from "motion/react";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 
 type FormValues = {
   name: string;
@@ -35,9 +28,7 @@ type FormValues = {
   message: string;
 };
 
-type FormErrors = Partial<
-  Record<keyof FormValues, string>
->;
+type FormErrors = Partial<Record<keyof FormValues, string>>;
 
 type ContactItem = {
   icon: LucideIcon;
@@ -80,8 +71,7 @@ const contactItems: ContactItem[] = [
     icon: MapPin,
     title: "Service Area",
     value: "Beirut, Lebanon",
-    description:
-      "Cleaning services across supported areas.",
+    description: "Cleaning services across supported areas.",
     iconClass: "bg-violet-50 text-violet-600",
     glowClass: "bg-violet-400/15",
   },
@@ -109,8 +99,7 @@ const supportSteps = [
   {
     number: "03",
     title: "Receive assistance",
-    description:
-      "We respond with the appropriate support.",
+    description: "We respond with the appropriate support.",
   },
 ];
 
@@ -159,38 +148,23 @@ const particles = [
   },
 ];
 
-function validateForm(
-  values: FormValues,
-): FormErrors {
+function validateForm(values: FormValues): FormErrors {
   const errors: FormErrors = {};
 
   if (!values.name.trim()) {
     errors.name = "Please enter your name.";
   } else if (values.name.trim().length < 2) {
-    errors.name =
-      "Your name must contain at least 2 characters.";
+    errors.name = "Your name must contain at least 2 characters.";
   }
 
   if (!values.email.trim()) {
-    errors.email =
-      "Please enter your email address.";
-  } else if (
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-      values.email.trim(),
-    )
-  ) {
-    errors.email =
-      "Please enter a valid email address.";
+    errors.email = "Please enter your email address.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+    errors.email = "Please enter a valid email address.";
   }
 
-  if (
-    values.phone.trim() &&
-    !/^[+()\d\s-]{7,20}$/.test(
-      values.phone.trim(),
-    )
-  ) {
-    errors.phone =
-      "Please enter a valid phone number.";
+  if (values.phone.trim() && !/^[+()\d\s-]{7,20}$/.test(values.phone.trim())) {
+    errors.phone = "Please enter a valid phone number.";
   }
 
   if (!values.subject.trim()) {
@@ -200,20 +174,13 @@ function validateForm(
   if (!values.message.trim()) {
     errors.message = "Please enter your message.";
   } else if (values.message.trim().length < 15) {
-    errors.message =
-      "Please provide at least 15 characters so we can understand your request.";
+    errors.message = "Please provide at least 15 characters so we can understand your request.";
   }
 
   return errors;
 }
 
-function ErrorMessage({
-  id,
-  message,
-}: {
-  id: string;
-  message?: string;
-}) {
+function ErrorMessage({ id, message }: { id: string; message?: string }) {
   return (
     <AnimatePresence initial={false}>
       {message && (
@@ -241,27 +208,19 @@ function ErrorMessage({
 }
 
 export default function ContactSection() {
-  const [values, setValues] =
-    useState<FormValues>(initialValues);
+  const [values, setValues] = useState<FormValues>(initialValues);
 
-  const [errors, setErrors] =
-    useState<FormErrors>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [isSubmitted, setIsSubmitted] =
-    useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
 
   function handleChange(
-    event: ChangeEvent<
-      | HTMLInputElement
-      | HTMLTextAreaElement
-      | HTMLSelectElement
-    >,
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
-    const fieldName =
-      event.target.name as keyof FormValues;
+    const fieldName = event.target.name as keyof FormValues;
 
     const fieldValue = event.target.value;
 
@@ -278,17 +237,12 @@ export default function ContactSection() {
     setIsSubmitted(false);
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const validationErrors =
-      validateForm(values);
+    const validationErrors = validateForm(values);
 
-    if (
-      Object.keys(validationErrors).length > 0
-    ) {
+    if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setIsSubmitted(false);
       return;
@@ -296,16 +250,31 @@ export default function ContactSection() {
 
     setIsSubmitting(true);
     setErrors({});
+    setSubmissionError("");
 
-    await new Promise<void>((resolve) => {
-      window.setTimeout(() => {
-        resolve();
-      }, 1100);
-    });
-
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setValues(initialValues);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const payload = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error ?? "Your message could not be sent.");
+      }
+      setIsSubmitted(true);
+      setValues(initialValues);
+    } catch (error) {
+      setIsSubmitted(false);
+      setSubmissionError(
+        error instanceof Error ? error.message : "Your message could not be sent. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -330,10 +299,7 @@ export default function ContactSection() {
             backgroundSize: "72px 72px",
           }}
           animate={{
-            backgroundPosition: [
-              "0px 0px",
-              "72px 72px",
-            ],
+            backgroundPosition: ["0px 0px", "72px 72px"],
           }}
           transition={{
             duration: 22,
@@ -345,7 +311,7 @@ export default function ContactSection() {
         {/* Moving glows */}
         <motion.div
           aria-hidden="true"
-          className="absolute -left-64 top-1/4 h-[42rem] w-[42rem] rounded-full bg-primary/12 blur-3xl"
+          className="bg-primary/12 absolute -left-64 top-1/4 h-[42rem] w-[42rem] rounded-full blur-3xl"
           animate={{
             x: [0, 115, 0],
             y: [0, -55, 0],
@@ -389,10 +355,7 @@ export default function ContactSection() {
         />
 
         {/* Floating particles */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0"
-        >
+        <div aria-hidden="true" className="absolute inset-0">
           {particles.map((particle, index) => (
             <motion.span
               key={`${particle.top}-${particle.left}`}
@@ -404,11 +367,7 @@ export default function ContactSection() {
                 height: particle.size,
               }}
               animate={{
-                x: [
-                  0,
-                  index % 2 === 0 ? 20 : -20,
-                  0,
-                ],
+                x: [0, index % 2 === 0 ? 20 : -20, 0],
                 y: [0, -30, 0],
                 opacity: [0.15, 0.85, 0.15],
                 scale: [0.7, 1.4, 0.7],
@@ -481,12 +440,7 @@ export default function ContactSection() {
             >
               <motion.span
                 animate={{
-                  rotate: [
-                    0,
-                    18,
-                    -18,
-                    0,
-                  ],
+                  rotate: [0, 18, -18, 0],
                   scale: [1, 1.25, 1],
                 }}
                 transition={{
@@ -497,7 +451,6 @@ export default function ContactSection() {
               >
                 <MessageCircle className="h-4 w-4" />
               </motion.span>
-
               Contact CleanNest
             </motion.div>
 
@@ -509,10 +462,8 @@ export default function ContactSection() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Send us a message about your account,
-              cleaning service, schedule, payment, or
-              booking. Our support team is ready to
-              help.
+              Send us a message about your account, cleaning service, schedule, payment, or booking.
+              Our support team is ready to help.
             </p>
           </motion.div>
 
@@ -528,11 +479,7 @@ export default function ContactSection() {
                     className={`absolute -right-14 -top-16 h-40 w-40 rounded-full blur-3xl ${item.glowClass}`}
                     animate={{
                       scale: [1, 1.25, 1],
-                      opacity: [
-                        0.35,
-                        0.75,
-                        0.35,
-                      ],
+                      opacity: [0.35, 0.75, 0.35],
                     }}
                     transition={{
                       duration: 5 + index,
@@ -552,17 +499,13 @@ export default function ContactSection() {
                       <Icon className="h-6 w-6" />
                     </motion.span>
 
-                    <h3 className="mt-5 font-heading text-lg font-bold text-navy">
-                      {item.title}
-                    </h3>
+                    <h3 className="mt-5 font-heading text-lg font-bold text-navy">{item.title}</h3>
 
                     <p className="mt-2 break-words text-sm font-semibold text-primary">
                       {item.value}
                     </p>
 
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {item.description}
-                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">{item.description}</p>
                   </div>
                 </>
               );
@@ -587,12 +530,7 @@ export default function ContactSection() {
                   transition={{
                     duration: 0.7,
                     delay: index * 0.1,
-                    ease: [
-                      0.22,
-                      1,
-                      0.36,
-                      1,
-                    ],
+                    ease: [0.22, 1, 0.36, 1],
                   }}
                   whileHover={{
                     y: -7,
@@ -600,10 +538,7 @@ export default function ContactSection() {
                   className="relative overflow-hidden rounded-[1.6rem] border border-primary/10 bg-white/85 p-6 shadow-[0_16px_45px_rgba(11,37,69,0.08)] backdrop-blur-md"
                 >
                   {item.href ? (
-                    <a
-                      href={item.href}
-                      className="block"
-                    >
+                    <a href={item.href} className="block">
                       {cardContent}
                     </a>
                   ) : (
@@ -670,12 +605,7 @@ export default function ContactSection() {
                 <div className="flex items-start gap-4">
                   <motion.span
                     animate={{
-                      rotate: [
-                        0,
-                        5,
-                        -5,
-                        0,
-                      ],
+                      rotate: [0, 5, -5, 0],
                       scale: [1, 1.06, 1],
                     }}
                     transition={{
@@ -697,25 +627,24 @@ export default function ContactSection() {
                     </h3>
 
                     <p className="mt-2 leading-7 text-slate-600">
-                      Complete the form and include
-                      any useful details about your
-                      request.
+                      Complete the form and include any useful details about your request.
                     </p>
                   </div>
                 </div>
 
-                <form
-                  onSubmit={handleSubmit}
-                  noValidate
-                  className="mt-9"
-                >
+                <form onSubmit={handleSubmit} noValidate className="mt-9">
+                  {submissionError && (
+                    <div
+                      role="alert"
+                      className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                    >
+                      {submissionError}
+                    </div>
+                  )}
                   <div className="grid gap-6 sm:grid-cols-2">
                     {/* Name */}
                     <div>
-                      <label
-                        htmlFor="contact-name"
-                        className="text-sm font-semibold text-navy"
-                      >
+                      <label htmlFor="contact-name" className="text-sm font-semibold text-navy">
                         Full name
                       </label>
 
@@ -730,14 +659,8 @@ export default function ContactSection() {
                           value={values.name}
                           onChange={handleChange}
                           placeholder="Enter your name"
-                          aria-invalid={Boolean(
-                            errors.name,
-                          )}
-                          aria-describedby={
-                            errors.name
-                              ? "contact-name-error"
-                              : undefined
-                          }
+                          aria-invalid={Boolean(errors.name)}
+                          aria-describedby={errors.name ? "contact-name-error" : undefined}
                           className={`min-h-[54px] w-full rounded-xl border bg-white px-4 py-3 pl-12 text-sm text-navy outline-none transition-all duration-300 placeholder:text-slate-400 focus:ring-4 ${
                             errors.name
                               ? "border-red-300 focus:border-red-400 focus:ring-red-100"
@@ -746,18 +669,12 @@ export default function ContactSection() {
                         />
                       </div>
 
-                      <ErrorMessage
-                        id="contact-name-error"
-                        message={errors.name}
-                      />
+                      <ErrorMessage id="contact-name-error" message={errors.name} />
                     </div>
 
                     {/* Email */}
                     <div>
-                      <label
-                        htmlFor="contact-email"
-                        className="text-sm font-semibold text-navy"
-                      >
+                      <label htmlFor="contact-email" className="text-sm font-semibold text-navy">
                         Email address
                       </label>
 
@@ -772,14 +689,8 @@ export default function ContactSection() {
                           value={values.email}
                           onChange={handleChange}
                           placeholder="name@example.com"
-                          aria-invalid={Boolean(
-                            errors.email,
-                          )}
-                          aria-describedby={
-                            errors.email
-                              ? "contact-email-error"
-                              : undefined
-                          }
+                          aria-invalid={Boolean(errors.email)}
+                          aria-describedby={errors.email ? "contact-email-error" : undefined}
                           className={`min-h-[54px] w-full rounded-xl border bg-white px-4 py-3 pl-12 text-sm text-navy outline-none transition-all duration-300 placeholder:text-slate-400 focus:ring-4 ${
                             errors.email
                               ? "border-red-300 focus:border-red-400 focus:ring-red-100"
@@ -788,22 +699,14 @@ export default function ContactSection() {
                         />
                       </div>
 
-                      <ErrorMessage
-                        id="contact-email-error"
-                        message={errors.email}
-                      />
+                      <ErrorMessage id="contact-email-error" message={errors.email} />
                     </div>
 
                     {/* Phone */}
                     <div>
-                      <label
-                        htmlFor="contact-phone"
-                        className="text-sm font-semibold text-navy"
-                      >
+                      <label htmlFor="contact-phone" className="text-sm font-semibold text-navy">
                         Phone number
-                        <span className="ml-1 font-normal text-slate-400">
-                          (optional)
-                        </span>
+                        <span className="ml-1 font-normal text-slate-400">(optional)</span>
                       </label>
 
                       <div className="group relative mt-2">
@@ -817,14 +720,8 @@ export default function ContactSection() {
                           value={values.phone}
                           onChange={handleChange}
                           placeholder="+961"
-                          aria-invalid={Boolean(
-                            errors.phone,
-                          )}
-                          aria-describedby={
-                            errors.phone
-                              ? "contact-phone-error"
-                              : undefined
-                          }
+                          aria-invalid={Boolean(errors.phone)}
+                          aria-describedby={errors.phone ? "contact-phone-error" : undefined}
                           className={`min-h-[54px] w-full rounded-xl border bg-white px-4 py-3 pl-12 text-sm text-navy outline-none transition-all duration-300 placeholder:text-slate-400 focus:ring-4 ${
                             errors.phone
                               ? "border-red-300 focus:border-red-400 focus:ring-red-100"
@@ -833,18 +730,12 @@ export default function ContactSection() {
                         />
                       </div>
 
-                      <ErrorMessage
-                        id="contact-phone-error"
-                        message={errors.phone}
-                      />
+                      <ErrorMessage id="contact-phone-error" message={errors.phone} />
                     </div>
 
                     {/* Subject */}
                     <div>
-                      <label
-                        htmlFor="contact-subject"
-                        className="text-sm font-semibold text-navy"
-                      >
+                      <label htmlFor="contact-subject" className="text-sm font-semibold text-navy">
                         Subject
                       </label>
 
@@ -856,43 +747,25 @@ export default function ContactSection() {
                           name="subject"
                           value={values.subject}
                           onChange={handleChange}
-                          aria-invalid={Boolean(
-                            errors.subject,
-                          )}
-                          aria-describedby={
-                            errors.subject
-                              ? "contact-subject-error"
-                              : undefined
-                          }
+                          aria-invalid={Boolean(errors.subject)}
+                          aria-describedby={errors.subject ? "contact-subject-error" : undefined}
                           className={`min-h-[54px] w-full appearance-none rounded-xl border bg-white px-4 py-3 pl-12 pr-10 text-sm text-navy outline-none transition-all duration-300 focus:ring-4 ${
                             errors.subject
                               ? "border-red-300 focus:border-red-400 focus:ring-red-100"
                               : "border-primary/10 focus:border-primary/40 focus:ring-primary/10"
                           }`}
                         >
-                          <option value="">
-                            Select a subject
-                          </option>
+                          <option value="">Select a subject</option>
 
-                          <option value="booking">
-                            Booking assistance
-                          </option>
+                          <option value="booking">Booking assistance</option>
 
-                          <option value="service">
-                            Service question
-                          </option>
+                          <option value="service">Service question</option>
 
-                          <option value="payment">
-                            Payment question
-                          </option>
+                          <option value="payment">Payment question</option>
 
-                          <option value="account">
-                            Account support
-                          </option>
+                          <option value="account">Account support</option>
 
-                          <option value="other">
-                            Other request
-                          </option>
+                          <option value="other">Other request</option>
                         </select>
 
                         <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">
@@ -900,20 +773,14 @@ export default function ContactSection() {
                         </span>
                       </div>
 
-                      <ErrorMessage
-                        id="contact-subject-error"
-                        message={errors.subject}
-                      />
+                      <ErrorMessage id="contact-subject-error" message={errors.subject} />
                     </div>
                   </div>
 
                   {/* Message */}
                   <div className="mt-6">
                     <div className="flex items-center justify-between gap-4">
-                      <label
-                        htmlFor="contact-message"
-                        className="text-sm font-semibold text-navy"
-                      >
+                      <label htmlFor="contact-message" className="text-sm font-semibold text-navy">
                         Message
                       </label>
 
@@ -931,14 +798,8 @@ export default function ContactSection() {
                       maxLength={500}
                       rows={6}
                       placeholder="Describe your question or request..."
-                      aria-invalid={Boolean(
-                        errors.message,
-                      )}
-                      aria-describedby={
-                        errors.message
-                          ? "contact-message-error"
-                          : undefined
-                      }
+                      aria-invalid={Boolean(errors.message)}
+                      aria-describedby={errors.message ? "contact-message-error" : undefined}
                       className={`mt-2 w-full resize-none rounded-xl border bg-white px-4 py-4 text-sm leading-7 text-navy outline-none transition-all duration-300 placeholder:text-slate-400 focus:ring-4 ${
                         errors.message
                           ? "border-red-300 focus:border-red-400 focus:ring-red-100"
@@ -946,10 +807,7 @@ export default function ContactSection() {
                       }`}
                     />
 
-                    <ErrorMessage
-                      id="contact-message-error"
-                      message={errors.message}
-                    />
+                    <ErrorMessage id="contact-message-error" message={errors.message} />
                   </div>
 
                   {/* Success message */}
@@ -975,15 +833,10 @@ export default function ContactSection() {
                         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
 
                         <div>
-                          <p className="text-sm font-bold">
-                            Message prepared
-                            successfully.
-                          </p>
+                          <p className="text-sm font-bold">Message prepared successfully.</p>
 
                           <p className="mt-1 text-xs leading-5">
-                            The form is ready to
-                            connect to your contact
-                            API when the backend
+                            The form is ready to connect to your contact API when the backend
                             endpoint is added.
                           </p>
                         </div>
@@ -994,9 +847,7 @@ export default function ContactSection() {
                   <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-2 text-xs leading-5 text-slate-500">
                       <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-
-                      Your information is used only
-                      to respond to your request.
+                      Your information is used only to respond to your request.
                     </div>
 
                     <motion.button
@@ -1024,10 +875,7 @@ export default function ContactSection() {
                           aria-hidden="true"
                           className="absolute inset-y-0 -left-1/2 w-1/3 skew-x-[-20deg] bg-white/20"
                           animate={{
-                            left: [
-                              "-50%",
-                              "140%",
-                            ],
+                            left: ["-50%", "140%"],
                           }}
                           transition={{
                             duration: 2.4,
@@ -1041,15 +889,11 @@ export default function ContactSection() {
                         <>
                           <LoaderCircle className="relative h-5 w-5 animate-spin" />
 
-                          <span className="relative">
-                            Sending...
-                          </span>
+                          <span className="relative">Sending...</span>
                         </>
                       ) : (
                         <>
-                          <span className="relative">
-                            Send Message
-                          </span>
+                          <span className="relative">Send Message</span>
 
                           <ArrowRight className="relative h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                         </>
@@ -1157,16 +1001,8 @@ export default function ContactSection() {
                     aria-hidden="true"
                     className="absolute h-40 w-40 rounded-full bg-primary/35 blur-2xl"
                     animate={{
-                      scale: [
-                        0.9,
-                        1.3,
-                        0.9,
-                      ],
-                      opacity: [
-                        0.45,
-                        0.85,
-                        0.45,
-                      ],
+                      scale: [0.9, 1.3, 0.9],
+                      opacity: [0.45, 0.85, 0.45],
                     }}
                     transition={{
                       duration: 4,
@@ -1178,12 +1014,7 @@ export default function ContactSection() {
                   <motion.div
                     animate={{
                       y: [0, -11, 0],
-                      rotate: [
-                        0,
-                        3,
-                        -3,
-                        0,
-                      ],
+                      rotate: [0, 3, -3, 0],
                     }}
                     transition={{
                       duration: 4,
@@ -1241,11 +1072,7 @@ export default function ContactSection() {
                     className="absolute right-7 top-7 text-cyan-300"
                     animate={{
                       rotate: 360,
-                      scale: [
-                        0.8,
-                        1.25,
-                        0.8,
-                      ],
+                      scale: [0.8, 1.25, 0.8],
                     }}
                     transition={{
                       duration: 4,
@@ -1262,75 +1089,63 @@ export default function ContactSection() {
                 </p>
 
                 <h3 className="mt-3 font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-                  Clear answers without unnecessary
-                  complications.
+                  Clear answers without unnecessary complications.
                 </h3>
 
                 <p className="mt-4 leading-7 text-blue-100/75">
-                  CleanNest makes it easy to ask
-                  questions and get support for every
-                  part of your cleaning journey.
+                  CleanNest makes it easy to ask questions and get support for every part of your
+                  cleaning journey.
                 </p>
 
                 <div className="mt-8 space-y-4">
-                  {supportSteps.map(
-                    (step, index) => (
-                      <motion.div
-                        key={step.number}
-                        initial={{
-                          opacity: 0,
-                          x: 25,
-                        }}
-                        whileInView={{
-                          opacity: 1,
-                          x: 0,
-                        }}
-                        viewport={{
-                          once: true,
-                        }}
+                  {supportSteps.map((step, index) => (
+                    <motion.div
+                      key={step.number}
+                      initial={{
+                        opacity: 0,
+                        x: 25,
+                      }}
+                      whileInView={{
+                        opacity: 1,
+                        x: 0,
+                      }}
+                      viewport={{
+                        once: true,
+                      }}
+                      transition={{
+                        delay: 0.35 + index * 0.13,
+                      }}
+                      whileHover={{
+                        x: 6,
+                      }}
+                      className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-md"
+                    >
+                      <motion.span
+                        animate={
+                          index === 1
+                            ? {
+                                scale: [1, 1.12, 1],
+                              }
+                            : undefined
+                        }
                         transition={{
-                          delay:
-                            0.35 +
-                            index * 0.13,
+                          duration: 2,
+                          repeat: 0,
                         }}
-                        whileHover={{
-                          x: 6,
-                        }}
-                        className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-md"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xs font-extrabold text-primary"
                       >
-                        <motion.span
-                          animate={
-                            index === 1
-                              ? {
-                                  scale: [
-                                    1,
-                                    1.12,
-                                    1,
-                                  ],
-                                }
-                              : undefined
-                          }
-                          transition={{
-                            duration: 2,
-                            repeat: 0,
-                          }}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xs font-extrabold text-primary"
-                        >
-                          {step.number}
-                        </motion.span>
+                        {step.number}
+                      </motion.span>
 
-                        <div>
-                          <h4 className="font-heading text-sm font-bold text-white">
-                            {step.title}
-                          </h4>
+                      <div>
+                        <h4 className="font-heading text-sm font-bold text-white">{step.title}</h4>
 
-                          <p className="mt-1 text-xs leading-5 text-blue-100/65">
-                            {step.description}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ),
-                  )}
+                        <p className="mt-1 text-xs leading-5 text-blue-100/65">
+                          {step.description}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
 
                 <div className="mt-auto pt-8">
@@ -1339,11 +1154,7 @@ export default function ContactSection() {
                       className="h-2.5 w-2.5 rounded-full bg-emerald-400"
                       animate={{
                         scale: [1, 1.4, 1],
-                        opacity: [
-                          0.6,
-                          1,
-                          0.6,
-                        ],
+                        opacity: [0.6, 1, 0.6],
                       }}
                       transition={{
                         duration: 1.8,

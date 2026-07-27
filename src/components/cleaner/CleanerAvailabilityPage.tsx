@@ -41,19 +41,13 @@ export default function CleanerAvailabilityPage() {
       const response = await fetch("/api/cleaner/availability", {
         cache: "no-store",
       });
-      const payload = (await response.json()) as ApiEnvelope<
-        CleanerAvailabilityDay[]
-      >;
+      const payload = (await response.json()) as ApiEnvelope<CleanerAvailabilityDay[]>;
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? "Could not load availability");
       }
       setDays(payload.data);
     } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Could not load availability",
-      );
+      setError(loadError instanceof Error ? loadError.message : "Could not load availability");
     } finally {
       setLoading(false);
     }
@@ -63,15 +57,10 @@ export default function CleanerAvailabilityPage() {
     void load();
   }, [load]);
 
-  function updateDay(
-    index: number,
-    patch: Partial<CleanerAvailabilityDay>,
-  ) {
+  function updateDay(index: number, patch: Partial<CleanerAvailabilityDay>) {
     setSaved(false);
     setDays((current) =>
-      current.map((day, dayIndex) =>
-        dayIndex === index ? { ...day, ...patch } : day,
-      ),
+      current.map((day, dayIndex) => (dayIndex === index ? { ...day, ...patch } : day))
     );
   }
 
@@ -85,46 +74,29 @@ export default function CleanerAvailabilityPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ days }),
       });
-      const payload = (await response.json()) as ApiEnvelope<
-        CleanerAvailabilityDay[]
-      >;
+      const payload = (await response.json()) as ApiEnvelope<CleanerAvailabilityDay[]>;
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? "Availability could not be saved");
       }
       setDays(payload.data);
       setSaved(true);
     } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Availability could not be saved",
-      );
+      setError(saveError instanceof Error ? saveError.message : "Availability could not be saved");
     } finally {
       setSaving(false);
     }
   }
 
-  const availableDays = useMemo(
-    () => days.filter((day) => day.isAvailable).length,
-    [days],
-  );
+  const availableDays = useMemo(() => days.filter((day) => day.isAvailable).length, [days]);
   const totalHours = useMemo(
     () =>
       days.reduce((total, day) => {
         if (!day.isAvailable) return total;
-        const [startHour = 0, startMinute = 0] = day.startTime
-          .split(":")
-          .map(Number);
+        const [startHour = 0, startMinute = 0] = day.startTime.split(":").map(Number);
         const [endHour = 0, endMinute = 0] = day.endTime.split(":").map(Number);
-        return (
-          total +
-          Math.max(
-            0,
-            endHour + endMinute / 60 - (startHour + startMinute / 60),
-          )
-        );
+        return total + Math.max(0, endHour + endMinute / 60 - (startHour + startMinute / 60));
       }, 0),
-    [days],
+    [days]
   );
 
   return (
@@ -147,16 +119,13 @@ export default function CleanerAvailabilityPage() {
                 Set your weekly availability.
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100/75">
-                Tell operations when you can work. Your schedule helps prevent
-                conflicting assignments and keeps your routes predictable.
+                Tell operations when you can work. Your schedule helps prevent conflicting
+                assignments and keeps your routes predictable.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <HeroMetric label="Available days" value={`${availableDays}/7`} />
-              <HeroMetric
-                label="Weekly hours"
-                value={`${Math.round(totalHours)}h`}
-              />
+              <HeroMetric label="Weekly hours" value={`${Math.round(totalHours)}h`} />
             </div>
           </div>
         </motion.section>
@@ -198,10 +167,7 @@ export default function CleanerAvailabilityPage() {
           {loading ? (
             <div className="mt-6 space-y-3">
               {Array.from({ length: 7 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-[86px] animate-pulse rounded-2xl bg-slate-50"
-                />
+                <div key={index} className="h-[86px] animate-pulse rounded-2xl bg-slate-50" />
               ))}
             </div>
           ) : (
@@ -223,9 +189,7 @@ export default function CleanerAvailabilityPage() {
                       type="button"
                       role="switch"
                       aria-checked={day.isAvailable}
-                      onClick={() =>
-                        updateDay(index, { isAvailable: !day.isAvailable })
-                      }
+                      onClick={() => updateDay(index, { isAvailable: !day.isAvailable })}
                       className={`relative h-7 w-12 shrink-0 rounded-full transition ${
                         day.isAvailable ? "bg-primary" : "bg-slate-300"
                       }`}
@@ -237,9 +201,7 @@ export default function CleanerAvailabilityPage() {
                       />
                     </button>
                     <div>
-                      <p className="text-sm font-black text-navy">
-                        {dayLabel(day.dayOfWeek)}
-                      </p>
+                      <p className="text-sm font-black text-navy">{dayLabel(day.dayOfWeek)}</p>
                       <p className="mt-0.5 text-xs font-semibold text-slate-400">
                         {day.isAvailable ? "Available" : "Day off"}
                       </p>
@@ -280,8 +242,8 @@ export default function CleanerAvailabilityPage() {
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
               <p className="text-xs font-semibold leading-5 text-blue-100/70">
-                Changes guide future assignments. Existing confirmed jobs remain
-                on your schedule, so contact operations if you cannot attend one.
+                Changes guide future assignments. Existing confirmed jobs remain on your schedule,
+                so contact operations if you cannot attend one.
               </p>
             </div>
             <button

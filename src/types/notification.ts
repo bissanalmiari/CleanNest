@@ -8,19 +8,17 @@ export interface AppNotification {
   href: string | null;
   bookingId: string | null;
   readAt: string | null;
-  emailStatus:
-    | "not_requested"
-    | "pending"
-    | "processing"
-    | "sent"
-    | "failed"
-    | "skipped";
+  emailStatus: "not_requested" | "pending" | "processing" | "sent" | "failed" | "skipped";
   createdAt: string;
 }
 
 export interface NotificationListResponse {
   notifications: AppNotification[];
   unreadCount: number;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface NotificationPreferences {

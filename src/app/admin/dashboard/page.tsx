@@ -1,12 +1,7 @@
 // src/app/(admin)/dashboard/page.tsx
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
   BarChart3,
@@ -23,21 +18,13 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  type Variants,
-} from "motion/react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 
 import StatCard from "@/components/dashboard/StatCard";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import BookingReportsTable from "@/components/dashboard/BookingReportsTable";
 
-import type {
-  DashboardStats,
-  RevenueRange,
-  RevenueStats,
-} from "@/services/dashboardService";
+import type { DashboardStats, RevenueRange, RevenueStats } from "@/services/dashboardService";
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -117,42 +104,24 @@ function formatCurrency(value: number) {
 }
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] =
-    useState<DashboardStats | null>(null);
-  const [statsLoading, setStatsLoading] =
-    useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
-  const [revenueRange, setRevenueRange] =
-    useState<RevenueRange>("week");
-  const [revenue, setRevenue] =
-    useState<RevenueStats | null>(null);
-  const [revenueLoading, setRevenueLoading] =
-    useState(true);
+  const [revenueRange, setRevenueRange] = useState<RevenueRange>("week");
+  const [revenue, setRevenue] = useState<RevenueStats | null>(null);
+  const [revenueLoading, setRevenueLoading] = useState(true);
 
-  const [reportFilters, setReportFilters] =
-    useState<ReportFiltersState>(
-      EMPTY_FILTERS,
-    );
-  const [reportPage, setReportPage] =
-    useState(1);
-  const [reports, setReports] =
-    useState<BookingReportsData | null>(
-      null,
-    );
-  const [reportsLoading, setReportsLoading] =
-    useState(true);
+  const [reportFilters, setReportFilters] = useState<ReportFiltersState>(EMPTY_FILTERS);
+  const [reportPage, setReportPage] = useState(1);
+  const [reports, setReports] = useState<BookingReportsData | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(true);
 
-  const [errorMessage, setErrorMessage] =
-    useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const initialLoadStarted = useRef(false);
   const initialLoadComplete = useRef(false);
 
   const fetchOverview = useCallback(
-    async (
-      range: RevenueRange,
-      filters: ReportFiltersState,
-      page: number,
-    ) => {
+    async (range: RevenueRange, filters: ReportFiltersState, page: number) => {
       setStatsLoading(true);
       setRevenueLoading(true);
       setReportsLoading(true);
@@ -168,12 +137,10 @@ export default function AdminDashboardPage() {
         if (filters.to) params.set("to", filters.to);
         if (filters.status) params.set("status", filters.status);
 
-        const response = await fetch(
-          `/api/admin/dashboard?${params.toString()}`,
-          { cache: "no-store" },
-        );
-        const json: ApiEnvelope<AdminDashboardOverview> =
-          await response.json();
+        const response = await fetch(`/api/admin/dashboard?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const json: ApiEnvelope<AdminDashboardOverview> = await response.json();
 
         if (!response.ok || !json.success || !json.data) {
           throw new Error(json.error ?? "Failed to load the dashboard");
@@ -183,114 +150,78 @@ export default function AdminDashboardPage() {
         setRevenue(json.data.revenue);
         setReports(json.data.reports);
       } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to load the dashboard",
-        );
+        setErrorMessage(error instanceof Error ? error.message : "Failed to load the dashboard");
       } finally {
         setStatsLoading(false);
         setRevenueLoading(false);
         setReportsLoading(false);
       }
     },
-    [],
+    []
   );
 
-  const fetchRevenue = useCallback(
-    async (range: RevenueRange) => {
-      setRevenueLoading(true);
+  const fetchRevenue = useCallback(async (range: RevenueRange) => {
+    setRevenueLoading(true);
 
-      try {
-        const response = await fetch(
-          `/api/admin/dashboard?section=revenue&range=${range}`,
-          {
-            cache: "no-store",
-          },
-        );
+    try {
+      const response = await fetch(`/api/admin/dashboard?section=revenue&range=${range}`, {
+        cache: "no-store",
+      });
 
-        const json: ApiEnvelope<RevenueStats> =
-          await response.json();
+      const json: ApiEnvelope<RevenueStats> = await response.json();
 
-        if (!response.ok || !json.success) {
-          throw new Error(
-            json.error ??
-              "Failed to load revenue information",
-          );
-        }
-
-        setRevenue(json.data ?? null);
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to load revenue information",
-        );
-      } finally {
-        setRevenueLoading(false);
+      if (!response.ok || !json.success) {
+        throw new Error(json.error ?? "Failed to load revenue information");
       }
-    },
-    [],
-  );
 
-  const fetchReports = useCallback(
-    async (
-      filters: ReportFiltersState,
-      page: number,
-    ) => {
-      setReportsLoading(true);
+      setRevenue(json.data ?? null);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to load revenue information"
+      );
+    } finally {
+      setRevenueLoading(false);
+    }
+  }, []);
 
-      try {
-        const params = new URLSearchParams({
-          section: "reports",
-          page: String(page),
-        });
+  const fetchReports = useCallback(async (filters: ReportFiltersState, page: number) => {
+    setReportsLoading(true);
 
-        if (filters.from) {
-          params.set("from", filters.from);
-        }
+    try {
+      const params = new URLSearchParams({
+        section: "reports",
+        page: String(page),
+      });
 
-        if (filters.to) {
-          params.set("to", filters.to);
-        }
-
-        if (filters.status) {
-          params.set(
-            "status",
-            filters.status,
-          );
-        }
-
-        const response = await fetch(
-          `/api/admin/dashboard?${params.toString()}`,
-          {
-            cache: "no-store",
-          },
-        );
-
-        const json: ApiEnvelope<BookingReportsData> =
-          await response.json();
-
-        if (!response.ok || !json.success) {
-          throw new Error(
-            json.error ??
-              "Failed to load booking reports",
-          );
-        }
-
-        setReports(json.data ?? null);
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to load booking reports",
-        );
-      } finally {
-        setReportsLoading(false);
+      if (filters.from) {
+        params.set("from", filters.from);
       }
-    },
-    [],
-  );
+
+      if (filters.to) {
+        params.set("to", filters.to);
+      }
+
+      if (filters.status) {
+        params.set("status", filters.status);
+      }
+
+      const response = await fetch(`/api/admin/dashboard?${params.toString()}`, {
+        cache: "no-store",
+      });
+
+      const json: ApiEnvelope<BookingReportsData> = await response.json();
+
+      if (!response.ok || !json.success) {
+        throw new Error(json.error ?? "Failed to load booking reports");
+      }
+
+      setReports(json.data ?? null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to load booking reports");
+    } finally {
+      setReportsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (initialLoadStarted.current) {
@@ -316,19 +247,10 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    void fetchReports(
-      reportFilters,
-      reportPage,
-    );
-  }, [
-    reportFilters,
-    reportPage,
-    fetchReports,
-  ]);
+    void fetchReports(reportFilters, reportPage);
+  }, [reportFilters, reportPage, fetchReports]);
 
-  function handleFiltersChange(
-    nextFilters: ReportFiltersState,
-  ) {
+  function handleFiltersChange(nextFilters: ReportFiltersState) {
     setReportFilters(nextFilters);
     setReportPage(1);
   }
@@ -336,25 +258,15 @@ export default function AdminDashboardPage() {
   function handleRefreshDashboard() {
     setErrorMessage(null);
 
-    void fetchOverview(
-      revenueRange,
-      reportFilters,
-      reportPage,
-    );
+    void fetchOverview(revenueRange, reportFilters, reportPage);
   }
 
-  const dashboardRefreshing =
-    statsLoading ||
-    revenueLoading ||
-    reportsLoading;
+  const dashboardRefreshing = statsLoading || revenueLoading || reportsLoading;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-surface-soft">
       {/* Background decoration */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-      >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_5%_5%,rgba(30,111,217,0.12),transparent_25%),radial-gradient(circle_at_95%_20%,rgba(34,211,238,0.10),transparent_24%),linear-gradient(to_bottom,#f8fbff,#f5f9fe)]" />
 
         <motion.div
@@ -393,10 +305,7 @@ export default function AdminDashboardPage() {
             backgroundSize: "72px 72px",
           }}
           animate={{
-            backgroundPosition: [
-              "0px 0px",
-              "72px 72px",
-            ],
+            backgroundPosition: ["0px 0px", "72px 72px"],
           }}
           transition={{
             duration: 25,
@@ -493,9 +402,8 @@ export default function AdminDashboardPage() {
                   </h1>
 
                   <p className="mt-2 max-w-2xl text-sm leading-7 text-blue-100/65 sm:text-base">
-                    Monitor bookings, revenue,
-                    customers, ratings, and business
-                    performance from one place.
+                    Monitor bookings, revenue, customers, ratings, and business performance from one
+                    place.
                   </p>
                 </div>
               </div>
@@ -518,15 +426,12 @@ export default function AdminDashboardPage() {
 
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
                 </span>
-
                 System active
               </div>
 
               <motion.button
                 type="button"
-                onClick={
-                  handleRefreshDashboard
-                }
+                onClick={handleRefreshDashboard}
                 disabled={dashboardRefreshing}
                 whileHover={
                   dashboardRefreshing
@@ -546,16 +451,10 @@ export default function AdminDashboardPage() {
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-navy shadow-lg transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <RefreshCw
-                  className={`h-4 w-4 text-primary ${
-                    dashboardRefreshing
-                      ? "animate-spin"
-                      : ""
-                  }`}
+                  className={`h-4 w-4 text-primary ${dashboardRefreshing ? "animate-spin" : ""}`}
                 />
 
-                {dashboardRefreshing
-                  ? "Refreshing..."
-                  : "Refresh data"}
+                {dashboardRefreshing ? "Refreshing..." : "Refresh data"}
               </motion.button>
             </div>
           </div>
@@ -578,51 +477,36 @@ export default function AdminDashboardPage() {
                 title: "Customer overview",
                 text: "Monitor account growth",
               },
-            ].map(
-              (
-                {
-                  icon: Icon,
-                  title,
-                  text,
-                },
-                index,
-              ) => (
-                <motion.div
-                  key={title}
-                  initial={{
-                    opacity: 0,
-                    y: 14,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    delay:
-                      0.35 +
-                      index * 0.1,
-                  }}
-                  whileHover={{
-                    y: -4,
-                  }}
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-4 py-3 backdrop-blur-md"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-cyan-200">
-                    <Icon className="h-5 w-5" />
-                  </span>
+            ].map(({ icon: Icon, title, text }, index) => (
+              <motion.div
+                key={title}
+                initial={{
+                  opacity: 0,
+                  y: 14,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  delay: 0.35 + index * 0.1,
+                }}
+                whileHover={{
+                  y: -4,
+                }}
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-4 py-3 backdrop-blur-md"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-cyan-200">
+                  <Icon className="h-5 w-5" />
+                </span>
 
-                  <div>
-                    <p className="text-sm font-bold">
-                      {title}
-                    </p>
+                <div>
+                  <p className="text-sm font-bold">{title}</p>
 
-                    <p className="mt-0.5 text-xs text-blue-100/55">
-                      {text}
-                    </p>
-                  </div>
-                </motion.div>
-              ),
-            )}
+                  <p className="mt-0.5 text-xs text-blue-100/55">{text}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </motion.section>
 
@@ -651,20 +535,14 @@ export default function AdminDashboardPage() {
                 <XCircle className="mt-0.5 h-5 w-5 shrink-0" />
 
                 <div className="flex-1">
-                  <p className="font-bold">
-                    Dashboard error
-                  </p>
+                  <p className="font-bold">Dashboard error</p>
 
-                  <p className="mt-0.5 text-xs leading-5 text-red-600/80">
-                    {errorMessage}
-                  </p>
+                  <p className="mt-0.5 text-xs leading-5 text-red-600/80">{errorMessage}</p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setErrorMessage(null)
-                  }
+                  onClick={() => setErrorMessage(null)}
                   aria-label="Dismiss error"
                   className="rounded-lg p-1 transition-colors hover:bg-red-100"
                 >
@@ -676,10 +554,7 @@ export default function AdminDashboardPage() {
         </AnimatePresence>
 
         {/* Statistics section */}
-        <motion.section
-          variants={sectionVariants}
-          className="space-y-4"
-        >
+        <motion.section variants={sectionVariants} className="space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -692,9 +567,7 @@ export default function AdminDashboardPage() {
               </h2>
             </div>
 
-            <p className="text-xs text-navy/50">
-              Updated from live dashboard data
-            </p>
+            <p className="text-xs text-navy/50">Updated from live dashboard data</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -709,9 +582,7 @@ export default function AdminDashboardPage() {
             >
               <StatCard
                 label="Today's Bookings"
-                value={
-                  stats?.todaysBookings ?? 0
-                }
+                value={stats?.todaysBookings ?? 0}
                 icon={CalendarDays}
                 accent="primary"
                 loading={statsLoading}
@@ -729,9 +600,7 @@ export default function AdminDashboardPage() {
             >
               <StatCard
                 label="Upcoming"
-                value={
-                  stats?.upcomingBookings ?? 0
-                }
+                value={stats?.upcomingBookings ?? 0}
                 icon={Clock3}
                 accent="inProgress"
                 loading={statsLoading}
@@ -749,9 +618,7 @@ export default function AdminDashboardPage() {
             >
               <StatCard
                 label="Completed"
-                value={
-                  stats?.completedBookings ?? 0
-                }
+                value={stats?.completedBookings ?? 0}
                 icon={CheckCircle2}
                 accent="confirmed"
                 loading={statsLoading}
@@ -769,9 +636,7 @@ export default function AdminDashboardPage() {
             >
               <StatCard
                 label="Cancelled"
-                value={
-                  stats?.cancelledBookings ?? 0
-                }
+                value={stats?.cancelledBookings ?? 0}
                 icon={XCircle}
                 accent="cancelled"
                 loading={statsLoading}
@@ -789,9 +654,7 @@ export default function AdminDashboardPage() {
             >
               <StatCard
                 label="Total Customers"
-                value={
-                  stats?.totalCustomers ?? 0
-                }
+                value={stats?.totalCustomers ?? 0}
                 icon={Users}
                 accent="primary"
                 loading={statsLoading}
@@ -809,13 +672,7 @@ export default function AdminDashboardPage() {
             >
               <StatCard
                 label="Average Rating"
-                value={
-                  stats
-                    ? `${stats.averageRating.toFixed(
-                        1,
-                      )} ★`
-                    : "—"
-                }
+                value={stats ? `${stats.averageRating.toFixed(1)} ★` : "—"}
                 icon={Star}
                 accent="pending"
                 loading={statsLoading}
@@ -825,19 +682,14 @@ export default function AdminDashboardPage() {
         </motion.section>
 
         {/* Revenue section */}
-        <motion.section
-          variants={sectionVariants}
-          className="space-y-4"
-        >
+        <motion.section variants={sectionVariants} className="space-y-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
               <BarChart3 className="h-4 w-4" />
               Revenue performance
             </div>
 
-            <h2 className="mt-2 font-heading text-xl font-bold text-navy">
-              Financial overview
-            </h2>
+            <h2 className="mt-2 font-heading text-xl font-bold text-navy">Financial overview</h2>
           </div>
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[0.75fr_2.25fr]">
@@ -902,10 +754,7 @@ export default function AdminDashboardPage() {
                       <div className="mt-3 h-9 w-36 animate-pulse rounded-lg bg-navy/10" />
                     ) : (
                       <motion.p
-                        key={
-                          revenue?.totalRevenue ??
-                          0
-                        }
+                        key={revenue?.totalRevenue ?? 0}
                         initial={{
                           opacity: 0,
                           y: 10,
@@ -916,10 +765,7 @@ export default function AdminDashboardPage() {
                         }}
                         className="mt-2 font-heading text-3xl font-extrabold text-navy"
                       >
-                        {formatCurrency(
-                          revenue?.totalRevenue ??
-                            0,
-                        )}
+                        {formatCurrency(revenue?.totalRevenue ?? 0)}
                       </motion.p>
                     )}
                   </div>
@@ -934,10 +780,7 @@ export default function AdminDashboardPage() {
                       <div className="mt-3 h-8 w-28 animate-pulse rounded-lg bg-navy/10" />
                     ) : (
                       <motion.p
-                        key={
-                          revenue?.averageBookingValue ??
-                          0
-                        }
+                        key={revenue?.averageBookingValue ?? 0}
                         initial={{
                           opacity: 0,
                           y: 10,
@@ -948,10 +791,7 @@ export default function AdminDashboardPage() {
                         }}
                         className="mt-2 font-heading text-2xl font-bold text-navy"
                       >
-                        {formatCurrency(
-                          revenue?.averageBookingValue ??
-                            0,
-                        )}
+                        {formatCurrency(revenue?.averageBookingValue ?? 0)}
                       </motion.p>
                     )}
                   </div>
@@ -961,8 +801,7 @@ export default function AdminDashboardPage() {
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
 
                   <p className="text-xs font-medium leading-5 text-emerald-700">
-                    Revenue is calculated from
-                    completed paid bookings.
+                    Revenue is calculated from completed paid bookings.
                   </p>
                 </div>
               </div>
@@ -981,9 +820,7 @@ export default function AdminDashboardPage() {
               <RevenueChart
                 data={revenue?.series ?? []}
                 range={revenueRange}
-                onRangeChange={
-                  setRevenueRange
-                }
+                onRangeChange={setRevenueRange}
                 loading={revenueLoading}
               />
             </motion.div>
@@ -991,10 +828,7 @@ export default function AdminDashboardPage() {
         </motion.section>
 
         {/* Booking reports */}
-        <motion.section
-          variants={sectionVariants}
-          className="space-y-4"
-        >
+        <motion.section variants={sectionVariants} className="space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -1011,7 +845,6 @@ export default function AdminDashboardPage() {
               <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary-light px-1.5 font-bold text-primary">
                 {reports?.total ?? 0}
               </span>
-
               Total records
             </div>
           </div>
@@ -1026,18 +859,12 @@ export default function AdminDashboardPage() {
             className="overflow-hidden rounded-[1.6rem] border border-primary/10 bg-white shadow-[0_18px_55px_rgba(11,37,69,0.08)]"
           >
             <BookingReportsTable
-              bookings={
-                reports?.bookings ?? []
-              }
+              bookings={reports?.bookings ?? []}
               total={reports?.total ?? 0}
-              page={
-                reports?.page ?? reportPage
-              }
+              page={reports?.page ?? reportPage}
               limit={reports?.limit ?? 20}
               filters={reportFilters}
-              onFiltersChange={
-                handleFiltersChange
-              }
+              onFiltersChange={handleFiltersChange}
               onPageChange={setReportPage}
               loading={reportsLoading}
             />

@@ -1,6 +1,4 @@
-import type {  ContactMessageStatus } from "./enums";
-
-
+import type { ContactMessageStatus } from "./enums";
 
 export interface ContactMessage {
   id: string;
