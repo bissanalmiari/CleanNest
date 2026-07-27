@@ -124,8 +124,8 @@ interface AppliedPromoCode {
   description: string;
 
   discountType:
-    | "percentage"
-    | "fixed_amount";
+  | "percentage"
+  | "fixed_amount";
 
   discountValue: number;
   discountAmount: number;
@@ -157,8 +157,8 @@ interface BookingPriceQuote {
   addOns: QuoteAddOnLine[];
 
   promoCode:
-    | AppliedPromoCode
-    | null;
+  | AppliedPromoCode
+  | null;
 
   serviceBaseAmount: number;
   propertyAdjustmentAmount: number;
@@ -254,7 +254,7 @@ function roundMoney(
     Math.round(
       (value +
         Number.EPSILON) *
-        100,
+      100,
     ) / 100
   );
 }
@@ -293,11 +293,10 @@ function formatDuration(
   if (
     remainingMinutes === 0
   ) {
-    return `${hours} ${
-      hours === 1
+    return `${hours} ${hours === 1
         ? "hour"
         : "hours"
-    }`;
+      }`;
   }
 
   return `${hours} hr ${remainingMinutes} min`;
@@ -466,7 +465,7 @@ function extractErrorMessage(
   if (
     errorRecord &&
     typeof errorRecord.message ===
-      "string"
+    "string"
   ) {
     return errorRecord.message;
   }
@@ -611,7 +610,7 @@ function normalizePromoCode(
 
   const discountType =
     record.discountType ===
-    "fixed_amount"
+      "fixed_amount"
       ? "fixed_amount"
       : "percentage";
 
@@ -677,15 +676,15 @@ function normalizeQuote(
       property.lines,
     )
       ? property.lines
-          .map(
-            normalizePropertyLine,
-          )
-          .filter(
-            (
-              line,
-            ): line is PropertyPriceLine =>
-              line !== null,
-          )
+        .map(
+          normalizePropertyLine,
+        )
+        .filter(
+          (
+            line,
+          ): line is PropertyPriceLine =>
+            line !== null,
+        )
       : [];
 
   const addOns =
@@ -693,15 +692,15 @@ function normalizeQuote(
       record.addOns,
     )
       ? record.addOns
-          .map(
-            normalizeQuoteAddOn,
-          )
-          .filter(
-            (
-              addOn,
-            ): addOn is QuoteAddOnLine =>
-              addOn !== null,
-          )
+        .map(
+          normalizeQuoteAddOn,
+        )
+        .filter(
+          (
+            addOn,
+          ): addOn is QuoteAddOnLine =>
+            addOn !== null,
+        )
       : [];
 
   return {
@@ -735,27 +734,27 @@ function normalizeQuote(
 
       bedrooms:
         property.bedrooms ===
-        undefined
+          undefined
           ? undefined
           : readNumber(
-              property.bedrooms,
-            ),
+            property.bedrooms,
+          ),
 
       bathrooms:
         property.bathrooms ===
-        undefined
+          undefined
           ? undefined
           : readNumber(
-              property.bathrooms,
-            ),
+            property.bathrooms,
+          ),
 
       size:
         property.size ===
-        undefined
+          undefined
           ? undefined
           : readNumber(
-              property.size,
-            ),
+            property.size,
+          ),
 
       adjustmentAmount:
         readNumber(
@@ -781,7 +780,7 @@ function normalizeQuote(
     serviceBaseAmount:
       readNumber(
         record.serviceBaseAmount,
-    ),
+      ),
 
     propertyAdjustmentAmount:
       readNumber(
@@ -840,7 +839,7 @@ function extractQuote(
 ): BookingPriceQuote | null {
   return normalizeQuote(
     payload.data?.quote ??
-      payload.quote,
+    payload.quote,
   );
 }
 
@@ -906,22 +905,22 @@ function normalizeCreatedBooking(
 
     pricing: pricing
       ? {
-          currency:
-            readString(
-              pricing.currency,
-              "USD",
-            ),
+        currency:
+          readString(
+            pricing.currency,
+            "USD",
+          ),
 
-          serviceAreaFee:
-            readNumber(
-              pricing.serviceAreaFee,
-            ),
+        serviceAreaFee:
+          readNumber(
+            pricing.serviceAreaFee,
+          ),
 
-          totalAmount:
-            readNumber(
-              pricing.totalAmount,
-            ),
-        }
+        totalAmount:
+          readNumber(
+            pricing.totalAmount,
+          ),
+      }
       : undefined,
   };
 }
@@ -931,7 +930,7 @@ function extractCreatedBooking(
 ): CreatedBooking | null {
   return normalizeCreatedBooking(
     payload.data?.booking ??
-      payload.booking,
+    payload.booking,
   );
 }
 
@@ -1174,7 +1173,7 @@ export default function FinalCheckStep({
         if (
           nextQuote.promoCode &&
           appliedPromoCodeId ===
-            nextQuote.promoCode.id
+          nextQuote.promoCode.id
         ) {
           setPromoMessage({
             type: "success",
@@ -1215,7 +1214,7 @@ export default function FinalCheckStep({
       } finally {
         if (
           requestVersion ===
-            requestVersionRef.current &&
+          requestVersionRef.current &&
           !controller.signal.aborted
         ) {
           setIsLoadingQuote(
@@ -1289,7 +1288,7 @@ export default function FinalCheckStep({
       ) {
         throw new Error(
           payload.error ??
-            "This promo code could not be applied.",
+          "This promo code could not be applied.",
         );
       }
 
@@ -1338,7 +1337,7 @@ export default function FinalCheckStep({
 
       return roundMoney(
         quote.subtotalAmount +
-          draft.serviceAreaFee,
+        draft.serviceAreaFee,
       );
     }, [
       draft.serviceAreaFee,
@@ -1353,7 +1352,7 @@ export default function FinalCheckStep({
 
       return roundMoney(
         quote.totalAmount +
-          draft.serviceAreaFee,
+        draft.serviceAreaFee,
       );
     }, [
       draft.serviceAreaFee,
@@ -1366,14 +1365,47 @@ export default function FinalCheckStep({
   const isComplete =
     Boolean(
       draft.serviceId &&
-        draft.addressId &&
-        draft.serviceAreaId &&
-        draft.bookingDate &&
-        draft.startTime &&
-        trustedEndTime &&
-        quote,
+      draft.addressId &&
+      draft.serviceAreaId &&
+      draft.bookingDate &&
+      draft.startTime &&
+      trustedEndTime &&
+      quote,
     );
+  async function redirectToStripeCheckout(bookingId: string) {
+    try {
+      const response = await fetch(
+        `/api/customer/payments/booking/${bookingId}/checkout`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
 
+      const payload = await response.json();
+
+      if (
+        response.ok &&
+        payload.success &&
+        payload.data?.url
+      ) {
+        window.location.href = payload.data.url;
+        return;
+      }
+
+      throw new Error(
+        payload.error ??
+        payload.message ??
+        "Unable to start Stripe checkout."
+      );
+    } catch (error) {
+      setSubmissionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to redirect to Stripe."
+      );
+    }
+  }
   async function handleCreateBooking() {
     if (
       !quote ||
@@ -1512,23 +1544,17 @@ export default function FinalCheckStep({
         );
       }
 
-      setCreatedBooking(
-        booking,
-      );
+      setCreatedBooking(booking);
 
-      if (
-        draft.paymentMethod !==
-        "card"
-      ) {
-        redirectTimerRef.current =
-          setTimeout(() => {
-            router.push(
-              "/bookings",
-            );
-
-            router.refresh();
-          }, 1600);
+      if (draft.paymentMethod === "card") {
+        await redirectToStripeCheckout(booking.id);
+        return;
       }
+
+      redirectTimerRef.current = setTimeout(() => {
+        router.push("/bookings");
+        router.refresh();
+      }, 1600);
     } catch (error) {
       setSubmissionError(
         error instanceof Error
@@ -1547,10 +1573,10 @@ export default function FinalCheckStep({
           prefersReducedMotion
             ? undefined
             : {
-                opacity: 0,
-                scale: 0.97,
-                y: 20,
-              }
+              opacity: 0,
+              scale: 0.97,
+              y: 20,
+            }
         }
         animate={{
           opacity: 1,
@@ -1565,9 +1591,9 @@ export default function FinalCheckStep({
               prefersReducedMotion
                 ? undefined
                 : {
-                    scale: 0,
-                    rotate: -25,
-                  }
+                  scale: 0,
+                  rotate: -25,
+                }
             }
             animate={{
               scale: 1,
@@ -1633,47 +1659,13 @@ export default function FinalCheckStep({
             </div>
           </div>
 
-          {draft.paymentMethod ===
-          "card" ? (
-            <>
-              <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left">
-                <p className="text-sm font-extrabold text-amber-800">
-                  Payment required to confirm
-                </p>
-                <p className="mt-1.5 text-sm font-medium leading-6 text-amber-700">
-                  Your booking is on hold
-                  as pending. CleanNest
-                  cannot confirm it until
-                  the card payment is
-                  completed (test mode —
-                  no real charge).
-                </p>
-              </div>
+          <>
+            <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-500">
+              Your booking is pending confirmation. You are being redirected to My Bookings.
+            </p>
 
-              <button
-                type="button"
-                onClick={() => {
-                  router.push(
-                    `/payments/pay/${createdBooking.id}`,
-                  );
-                }}
-                className="mx-auto mt-6 inline-flex min-h-[54px] min-w-[220px] items-center justify-center gap-3 rounded-2xl bg-primary px-7 text-base font-extrabold text-white shadow-[0_16px_35px_rgba(30,111,217,0.3)] transition hover:bg-navy"
-              >
-                <CreditCard className="h-5 w-5" />
-                Pay now
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-500">
-                Your booking is pending
-                confirmation. You are being
-                redirected to My Bookings.
-              </p>
-
-              <LoaderCircle className="mx-auto mt-7 h-7 w-7 animate-spin text-primary" />
-            </>
-          )}
+            <LoaderCircle className="mx-auto mt-7 h-7 w-7 animate-spin text-primary" />
+          </>
         </div>
       </motion.div>
     );
@@ -1721,11 +1713,10 @@ export default function FinalCheckStep({
           className="inline-flex min-h-[48px] items-center justify-center gap-3 rounded-xl border border-primary/15 bg-white px-5 text-sm font-extrabold text-primary transition hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw
-            className={`h-4 w-4 ${
-              isLoadingQuote
+            className={`h-4 w-4 ${isLoadingQuote
                 ? "animate-spin"
                 : ""
-            }`}
+              }`}
           />
 
           Refresh quote
@@ -1781,10 +1772,10 @@ export default function FinalCheckStep({
                     icon={BedDouble}
                     label={
                       draft.propertyType ===
-                      "office"
+                        "office"
                         ? "Work areas"
                         : draft.propertyType ===
-                            "other"
+                          "other"
                           ? "Main rooms"
                           : "Bedrooms"
                     }
@@ -1810,28 +1801,28 @@ export default function FinalCheckStep({
 
                 {quote.property.lines
                   .length > 0 && (
-                  <div className="mt-5 space-y-3 border-t border-primary/10 pt-5">
-                    {quote.property.lines.map(
-                      (line) => (
-                        <div
-                          key={`${line.code}-${line.label}`}
-                          className="flex items-center justify-between gap-4 text-sm"
-                        >
-                          <span className="font-semibold text-slate-500">
-                            {line.label}
-                          </span>
+                    <div className="mt-5 space-y-3 border-t border-primary/10 pt-5">
+                      {quote.property.lines.map(
+                        (line) => (
+                          <div
+                            key={`${line.code}-${line.label}`}
+                            className="flex items-center justify-between gap-4 text-sm"
+                          >
+                            <span className="font-semibold text-slate-500">
+                              {line.label}
+                            </span>
 
-                          <span className="font-extrabold text-navy">
-                            +
-                            {formatCurrency(
-                              line.totalAmount,
-                            )}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                )}
+                            <span className="font-extrabold text-navy">
+                              +
+                              {formatCurrency(
+                                line.totalAmount,
+                              )}
+                            </span>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  )}
               </ReviewCard>
 
               <ReviewCard
@@ -1871,13 +1862,13 @@ export default function FinalCheckStep({
                 eyebrow="Extra touches"
                 title={
                   quote.addOns.length >
-                  0
+                    0
                     ? `${quote.addOns.length} selected`
                     : "No extras selected"
                 }
               >
                 {quote.addOns.length ===
-                0 ? (
+                  0 ? (
                   <p className="text-base font-medium leading-7 text-slate-500">
                     This booking contains
                     only the selected
@@ -2002,21 +1993,19 @@ export default function FinalCheckStep({
                         "cash",
                       );
                     }}
-                    className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                      draft.paymentMethod ===
-                      "cash"
+                    className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${draft.paymentMethod ===
+                        "cash"
                         ? "border-primary bg-primary-light shadow-[0_12px_30px_rgba(30,111,217,0.12)]"
                         : "border-slate-200 bg-white hover:border-primary/35"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span
-                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                          draft.paymentMethod ===
-                          "cash"
+                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${draft.paymentMethod ===
+                            "cash"
                             ? "bg-primary text-white"
                             : "bg-surface-soft text-primary"
-                        }`}
+                          }`}
                       >
                         <Banknote className="h-5 w-5" />
                       </span>
@@ -2053,21 +2042,19 @@ export default function FinalCheckStep({
                         "card",
                       );
                     }}
-                    className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                      draft.paymentMethod ===
-                      "card"
+                    className={`relative rounded-2xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${draft.paymentMethod ===
+                        "card"
                         ? "border-primary bg-primary-light shadow-[0_12px_30px_rgba(30,111,217,0.12)]"
                         : "border-slate-200 bg-white hover:border-primary/35"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span
-                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                          draft.paymentMethod ===
-                          "card"
+                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${draft.paymentMethod ===
+                            "card"
                             ? "bg-primary text-white"
                             : "bg-surface-soft text-primary"
-                        }`}
+                          }`}
                       >
                         <CreditCard className="h-5 w-5" />
                       </span>
@@ -2138,11 +2125,10 @@ export default function FinalCheckStep({
                   </p>
 
                   <p
-                    className={`text-sm font-extrabold ${
-                      notesLength > 950
+                    className={`text-sm font-extrabold ${notesLength > 950
                         ? "text-red-500"
                         : "text-slate-400"
-                    }`}
+                      }`}
                   >
                     {notesLength}/1000
                   </p>
@@ -2235,12 +2221,11 @@ export default function FinalCheckStep({
                   {promoMessage && (
                     <p
                       aria-live="polite"
-                      className={`mt-3 text-sm font-bold ${
-                        promoMessage.type ===
-                        "success"
+                      className={`mt-3 text-sm font-bold ${promoMessage.type ===
+                          "success"
                           ? "text-emerald-600"
                           : "text-red-500"
-                      }`}
+                        }`}
                     >
                       {promoMessage.text}
                     </p>
@@ -2298,17 +2283,17 @@ export default function FinalCheckStep({
 
                   {quote.discountAmount >
                     0 && (
-                    <PriceLine
-                      label={
-                        quote.promoCode
-                          ? `Discount (${quote.promoCode.code})`
-                          : "Discount"
-                      }
-                      value={
-                        -quote.discountAmount
-                      }
-                    />
-                  )}
+                      <PriceLine
+                        label={
+                          quote.promoCode
+                            ? `Discount (${quote.promoCode.code})`
+                            : "Discount"
+                        }
+                        value={
+                          -quote.discountAmount
+                        }
+                      />
+                    )}
 
                   <div className="border-t border-primary/10 pt-4">
                     <PriceLine
@@ -2418,20 +2403,20 @@ export default function FinalCheckStep({
                   }}
                   whileHover={
                     prefersReducedMotion ||
-                    !isComplete ||
-                    isSubmitting
+                      !isComplete ||
+                      isSubmitting
                       ? undefined
                       : {
-                          y: -3,
-                        }
+                        y: -3,
+                      }
                   }
                   whileTap={
                     !isComplete ||
-                    isSubmitting
+                      isSubmitting
                       ? undefined
                       : {
-                          scale: 0.98,
-                        }
+                        scale: 0.98,
+                      }
                   }
                   className="inline-flex min-h-[58px] min-w-[220px] items-center justify-center gap-3 rounded-2xl bg-primary px-7 text-base font-extrabold text-white shadow-[0_16px_35px_rgba(30,111,217,0.3)] transition hover:bg-navy disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
                 >
@@ -2598,11 +2583,10 @@ function SelectionCircle({
 }) {
   return (
     <span
-      className={`flex h-7 w-7 items-center justify-center rounded-full border ${
-        selected
+      className={`flex h-7 w-7 items-center justify-center rounded-full border ${selected
           ? "border-primary bg-primary text-white"
           : "border-slate-200 bg-white text-transparent"
-      }`}
+        }`}
     >
       <Check className="h-4 w-4" />
     </span>
