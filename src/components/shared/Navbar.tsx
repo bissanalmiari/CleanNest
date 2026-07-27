@@ -2,18 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarCheck2,
+  ChevronDown,
+  LayoutDashboard,
+  LoaderCircle,
   LogIn,
+  LogOut,
   Menu,
   ShieldCheck,
   Sparkles,
   UserPlus,
+  UserRound,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
+
+import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import type { PublicUser } from "@/types/user";
 
 const navigationLinks = [
   {
@@ -46,11 +55,49 @@ const navigationLinks = [
   },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  user?: PublicUser | null;
+}
+
+function getInitials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "CN";
+  if (words.length === 1) return words[0]?.slice(0, 2).toUpperCase() ?? "CN";
+  return ((words[0]?.charAt(0) ?? "") + (words.at(-1)?.charAt(0) ?? "")).toUpperCase();
+}
+
+function getDashboardHref(role: PublicUser["role"]) {
+  if (role === "admin") return "/admin/dashboard";
+  if (role === "cleaner") return "/cleaner/today";
+  return "/dashboard";
+}
+
+function getProfileHref(role: PublicUser["role"]) {
+  if (role === "admin") return "/admin/profile";
+  if (role === "cleaner") return "/cleaner/profile";
+  return "/profile";
+}
+
+function getRoleLabel(role: PublicUser["role"]) {
+  if (role === "admin") return "Administrator";
+  if (role === "cleaner") return "Cleaning professional";
+  return "Customer";
+}
+
+export default function Navbar({ user = null }: NavbarProps) {
   const pathname = usePathname();
+  const { logout, loading: logoutLoading } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  const initials = useMemo(() => (user ? getInitials(user.name) : "CN"), [user]);
+  const dashboardHref = useMemo(() => (user ? getDashboardHref(user.role) : "/"), [user]);
+  const profileHref = useMemo(() => (user ? getProfileHref(user.role) : "/"), [user]);
+  const roleLabel = useMemo(() => (user ? getRoleLabel(user.role) : ""), [user]);
 
   useEffect(() => {
     function handleScroll() {
@@ -70,6 +117,7 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -79,6 +127,20 @@ export default function Navbar() {
       document.body.style.overflow = "";
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, []);
 
   function closeMenu() {
     setIsMenuOpen(false);
@@ -96,6 +158,32 @@ export default function Navbar() {
     return pathname.startsWith(href);
   }
 
+  async function handleLogout() {
+    if (logoutLoading) {
+      return;
+    }
+
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
+    await logout();
+  }
+
+  const avatar = user ? (
+    <span
+      className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary via-blue-600 to-cyan-500 bg-cover bg-center text-xs font-black text-white shadow-[0_10px_24px_rgba(30,111,217,0.24)]"
+      style={
+        user.avatarUrl
+          ? {
+              backgroundImage: "url(\"" + user.avatarUrl.replaceAll('"', "%22") + "\")",
+            }
+          : undefined
+      }
+    >
+      {!user.avatarUrl && initials}
+      <span className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+    </span>
+  ) : null;
+
   return (
     <MotionConfig reducedMotion="always">
       <header
@@ -105,7 +193,6 @@ export default function Navbar() {
             : "border-b border-transparent bg-white/75 backdrop-blur-md"
         }`}
       >
-        {/* Animated top line */}
         <motion.div
           aria-hidden="true"
           className="absolute inset-x-0 top-0 h-[2px] origin-left bg-gradient-to-r from-primary via-cyan-400 to-primary"
@@ -120,7 +207,6 @@ export default function Navbar() {
           }}
         />
 
-        {/* Background glow */}
         <motion.div
           aria-hidden="true"
           className="pointer-events-none absolute -left-20 -top-24 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
@@ -139,7 +225,6 @@ export default function Navbar() {
           aria-label="Main navigation"
           className="relative mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-5 sm:px-8 lg:px-10"
         >
-          {/* Logo */}
           <Link
             href="/"
             onClick={closeMenu}
@@ -196,7 +281,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop navigation */}
           <div className="hidden items-center gap-0.5 xl:flex">
             {navigationLinks.map((link) => {
               const isActive = isActiveLink(link.href);
@@ -236,46 +320,137 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Desktop authentication and booking actions */}
           <div className="hidden shrink-0 items-center gap-2 xl:flex">
-            {/* Sign In */}
-            <motion.div
-              whileHover={{
-                y: -2,
-              }}
-              whileTap={{
-                scale: 0.97,
-              }}
-            >
-              <Link
-                href="/login"
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-3.5 py-2.5 text-sm font-semibold text-navy shadow-sm transition-all hover:border-primary/30 hover:bg-primary-light hover:text-primary"
-              >
-                <LogIn className="h-4 w-4" />
-                Sign In
-              </Link>
-            </motion.div>
+            {user ? (
+              <>
+                <NotificationBell />
 
-            {/* Sign Up */}
-            <motion.div
-              whileHover={{
-                y: -2,
-                scale: 1.02,
-              }}
-              whileTap={{
-                scale: 0.97,
-              }}
-            >
-              <Link
-                href="/signup"
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-light px-3.5 py-2.5 text-sm font-bold text-primary transition-all hover:border-primary/35 hover:bg-blue-100"
-              >
-                <UserPlus className="h-4 w-4" />
-                Sign Up
-              </Link>
-            </motion.div>
+                <div ref={profileMenuRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileMenuOpen((current) => !current);
+                    }}
+                    aria-label="Open profile menu"
+                    aria-expanded={isProfileMenuOpen}
+                    className="flex min-h-[48px] items-center gap-2 rounded-xl border border-primary/15 bg-white p-1.5 pr-2.5 shadow-sm transition hover:border-primary/30 hover:bg-primary-light"
+                  >
+                    {avatar}
+                    <span className="hidden max-w-28 text-left lg:block">
+                      <span className="block truncate text-xs font-extrabold text-navy">
+                        {user.name}
+                      </span>
+                      <span className="mt-0.5 block text-[9px] font-bold uppercase tracking-[0.12em] text-primary">
+                        {roleLabel}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-slate-400 transition ${
+                        isProfileMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-            {/* Book Now */}
+                  <AnimatePresence>
+                    {isProfileMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        className="absolute right-0 top-[calc(100%+0.75rem)] w-72 overflow-hidden rounded-2xl border border-primary/10 bg-white p-2 shadow-[0_24px_70px_rgba(11,37,69,0.18)]"
+                      >
+                        <div className="rounded-xl bg-gradient-to-br from-primary-light to-cyan-50 p-4">
+                          <div className="flex items-center gap-3">
+                            {avatar}
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-extrabold text-navy">
+                                {user.name}
+                              </p>
+                              <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 space-y-1">
+                          <Link
+                            href={profileHref}
+                            className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-600 transition hover:bg-primary-light hover:text-primary"
+                          >
+                            <UserRound className="h-4 w-4" />
+                            My profile
+                            <ArrowRight className="ml-auto h-4 w-4" />
+                          </Link>
+                          <Link
+                            href={dashboardHref}
+                            className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-600 transition hover:bg-primary-light hover:text-primary"
+                          >
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard
+                            <ArrowRight className="ml-auto h-4 w-4" />
+                          </Link>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleLogout();
+                          }}
+                          disabled={logoutLoading}
+                          className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-3 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-wait disabled:opacity-60"
+                        >
+                          {logoutLoading ? (
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <LogOut className="h-4 w-4" />
+                          )}
+                          {logoutLoading ? "Logging out\u2026" : "Log out"}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            ) : (
+              <>
+                <motion.div
+                  whileHover={{
+                    y: -2,
+                  }}
+                  whileTap={{
+                    scale: 0.97,
+                  }}
+                >
+                  <Link
+                    href="/login"
+                    className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-3.5 py-2.5 text-sm font-semibold text-navy shadow-sm transition-all hover:border-primary/30 hover:bg-primary-light hover:text-primary"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </Link>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{
+                    y: -2,
+                    scale: 1.02,
+                  }}
+                  whileTap={{
+                    scale: 0.97,
+                  }}
+                >
+                  <Link
+                    href="/signup"
+                    className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-light px-3.5 py-2.5 text-sm font-bold text-primary transition-all hover:border-primary/35 hover:bg-blue-100"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Sign Up
+                  </Link>
+                </motion.div>
+              </>
+            )}
+
             <motion.div
               whileHover={{
                 y: -3,
@@ -311,7 +486,6 @@ export default function Navbar() {
             </motion.div>
           </div>
 
-          {/* Mobile and tablet menu button */}
           <motion.button
             type="button"
             onClick={() => {
@@ -383,11 +557,9 @@ export default function Navbar() {
           </motion.button>
         </nav>
 
-        {/* Mobile and tablet navigation */}
         <AnimatePresence>
           {isMenuOpen && (
             <>
-              {/* Background overlay */}
               <motion.button
                 type="button"
                 aria-label="Close navigation menu"
@@ -404,7 +576,6 @@ export default function Navbar() {
                 className="fixed inset-0 top-[76px] z-[-1] bg-navy/25 backdrop-blur-sm xl:hidden"
               />
 
-              {/* Menu panel */}
               <motion.div
                 id="mobile-navigation"
                 initial={{
@@ -429,7 +600,32 @@ export default function Navbar() {
                 className="absolute inset-x-0 top-full overflow-hidden border-t border-primary/10 bg-white/95 shadow-[0_24px_60px_rgba(11,37,69,0.16)] backdrop-blur-md xl:hidden"
               >
                 <div className="mx-auto max-h-[calc(100vh-76px)] max-w-7xl overflow-y-auto px-5 py-6 sm:px-8 lg:px-10">
-                  {/* Navigation links */}
+                  {user && (
+                    <div className="mb-5 flex items-center gap-3 rounded-2xl bg-primary-light/60 p-3">
+                      {avatar}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-extrabold text-navy">
+                          {user.name}
+                        </p>
+                        <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                          {user.email}
+                        </p>
+                      </div>
+                      <span className="ml-auto rounded-full bg-white px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-primary">
+                        {roleLabel}
+                      </span>
+                    </div>
+                  )}
+
+                  {user && (
+                    <div className="mb-4 flex items-center justify-between rounded-2xl border border-primary/10 bg-white p-3">
+                      <span className="text-xs font-black text-navy">
+                        Account notifications
+                      </span>
+                      <NotificationBell />
+                    </div>
+                  )}
+
                   <div className="grid gap-2 sm:grid-cols-2">
                     {navigationLinks.map((link, index) => {
                       const isActive = isActiveLink(link.href);
@@ -467,53 +663,110 @@ export default function Navbar() {
                     })}
                   </div>
 
-                  {/* Authentication and booking buttons */}
                   <div className="mt-5 grid gap-3 border-t border-primary/10 pt-5 sm:grid-cols-3">
-                    <motion.div
-                      initial={{
-                        opacity: 0,
-                        y: 15,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        delay: 0.2,
-                      }}
-                    >
-                      <Link
-                        href="/login"
-                        onClick={closeMenu}
-                        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-primary-light hover:text-primary"
-                      >
-                        <LogIn className="h-5 w-5 text-primary" />
-                        Sign In
-                      </Link>
-                    </motion.div>
+                    {user ? (
+                      <>
+                        <motion.div
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          <Link
+                            href={profileHref}
+                            onClick={closeMenu}
+                            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-primary-light hover:text-primary"
+                          >
+                            <UserRound className="h-5 w-5 text-primary" />
+                            My Profile
+                          </Link>
+                        </motion.div>
 
-                    <motion.div
-                      initial={{
-                        opacity: 0,
-                        y: 15,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        delay: 0.25,
-                      }}
-                    >
-                      <Link
-                        href="/signup"
-                        onClick={closeMenu}
-                        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-light px-5 py-3 font-bold text-primary transition-colors hover:bg-blue-100"
-                      >
-                        <UserPlus className="h-5 w-5" />
-                        Sign Up
-                      </Link>
-                    </motion.div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.25 }}
+                        >
+                          <Link
+                            href={dashboardHref}
+                            onClick={closeMenu}
+                            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-light px-5 py-3 font-bold text-primary transition-colors hover:bg-blue-100"
+                          >
+                            <LayoutDashboard className="h-5 w-5" />
+                            Dashboard
+                          </Link>
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleLogout();
+                            }}
+                            disabled={logoutLoading}
+                            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-3 font-bold text-red-600 disabled:opacity-60"
+                          >
+                            {logoutLoading ? (
+                              <LoaderCircle className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <LogOut className="h-5 w-5" />
+                            )}
+                            {logoutLoading ? "Logging out\u2026" : "Log out"}
+                          </button>
+                        </motion.div>
+                      </>
+                    ) : (
+                      <>
+                        <motion.div
+                          initial={{
+                            opacity: 0,
+                            y: 15,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          transition={{
+                            delay: 0.2,
+                          }}
+                        >
+                          <Link
+                            href="/login"
+                            onClick={closeMenu}
+                            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-primary-light hover:text-primary"
+                          >
+                            <LogIn className="h-5 w-5 text-primary" />
+                            Sign In
+                          </Link>
+                        </motion.div>
+
+                        <motion.div
+                          initial={{
+                            opacity: 0,
+                            y: 15,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          transition={{
+                            delay: 0.25,
+                          }}
+                        >
+                          <Link
+                            href="/signup"
+                            onClick={closeMenu}
+                            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-light px-5 py-3 font-bold text-primary transition-colors hover:bg-blue-100"
+                          >
+                            <UserPlus className="h-5 w-5" />
+                            Sign Up
+                          </Link>
+                        </motion.div>
+                      </>
+                    )}
 
                     <motion.div
                       initial={{
@@ -527,6 +780,7 @@ export default function Navbar() {
                       transition={{
                         delay: 0.3,
                       }}
+                      className={user ? "sm:col-span-3" : ""}
                     >
                       <Link
                         href="/book"
@@ -557,7 +811,6 @@ export default function Navbar() {
                     </motion.div>
                   </div>
 
-                  {/* Security message */}
                   <motion.div
                     initial={{
                       opacity: 0,
