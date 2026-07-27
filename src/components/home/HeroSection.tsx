@@ -624,7 +624,7 @@ export default function HeroSection() {
               }}
             >
               <Link
-                href="/book"
+                href="/book-service"
                 className="group relative flex min-h-14 items-center justify-center gap-3 overflow-hidden rounded-2xl bg-navy px-7 py-4 font-bold text-white shadow-[0_18px_45px_rgba(11,37,69,0.28)] transition-shadow hover:shadow-[0_22px_55px_rgba(11,37,69,0.38)]"
               >
                 <motion.span
