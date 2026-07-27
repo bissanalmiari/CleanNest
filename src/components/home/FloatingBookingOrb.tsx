@@ -176,7 +176,7 @@ export default function FloatingBookingOrb() {
               }}
             >
               <Link
-                href="/book"
+                href="/book-service"
                 aria-label="Book a CleanNest cleaning service"
                 className="relative flex h-[62px] w-[62px] items-center justify-center overflow-hidden rounded-full border border-white/40 bg-gradient-to-br from-primary via-blue-600 to-cyan-500 text-white shadow-[0_20px_55px_rgba(30,111,217,0.42)] sm:h-[72px] sm:w-[72px]"
               >

@@ -882,7 +882,7 @@ export default function FAQSection() {
                 }}
               >
                 <Link
-                  href="/book"
+                  href="/book-service"
                   className="group inline-flex min-h-[50px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-[0_15px_35px_rgba(30,111,217,0.26)] transition-colors hover:bg-primary-dark"
                 >
                   Start Booking

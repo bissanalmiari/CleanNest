@@ -884,7 +884,7 @@ export default function WhyChooseUsSection() {
                 }}
               >
                 <Link
-                  href="/book"
+                  href="/book-service"
                   className="group relative flex min-h-14 items-center justify-center gap-3 overflow-hidden rounded-xl bg-white px-8 py-4 font-bold text-primary shadow-[0_20px_50px_rgba(0,0,0,0.2)]"
                 >
                   <motion.span

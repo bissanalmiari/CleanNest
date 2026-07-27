@@ -452,7 +452,7 @@ export default function ServicesPreviewSection() {
                       }}
                     >
                       <Link
-                        href="/book?service=regular-home-cleaning"
+                        href="/book-service?service=regular-home-cleaning"
                         className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-primary shadow-[0_16px_38px_rgba(0,0,0,0.2)]"
                       >
                         Book This Service
@@ -621,7 +621,7 @@ export default function ServicesPreviewSection() {
                       }}
                     >
                       <Link
-                        href="/book?service=deep-cleaning"
+                        href="/book-service?service=deep-cleaning"
                         aria-label="Book deep cleaning"
                         className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg"
                       >
@@ -710,7 +710,7 @@ export default function ServicesPreviewSection() {
 
                 <div className="mt-auto pt-7">
                   <Link
-                    href="/services/move-in-move-out"
+                    href="/services/move-in-move-out-cleaning"
                     className="group inline-flex items-center gap-2 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700"
                   >
                     Explore service
@@ -759,7 +759,7 @@ export default function ServicesPreviewSection() {
                       className="inline-block"
                     >
                       <Link
-                        href="/book?service=office-cleaning"
+                        href="/book-service?service=office-cleaning"
                         className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-5 py-3 font-semibold text-white shadow-[0_15px_35px_rgba(6,182,212,0.25)] transition-colors hover:bg-cyan-500"
                       >
                         Book Office Cleaning
@@ -935,7 +935,7 @@ export default function ServicesPreviewSection() {
                   }}
                 >
                   <Link
-                    href="/book"
+                    href="/book-service"
                     className="group relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3.5 font-bold text-primary shadow-[0_16px_40px_rgba(0,0,0,0.22)]"
                   >
                     <motion.span
