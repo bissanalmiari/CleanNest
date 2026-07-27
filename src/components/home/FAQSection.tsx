@@ -765,7 +765,7 @@ export default function FAQSection() {
                       }}
                     >
                       <Link
-                        href="mailto:support@cleannest.com"
+                        href="mailto:cleannest.project@gmail.com"
                         className="flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3.5 font-semibold text-white transition-colors hover:bg-white/15"
                       >
                         <Mail className="h-4 w-4" />

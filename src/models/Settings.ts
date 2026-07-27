@@ -23,7 +23,12 @@ const settingsSchema = new Schema<ISettings>(
   {
     key: { type: String, required: true, unique: true, default: SETTINGS_SINGLETON_KEY },
     businessName: { type: String, required: true, trim: true, default: "CleanNest" },
-    supportEmail: { type: String, required: true, trim: true, default: "support@cleannest.com" },
+    supportEmail: {
+      type: String,
+      required: true,
+      trim: true,
+      default: "cleannest.project@gmail.com",
+    },
     supportPhone: { type: String, trim: true },
     businessAddress: { type: String, trim: true },
     bookingLeadTimeHours: { type: Number, min: 0, max: 168, default: 12 },

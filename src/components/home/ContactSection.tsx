@@ -52,9 +52,9 @@ const contactItems: ContactItem[] = [
   {
     icon: Mail,
     title: "Email Support",
-    value: "support@cleannest.com",
+    value: "cleannest.project@gmail.com",
     description: "Send us your questions at any time.",
-    href: "mailto:support@cleannest.com",
+    href: "mailto:cleannest.project@gmail.com",
     iconClass: "bg-blue-50 text-blue-600",
     glowClass: "bg-blue-400/15",
   },

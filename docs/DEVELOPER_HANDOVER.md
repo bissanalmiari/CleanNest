@@ -139,6 +139,7 @@ Never expose server-only values through `NEXT_PUBLIC_*`, commit `.env.local`, or
 | `EMAIL_SERVER` | Production email | Nodemailer SMTP URL. Without it, messages are logged. |
 | `EMAIL_FROM` | Production email | Authenticated From identity. |
 | `EMAIL_REPLY_TO` | No | Default reply-to address. |
+| `CONTACT_EMAIL` | No | Inbox for public contact-form submissions; defaults to `cleannest.project@gmail.com`. |
 | `EMAIL_RETURN_PATH` | No | SMTP envelope/bounce address. |
 | `EMAIL_MESSAGE_DOMAIN` | No | Domain used in generated message IDs. |
 | `EMAIL_DKIM_DOMAIN` | No | DKIM signing domain when signing in-app. |
