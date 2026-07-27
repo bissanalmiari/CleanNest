@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Clock3,
   CreditCard,
+  Download,
   RefreshCw,
   Sparkles,
   Target,
@@ -168,6 +169,7 @@ export default function AdminReportsPage() {
   );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchReports = useCallback(
@@ -231,6 +233,47 @@ export default function AdminReportsPage() {
   useEffect(() => {
     void fetchReports(range);
   }, [fetchReports, range]);
+
+  const handleDownloadReport = useCallback(async () => {
+    setDownloading(true);
+    setErrorMessage(null);
+    try {
+      const response = await fetch(
+        `/api/admin/reports/export?range=${range}`,
+        { cache: "no-store" },
+      );
+
+      if (!response.ok) {
+        const json = (await response.json().catch(() => null)) as
+          | ApiEnvelope<unknown>
+          | null;
+        throw new Error(json?.error ?? "Could not generate the report.");
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition");
+      const filenameMatch = disposition?.match(/filename="?([^"]+)"?/);
+      const filename =
+        filenameMatch?.[1] ?? `cleannest-report-${range}.docx`;
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not generate the report.",
+      );
+    } finally {
+      setDownloading(false);
+    }
+  }, [range]);
 
   const breakdown = bookings?.statusBreakdown ?? EMPTY_BREAKDOWN;
   const activePipeline =
@@ -344,6 +387,17 @@ export default function AdminReportsPage() {
                     }`}
                   />
                   Refresh data
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDownloadReport()}
+                  disabled={downloading}
+                  className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-xl bg-cyan-300 px-4 text-xs font-extrabold text-navy transition hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-60"
+                >
+                  <Download
+                    className={`h-4 w-4 ${downloading ? "animate-bounce" : ""}`}
+                  />
+                  {downloading ? "Preparing…" : "Download report (.docx)"}
                 </button>
               </div>
             </div>

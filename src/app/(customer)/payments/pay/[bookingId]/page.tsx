@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect, useState, use as usePromise } from "react";
-import { useRouter } from "next/navigation";
-import { CreditCard, ShieldCheck, ArrowLeft, Info } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CreditCard, ShieldCheck, ArrowLeft, Lock } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 
 interface ServiceRef {
@@ -32,17 +32,6 @@ interface ApiEnvelope<T> {
   error?: string;
 }
 
-function formatCardNumber(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 19);
-  return digits.replace(/(.{4})/g, "$1 ").trim();
-}
-
-function formatExpiry(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-}
-
 export default function PayBookingPage({
   params,
 }: {
@@ -50,20 +39,16 @@ export default function PayBookingPage({
 }) {
   const { bookingId } = usePromise(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const wasCanceled = searchParams.get("canceled") === "1";
 
   const [booking, setBooking] = useState<BookingSummary | null>(null);
   const [payment, setPayment] = useState<PaymentSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [cardholderName, setCardholderName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,37 +87,28 @@ export default function PayBookingPage({
     };
   }, [bookingId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setSubmitError(null);
+  const handlePayWithStripe = async () => {
+    setRedirecting(true);
+    setCheckoutError(null);
 
     try {
       const res = await fetch(
-        `/api/customer/payments/booking/${bookingId}/pay`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cardholderName,
-            cardNumber,
-            expiry,
-            cvv,
-          }),
-        }
+        `/api/customer/payments/booking/${bookingId}/checkout`,
+        { method: "POST" }
       );
-      const json: ApiEnvelope<PaymentSummary> = await res.json();
+      const json: ApiEnvelope<{ url: string }> = await res.json();
 
-      if (!json.success) {
-        throw new Error(json.error ?? "Payment failed");
+      if (!json.success || !json.data?.url) {
+        throw new Error(json.error ?? "Could not start checkout");
       }
 
-      setSuccess(true);
-      setTimeout(() => router.push("/payments"), 1600);
+      // Full-page redirect to Stripe's hosted Checkout page.
+      window.location.href = json.data.url;
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Payment failed");
-    } finally {
-      setSubmitting(false);
+      setCheckoutError(
+        err instanceof Error ? err.message : "Could not start checkout"
+      );
+      setRedirecting(false);
     }
   };
 
@@ -192,102 +168,39 @@ export default function PayBookingPage({
           </div>
         </div>
 
-        <div className="flex items-start gap-2 rounded-card bg-primary-light px-4 py-3 text-xs text-primary-dark">
-          <Info size={16} className="mt-0.5 shrink-0" />
-          <span>
-            CleanNest is running in test mode — no real card network is
-            contacted and no real money moves. Any card number works to
-            simulate success; a number ending in <strong>0000</strong>{" "}
-            simulates a declined payment.
-          </span>
-        </div>
-
-        {success ? (
-          <Alert variant="success">
-            Payment successful! Redirecting to your payments...
+        {wasCanceled && (
+          <Alert variant="error">
+            Checkout was canceled before payment completed. You can try again
+            below.
           </Alert>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4 rounded-card bg-surface p-5 shadow-card"
-          >
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-navy">
-                Cardholder name
-              </label>
-              <input
-                required
-                type="text"
-                value={cardholderName}
-                onChange={(e) => setCardholderName(e.target.value)}
-                placeholder="Jane Doe"
-                className="w-full rounded-md border border-navy/15 px-3.5 py-2.5 text-sm text-navy outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-navy">
-                Card number
-              </label>
-              <input
-                required
-                type="text"
-                inputMode="numeric"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                placeholder="4242 4242 4242 4242"
-                className="w-full rounded-md border border-navy/15 px-3.5 py-2.5 text-sm text-navy outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-1 space-y-1.5">
-                <label className="block text-sm font-medium text-navy">
-                  Expiry
-                </label>
-                <input
-                  required
-                  type="text"
-                  inputMode="numeric"
-                  value={expiry}
-                  onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                  placeholder="MM/YY"
-                  className="w-full rounded-md border border-navy/15 px-3.5 py-2.5 text-sm text-navy outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-              <div className="w-28 space-y-1.5">
-                <label className="block text-sm font-medium text-navy">
-                  CVV
-                </label>
-                <input
-                  required
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={cvv}
-                  onChange={(e) =>
-                    setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
-                  }
-                  placeholder="123"
-                  className="w-full rounded-md border border-navy/15 px-3.5 py-2.5 text-sm text-navy outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-            </div>
-
-            {submitError && <Alert variant="error">{submitError}</Alert>}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
-            >
-              <ShieldCheck size={16} />
-              {submitting
-                ? "Processing..."
-                : `Pay $${booking.totalAmount.toFixed(2)} (test mode)`}
-            </button>
-          </form>
         )}
+
+        <div className="space-y-4 rounded-card bg-surface p-5 shadow-card">
+          <p className="text-sm text-navy/70">
+            You&apos;ll be securely redirected to Stripe to enter your card
+            details. CleanNest never sees or stores your card number.
+          </p>
+
+          <div className="flex items-center gap-2 rounded-md bg-navy/5 px-3 py-2 text-xs text-navy/60">
+            <Lock size={14} />
+            Payments are processed by Stripe, a PCI-compliant payment
+            provider.
+          </div>
+
+          {checkoutError && <Alert variant="error">{checkoutError}</Alert>}
+
+          <button
+            type="button"
+            disabled={redirecting}
+            onClick={handlePayWithStripe}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+          >
+            <ShieldCheck size={16} />
+            {redirecting
+              ? "Redirecting to Stripe..."
+              : `Pay $${booking.totalAmount.toFixed(2)} with Stripe`}
+          </button>
+        </div>
       </div>
     </div>
   );

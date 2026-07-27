@@ -28,6 +28,7 @@ const PAYMENT_STATUSES = [
 const PAYMENT_PROVIDERS = [
   "cash",
   "test_card",
+  "stripe",
 ] as const;
 
 export type PaymentProvider =
@@ -44,6 +45,10 @@ export interface IPayment extends Document {
   status: PaymentStatus;
 
   transactionReference?: string;
+
+  stripeCheckoutSessionId?: string;
+  stripePaymentIntentId?: string;
+  stripeCustomerId?: string;
 
   paidAt?: Date;
 
@@ -155,6 +160,25 @@ const paymentSchema =
         default: undefined,
       },
 
+      stripeCheckoutSessionId: {
+        type: String,
+        trim: true,
+        default: undefined,
+        index: true,
+      },
+
+      stripePaymentIntentId: {
+        type: String,
+        trim: true,
+        default: undefined,
+      },
+
+      stripeCustomerId: {
+        type: String,
+        trim: true,
+        default: undefined,
+      },
+
       paidAt: {
         type: Date,
         default: undefined,
@@ -259,11 +283,12 @@ paymentSchema.pre(
 
     if (
       this.method === "card" &&
-      this.provider !== "test_card"
+      this.provider !== "test_card" &&
+      this.provider !== "stripe"
     ) {
       this.invalidate(
         "provider",
-        "Card payments must use the test-card provider.",
+        "Card payments must use the Stripe (or legacy test-card) provider.",
       );
     }
   },
