@@ -453,7 +453,7 @@ export default function Navbar({ user = null }: NavbarProps) {
               }}
             >
               <Link
-                href="/book"
+                href="/book-service"
                 className="group relative inline-flex min-h-[46px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_14px_32px_rgba(30,111,217,0.28)] transition-colors hover:bg-primary-dark"
               >
                 <motion.span
@@ -767,7 +767,7 @@ export default function Navbar({ user = null }: NavbarProps) {
                       className={user ? "sm:col-span-3" : ""}
                     >
                       <Link
-                        href="/book"
+                        href="/book-service"
                         onClick={closeMenu}
                         className="group relative flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-[0_15px_35px_rgba(30,111,217,0.28)]"
                       >
