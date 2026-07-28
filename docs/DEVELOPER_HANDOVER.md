@@ -620,15 +620,15 @@ ENABLE_DEMO_CHECK_IN
 
 No
 
-Server-side location bypass
+Explicit server-side testing check-in override
 
 NEXT_PUBLIC_ENABLE_DEMO_CHECK_IN
 
 No
 
-Matching client-visible demo flag
+Legacy compatibility flag; the client now receives the capability from the authenticated job API
 
-Keep both values disabled in production.
+Testing check-in is enabled automatically in local development and deployments using a Stripe `sk_test_` key. It remains unavailable with live Stripe keys unless `ENABLE_DEMO_CHECK_IN=true` is explicitly configured. Keep the override disabled in a real production environment.
 
 Initial Admin Seed
 

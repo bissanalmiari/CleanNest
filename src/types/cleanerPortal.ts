@@ -30,6 +30,7 @@ export interface CleanerJob {
   adminNotes: string | null;
   paymentMethod: string;
   paymentStatus: string;
+  testingCheckInEnabled: boolean;
 }
 
 export interface CleanerJobsResponse {

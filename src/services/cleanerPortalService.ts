@@ -19,7 +19,12 @@ type JobScope = "today" | "upcoming";
 type JobAction = "accept" | "on_my_way" | "start" | "demo_start" | "complete";
 
 function demoCheckInEnabled() {
-  return process.env.NODE_ENV !== "production" || process.env.ENABLE_DEMO_CHECK_IN === "true";
+  return (
+    process.env.NODE_ENV !== "production" ||
+    process.env.ENABLE_DEMO_CHECK_IN === "true" ||
+    process.env.NEXT_PUBLIC_ENABLE_DEMO_CHECK_IN === "true" ||
+    process.env.STRIPE_SECRET_KEY?.trim().startsWith("sk_test_") === true
+  );
 }
 
 interface PopulatedBooking {
@@ -117,6 +122,7 @@ function toJob(assignment: PopulatedAssignment): CleanerJob {
     adminNotes: booking.adminNotes || null,
     paymentMethod: booking.paymentMethod,
     paymentStatus: booking.paymentStatus,
+    testingCheckInEnabled: demoCheckInEnabled(),
   };
 }
 

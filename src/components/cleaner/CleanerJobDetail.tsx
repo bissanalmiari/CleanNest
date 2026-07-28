@@ -40,9 +40,6 @@ interface ApiEnvelope<T> {
 
 type JobAction = "accept" | "on_my_way" | "start" | "demo_start" | "complete";
 
-const DEMO_CHECK_IN_ENABLED =
-  process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_DEMO_CHECK_IN === "true";
-
 function optionalBrowserLocation(): Promise<
   | {
       latitude: number;
@@ -277,7 +274,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
                     onClick={() => void performAction("start")}
                     tone="success"
                   />
-                  {DEMO_CHECK_IN_ENABLED && (
+                  {job.testingCheckInEnabled && (
                     <ActionButton
                       label="Check in for testing"
                       icon={TestTube2}
@@ -329,7 +326,7 @@ export default function CleanerJobDetail({ bookingId }: { bookingId: string }) {
           </div>
         )}
 
-        {DEMO_CHECK_IN_ENABLED && canStart && (
+        {job.testingCheckInEnabled && canStart && (
           <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-900">
             <TestTube2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
             <div>
