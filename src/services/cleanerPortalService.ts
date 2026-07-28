@@ -7,6 +7,11 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import BookingStatusHistory from "@/models/BookingStatusHistory";
 import CleanerAssignment from "@/models/CleanerAssignment";
+// Register every model used by nested populate() calls. This prevents
+// intermittent MissingSchemaError failures on cold serverless invocations.
+import "@/models/Address";
+import "@/models/Service";
+import "@/models/User";
 import {
   assertProofReadyAndCheckOut,
   checkInServiceProof,
@@ -180,6 +185,8 @@ export async function listCleanerJobs(
 }
 
 export async function getCleanerJob(cleanerId: string, bookingId: string) {
+  await connectDB();
+
   if (!Types.ObjectId.isValid(bookingId)) {
     throw new AppError("Booking ID is invalid", 422);
   }
