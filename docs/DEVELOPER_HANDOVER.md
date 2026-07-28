@@ -1,412 +1,665 @@
-# CleanNest Developer Handover
+CleanNest
 
-## 1. Project overview
+<p align="center">
+  <strong>A full-stack cleaning-services marketplace and operations platform built with Next.js.</strong>
+</p>
 
-CleanNest is a full-stack cleaning-services marketplace and operations application. It supports:
+<p align="center">
+  <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?logo=react">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript">
+  <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb">
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss">
+  <img alt="Stripe" src="https://img.shields.io/badge/Stripe-Checkout-635BFF?logo=stripe">
+</p>
 
-- Public service discovery, reviews, marketing content, and contact enquiries.
-- Customer registration, email verification, profile/address management, booking, rescheduling, cancellation, reviews, notifications, and payment.
-- Cleaner accounts with availability, assigned jobs, job actions, proof checklists, before/after photos, issue reporting, and check-in/check-out.
-- Admin management of customers, cleaners, services, bookings, assignments, payments, promo codes, settings, dashboards, and reports.
-- Background booking-status reconciliation and queued notification processing.
+Overview
 
-The application is a single Next.js repository: the browser UI and server-side API route handlers are deployed together.
+CleanNest is a production-oriented platform for managing cleaning services from discovery through fulfillment.
 
-## 2. Technology stack
+It combines:
 
-| Area | Technology |
-| --- | --- |
-| Application framework | Next.js 15 App Router, React 19, TypeScript |
-| Styling/UI | Tailwind CSS 3, Motion, Lucide icons, CVA, `clsx`, `tailwind-merge` |
-| Forms and validation | React Hook Form, Zod, `@hookform/resolvers` |
-| Database | MongoDB Atlas through Mongoose |
-| Authentication | Custom JWT session stored in an HTTP-only cookie; `jsonwebtoken` and `bcryptjs` |
-| Email | Nodemailer over an SMTP connection string; optional application-level DKIM |
-| Card payments | Stripe Checkout and Stripe webhooks |
-| File storage | Supabase Storage using a server-side service-role client |
-| Reports | Server-generated DOCX files using `docx` |
-| Hosting/scheduling | Vercel-compatible deployment and Vercel Cron |
-| Package tooling | npm, TypeScript, ESLint, Prettier, `tsx` for seed scripts |
+A public marketing and service-discovery website
 
-`cloudinary` and `next-cloudinary` are present in `package.json`, but the current upload code uses Supabase Storage. Confirm that they are no longer needed before removing them.
+Customer registration, profile management, saved addresses, bookings, payments, reviews, and notifications
 
-## 3. Repository structure
+Cleaner availability, assignments, check-in/check-out, proof-of-service, issue reporting, and job progress
 
-The repository root is the directory containing `package.json` (currently `CleanNest/CleanNest` in the checked-out workspace).
+Admin tools for users, services, bookings, cleaner assignments, payments, promo codes, reports, settings, and customer enquiries
 
-```text
+Background reconciliation for time-driven booking statuses and queued notifications
+
+The browser application and server-side API are implemented in a single Next.js App Router repository.
+
+Table of Contents
+
+Key Features
+
+Technology Stack
+
+Architecture
+
+Repository Structure
+
+Getting Started
+
+Environment Variables
+
+Available Scripts
+
+Core Workflows
+
+Database Models
+
+API Overview
+
+Authentication and Authorization
+
+Testing and Quality Checks
+
+Deployment
+
+Security Notes
+
+Known Issues and Roadmap
+
+Developer Handover Checklist
+
+Key Features
+
+Public Experience
+
+Service discovery and service details
+
+Approved customer reviews
+
+Marketing content and contact enquiries
+
+Registration, email verification, login, and password recovery
+
+Customer Portal
+
+Profile and avatar management
+
+Saved-address management with a default address
+
+Service and add-on selection
+
+Trusted server-side price previews
+
+Availability checks and capacity validation
+
+Booking creation, rescheduling, editing, and cancellation
+
+Cash and card payment flows
+
+Booking history, payment history, reviews, and notifications
+
+Cleaner Portal
+
+Weekly availability management
+
+Assigned-job dashboard
+
+Job acceptance and lifecycle actions
+
+On-the-way, check-in, check-out, and completion actions
+
+Checklist and proof-of-service management
+
+Before/after image uploads
+
+Issue reporting and optional location verification
+
+Admin Portal
+
+Customer, cleaner, and general-user management
+
+Service catalog and service-image management
+
+Booking queue, booking details, assignments, and status changes
+
+Payment review, cash settlement, failure handling, and refunds
+
+Promo-code management
+
+Contact-message inbox and workflow
+
+Business settings and operational reports
+
+Development-only catalog helpers
+
+Automation
+
+Booking-status reconciliation
+
+Queued notification processing
+
+Vercel Cron compatibility
+
+Stripe webhook processing
+
+Technology Stack
+
+Area
+
+Technology
+
+Framework
+
+Next.js 15 App Router
+
+Frontend
+
+React 19, TypeScript
+
+Styling
+
+Tailwind CSS 3, Motion, Lucide icons
+
+UI utilities
+
+CVA, clsx, tailwind-merge
+
+Forms
+
+React Hook Form
+
+Validation
+
+Zod, @hookform/resolvers
+
+Database
+
+MongoDB Atlas
+
+ODM
+
+Mongoose
+
+Authentication
+
+Custom JWT session in an HTTP-only cookie
+
+Password hashing
+
+bcryptjs
+
+Email
+
+Nodemailer over SMTP
+
+Payments
+
+Stripe Checkout and Stripe webhooks
+
+File storage
+
+Supabase Storage
+
+Reports
+
+Server-generated DOCX files with docx
+
+Deployment
+
+Vercel-compatible
+
+Package manager
+
+npm
+
+Seed tooling
+
+tsx
+
+cloudinary and next-cloudinary are currently present in package.json, while active upload flows use Supabase Storage. Confirm they are unused before removing them.
+
+Architecture
+
+flowchart LR
+    Browser[Next.js React UI]
+    Routes[App Router API Handlers]
+    Validators[Zod Validators]
+    Services[Domain Services]
+    Models[Mongoose Models]
+    Mongo[(MongoDB Atlas)]
+    Stripe[Stripe]
+    Supabase[Supabase Storage]
+    SMTP[SMTP / Nodemailer]
+    Cron[Vercel Cron]
+
+    Browser --> Routes
+    Routes --> Validators
+    Routes --> Services
+    Services --> Models
+    Models --> Mongo
+    Services --> Stripe
+    Services --> Supabase
+    Services --> SMTP
+    Cron --> Routes
+
+Architectural Principles
+
+Thin route handlers: authenticate, validate, and delegate.
+
+Service-layer workflows: multi-step business operations belong in src/services.
+
+Server-owned pricing: browser totals are never authoritative.
+
+Central validation: Zod defines API contracts; Mongoose protects persistence invariants.
+
+Explicit audit records: status, reschedule, assignment, payment, and promo histories are stored separately.
+
+Ownership checks: authenticated users can access only their own customer or cleaner records.
+
+Serverless-ready database reuse: the Mongoose connection is cached on globalThis.
+
+External file storage: MongoDB stores metadata and URLs, not binary uploads.
+
+Repository Structure
+
 .
 ├── docs/
-│   ├── DEVELOPER_HANDOVER.md       # This document
-│   └── email-deliverability.md     # SMTP/domain deliverability notes
-├── public/images/                  # Static marketing images
+│   ├── DEVELOPER_HANDOVER.md
+│   └── email-deliverability.md
+├── public/
+│   └── images/
 ├── scripts/
-│   ├── seed.ts                     # Legacy catalog seed + admin seed (see known issues)
-│   └── seedCatalog.ts              # Idempotent service/add-on catalog seed
+│   ├── seed.ts
+│   └── seedCatalog.ts
 ├── src/
 │   ├── app/
-│   │   ├── (public)/               # Public pages; group name is omitted from URLs
-│   │   ├── (auth)/                 # Login, signup, verification, password recovery
-│   │   ├── (customer)/             # Customer portal at unprefixed URLs
-│   │   ├── (cleaner)/              # Older/alternate cleaner route-group pages
-│   │   ├── admin/                  # Admin UI at /admin/*
-│   │   ├── cleaner/                # Active cleaner UI at /cleaner/*
-│   │   └── api/                    # Next.js route handlers
-│   ├── components/                 # Feature and shared React components
-│   ├── config/                     # UI/navigation configuration
-│   ├── constants/                  # Static application data
-│   ├── hooks/                      # Client-side feature hooks
-│   ├── lib/                        # Infrastructure and cross-cutting helpers
-│   ├── models/                     # Mongoose schemas and indexes
-│   ├── services/                   # Business logic and database access
-│   ├── store/                      # Client booking-wizard state
-│   ├── types/                      # Shared domain and API types
-│   └── validators/                 # Zod input schemas
-├── middleware.ts                   # Presence-only protected-page redirect
-├── next.config.js                  # Next.js and remote image configuration
-├── vercel.json                     # Scheduled booking reconciliation
-└── package.json                    # Dependencies and lifecycle scripts
-```
-
-Important architectural files:
-
-- `src/lib/db.ts`: cached Mongoose connection suitable for Next.js/serverless reuse.
-- `src/lib/auth.ts`: JWT creation/verification, session cookie, current-user loading, and role guards.
-- `src/lib/rbac.ts`: a second role-guard wrapper used by payment routes.
-- `src/lib/pricing.ts` and `src/services/bookingPriceService.ts`: trusted server-side price calculation.
-- `src/lib/bookingScheduleRules.ts` and `src/services/bookingAvailabilityService.ts`: scheduling constraints and capacity checks.
-- `src/lib/stripe.ts`: singleton Stripe server client.
-- `src/lib/supabase.ts`: storage buckets and upload helpers.
-- `src/lib/email.ts`: SMTP transport and transactional email construction.
-- `src/services/*`: the main place for workflows; route handlers should remain thin.
-- `src/validators/*`: API input contracts.
-
-## 4. Setup and installation
-
-### Prerequisites
-
-- Node.js 20 or a compatible current LTS release.
-- npm (the project currently records `npm@11.13.0`).
-- A MongoDB Atlas database, or another reachable MongoDB deployment.
-- Optional for full functionality: SMTP credentials, Stripe test credentials, and a Supabase project.
-
-### Local setup
-
-1. Change to the directory containing `package.json`.
-2. Install the lockfile exactly:
-
-   ```bash
-   npm ci
-   ```
-
-3. Create the local environment file:
-
-   ```powershell
-   Copy-Item .env.local.example .env.local
-   ```
-
-4. Fill in at least `MONGODB_URI` and `AUTH_SECRET`.
-5. Seed the service/add-on catalog:
-
-   ```bash
-   npm run seed:catalog
-   ```
-
-6. Start the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-7. Open `http://localhost:3000`.
-
-When `EMAIL_SERVER` is blank, email content (including development OTP codes) is written to the server console instead of being sent. Upload and card-payment features still require their external services.
-
-### Initial admin account
-
-The intended admin seed uses `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`, with a minimum password length of eight characters. However, `scripts/seed.ts` currently combines the legacy service seed and admin seed in one file and starts both workflows. Do not rely on `npm run seed` in a shared or production database until that script is separated; see **Known issues**.
-
-## 5. Environment and configuration
-
-Never expose server-only values through `NEXT_PUBLIC_*`, commit `.env.local`, or use production Stripe/Supabase secrets in client components.
-
-| Variable | Required | Purpose/default |
-| --- | --- | --- |
-| `MONGODB_URI` | Yes | MongoDB connection string. |
-| `AUTH_SECRET` | Yes | Secret used to sign session JWTs. Use a long random value. |
-| `AUTH_TOKEN_EXPIRES_IN` | No | JWT lifetime; defaults to `7d`. |
-| `APP_URL` | Recommended | Absolute public app URL used in email and Stripe redirects; defaults to `http://localhost:3000`. |
-| `EMAIL_SERVER` | Production email | Nodemailer SMTP URL. Without it, messages are logged. |
-| `EMAIL_FROM` | Production email | Authenticated From identity. |
-| `EMAIL_REPLY_TO` | No | Default reply-to address. |
-| `CONTACT_EMAIL` | No | Inbox for public contact-form submissions; defaults to `cleannest.project@gmail.com`. |
-| `CONTACT_EMAIL` | No | Inbox for public contact-form submissions; defaults to `cleannest.project@gmail.com`. |
-| `EMAIL_RETURN_PATH` | No | SMTP envelope/bounce address. |
-| `EMAIL_MESSAGE_DOMAIN` | No | Domain used in generated message IDs. |
-| `EMAIL_DKIM_DOMAIN` | No | DKIM signing domain when signing in-app. |
-| `EMAIL_DKIM_SELECTOR` | No | DKIM selector. |
-| `EMAIL_DKIM_PRIVATE_KEY` | No | DKIM PEM key; escaped newlines are supported. |
-| `STRIPE_SECRET_KEY` | Card payments | Stripe secret key; use test mode locally. |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook | Verifies `/api/webhooks/stripe` signatures. |
-| `SUPABASE_URL` | Uploads | Supabase project URL. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Uploads | Server-only service-role key. |
-| `SUPABASE_AVATAR_BUCKET` | No | Avatar bucket; default `avatars`. |
-| `SUPABASE_REVIEW_BUCKET` | No | Review image bucket; default `review-images`. |
-| `SUPABASE_SERVICE_IMAGE_BUCKET` | No | Service cover bucket; default `service-images`. |
-| `SUPABASE_PROOF_BUCKET` | No | Proof image bucket; defaults to the review bucket. |
-| `BUSINESS_TIME_ZONE` | No | Scheduler time zone; default `Asia/Beirut`. |
-| `CLEANNEST_MAX_SIMULTANEOUS_BOOKINGS` | No | Global scheduling-capacity fallback. Per-area capacity is also stored in `ServiceArea`. |
-| `CRON_SECRET` | Scheduled jobs | Bearer secret accepted by internal cron routes. Vercel also supplies its configured cron authorization. |
-| `ENABLE_DEMO_CHECK_IN` | No | Server-side cleaner location bypass; keep `false` in production. |
-| `NEXT_PUBLIC_ENABLE_DEMO_CHECK_IN` | No | Matching client-visible demo switch; keep `false` in production. |
-| `ADMIN_NAME` | Admin seed only | Name of the first seeded admin. |
-| `ADMIN_EMAIL` | Admin seed only | Email of the first seeded admin. |
-| `ADMIN_PASSWORD` | Admin seed only | Password of the first seeded admin. |
-
-The checked-in `.env.local.example` omits `CLEANNEST_MAX_SIMULTANEOUS_BOOKINGS` and the three `ADMIN_*` variables. Add them there when the seed script is repaired.
-
-Supabase buckets are made public by some upload helpers and allow JPEG, PNG, and WebP files up to 5 MB. Public URLs are persisted in MongoDB. Treat this public visibility as a product/privacy decision, especially for service-proof photos.
-
-## 6. Database structure
-
-Mongoose generates collection names from the model names (normally lowercase plural form). Relationships below are logical ObjectId references; MongoDB does not enforce foreign keys.
-
-### Identity and customer data
-
-| Model | Purpose and key fields |
-| --- | --- |
-| `User` | Identity, password hash, role (`customer`, `cleaner`, `admin`), account status, profile data, email-verification OTP hash/expiry, and reset OTP hash/expiry. Email is unique. |
-| `Address` | Customer-owned address, label/contact/location fields, service-area relation, access instructions, and default flag. |
-| `Notification` | User notification payload, type/channel, read/sent state, scheduling and delivery attempts. |
-| `NotificationPreference` | Per-user email/in-app preferences and reminder choices. |
-| `ContactMessage` | Public enquiries and admin handling status. |
+│   │   ├── (public)/
+│   │   ├── (auth)/
+│   │   ├── (customer)/
+│   │   ├── (cleaner)/
+│   │   ├── admin/
+│   │   ├── cleaner/
+│   │   └── api/
+│   ├── components/
+│   ├── config/
+│   ├── constants/
+│   ├── hooks/
+│   ├── lib/
+│   ├── models/
+│   ├── services/
+│   ├── store/
+│   ├── types/
+│   └── validators/
+├── middleware.ts
+├── next.config.js
+├── tailwind.config.ts
+├── tsconfig.json
+├── vercel.json
+└── package.json
 
-### Catalog and coverage
+Important Files
 
-| Model | Purpose and key fields |
-| --- | --- |
-| `Service` | Service name/slug, descriptions, category, base price, duration, features, image, and active state. Slug is unique. |
-| `AddOn` | Reusable optional extra with price, added duration, quantity limit, and active state. |
-| `ServiceAddon` | Many-to-many link from service to add-on, with price/duration/quantity overrides and ordering. |
-| `ServiceArea` | City/area/postal code, service fee, concurrent-booking capacity, and active state. City + area is unique case-insensitively. |
-| `Settings` | Singleton-like business configuration used by admin settings and booking rules. |
+File
 
-### Booking and operations
+Responsibility
 
-| Model | Purpose and key fields |
-| --- | --- |
-| `Booking` | Booking number; customer/service/address/area; schedule; property data; immutable pricing snapshot; payment data; status; notes; cancellation and reschedule metadata. |
-| `BookingAddOn` | Snapshot of each selected add-on, quantity, unit price, duration, and total for a booking. |
-| `BookingStatusHistory` | Append-only booking status audit trail. |
-| `BookingRescheduleHistory` | Previous/new schedule, actor, reason, and source. |
-| `BookingCleanerAssignmentHistory` | Older name-only cleaner assignment audit trail. |
-| `CleanerAssignment` | Account-based relationship between a booking and cleaner, with assignment status and operational timestamps. |
-| `CleanerAvailability` | Weekly availability windows for cleaner accounts. |
-| `BlockedTime` | Cleaner-specific unavailable time ranges. |
-| `ServiceProof` | Per-assignment checklist, before/after photos, issues, travel/check-in/out timestamps, and optional check-in coordinates. |
+src/lib/db.ts
 
-### Commercial data
+Cached Mongoose connection
 
-| Model | Purpose and key fields |
-| --- | --- |
-| `Payment` | One or more booking payment records: USD amount, cash/card method, provider (`cash`, `test_card`, `stripe`), state, Stripe identifiers, failure/refund metadata, and timestamps. |
-| `PromoCode` | Code, discount type/value, applicability constraints, date window, usage limits, and active state. |
-| `PromoCodeUsage` | Customer/code/booking redemption audit used to enforce limits. |
-| `Review` | Customer review tied to a completed booking/service, rating, text, moderation state, and before/after image URLs. |
+src/lib/auth.ts
 
-The authoritative schema details, validation hooks, and compound indexes are in `src/models`. Important invariants include:
+JWT, session cookie, current-user loading, and role guards
 
-- Booking totals are recalculated server-side from base amount + add-ons + service-area fee - discount.
-- End time must be later than start time; duration is derived.
-- Booking number and catalog slugs are unique.
-- Status, reschedule, promo-use, and assignment history are separate audit records.
-- Payment currency is currently fixed to USD.
+src/lib/rbac.ts
 
-There are two overlapping cleaner representations: legacy `assignedCleanerName`/`BookingCleanerAssignmentHistory` and newer `CleanerAssignment` records linked to cleaner `User` accounts. New work should use the account-based path unless intentionally maintaining compatibility.
+Additional role-guard helpers used by selected routes
 
-## 7. Main features and workflows
+src/lib/pricing.ts
 
-### Registration and email verification
-
-1. A customer or cleaner submits `/api/auth/register`.
-2. The password is hashed with bcrypt (12 rounds).
-3. A `pending_verification` user and hashed OTP/expiry are stored.
-4. The raw OTP is emailed, or logged locally without SMTP.
-5. `/api/auth/verify-email` validates it, activates the account, creates a JWT, and sets the session cookie.
-6. Login rejects invalid, suspended, or unverified accounts.
-
-Forgot-password and reset-password use a separate hashed OTP. Resend requests have cooldown/expiry logic in `src/lib/otp.ts` and `src/services/authService.ts`.
-
-### Customer booking
-
-1. The customer retrieves active services/add-ons and saved addresses.
-2. Availability is checked against business rules, service duration/add-ons, service-area capacity, existing bookings, cleaner availability, and blocked time.
-3. Price-preview endpoints call trusted server logic; the browser's total is never authoritative.
-4. Create revalidates the inputs, availability, promo code, and price, then writes the booking, add-on snapshots, initial status history, promo usage, payment record, and notifications.
-5. Customer dashboard/history routes return customer-owned records only.
-6. Reschedule/cancel operations enforce status/time rules and append history.
-
-### Payment
-
-- Cash bookings retain a cash payment record and can be marked paid by an admin after service.
-- Card checkout creates/reuses a Stripe Checkout Session and redirects to Stripe.
-- The success page can verify a session, but `/api/webhooks/stripe` is the durable source for asynchronous Stripe state changes.
-- Admins can inspect, mark failed, mark cash paid, and refund eligible payments.
-- Payment services synchronize both the `Payment` record and booking payment status.
-
-Use the Stripe CLI locally to forward webhook events:
-
-```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-```
-
-Put the emitted `whsec_...` value in `STRIPE_WEBHOOK_SECRET`.
-
-### Cleaner operations
-
-Admins create cleaner users and assign them to bookings through `CleanerAssignment`. A cleaner can:
-
-- Maintain weekly availability.
-- View today's/upcoming assigned jobs.
-- Accept/decline or progress permitted job actions.
-- Mark on-my-way, check in/out, complete checklist items, upload before/after images, and report issues.
-
-Location checking can be bypassed only with the two explicit demo environment switches. Never enable that bypass in production.
-
-### Reviews and proof reports
-
-Customers can review eligible completed bookings and upload before/after images. Admins can moderate reviews. Cleaner service proof is visible through cleaner routes and an authorized proof-report endpoint; ownership/role checks are performed server-side.
-
-### Notifications and automation
-
-Domain services queue in-app/email notifications. `/api/internal/notifications/process` processes due notification work. `/api/internal/bookings/reconcile` advances or reconciles time-driven booking state. Both require cron authorization.
-
-`vercel.json` currently schedules booking reconciliation every five minutes, but does **not** schedule notification processing.
-
-### Contact-message support workflow
-
-The public homepage form posts to `/api/contact`. A valid enquiry is saved as a `ContactMessage`, emailed to `CONTACT_EMAIL`, and announced through in-app notifications to active admins. Administrators manage these enquiries at `/admin/contact-messages`, where they can search, filter, read the full message, reply through their email client, and move it through `new`, `in_progress`, and `resolved`. Moving a message out of `new` assigns the current administrator; returning it to `new` clears that assignment.
-
-## 8. API routes
-
-All routes are under `/api`. Inputs are generally validated with Zod and errors are normalized through `apiError`/`apiResponse` helpers.
-
-### Public and authentication
-
-| Methods and route | Responsibility |
-| --- | --- |
-| `GET /services`, `GET /services/[slug]` | Public active service catalog and details. |
-| `GET /reviews`, `GET /reviews/[id]` | Public/paginated approved review data and details. |
-| `POST /contact` | Store a public contact enquiry. |
-| `POST /auth/register` | Create a pending customer/cleaner and send verification OTP. |
-| `POST /auth/verify-email`, `POST /auth/resend-otp` | Verify or resend account OTP. |
-| `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | Start, end, or inspect the cookie session. |
-| `POST /auth/forgot-password`, `POST /auth/reset-password` | Password-reset OTP flow. |
-| `POST /webhooks/stripe` | Verify Stripe signature and apply payment events. |
-
-### Shared authenticated routes
-
-| Methods and route | Responsibility |
-| --- | --- |
-| `GET, PUT /profile`; `PUT /profile/password`; `POST /profile/avatar` | Profile, password, and avatar management. |
-| `GET, POST /addresses`; `PATCH, DELETE /addresses/[id]`; `PATCH /addresses/[id]/default` | User-owned address CRUD/default selection. |
-| `GET /notifications`; `PATCH /notifications/[id]/read`; `POST /notifications/read-all`; `GET, PUT /notifications/preferences` | Notification inbox and preferences. |
-| `POST /promo-codes/validate` | Validate a code for the authenticated booking context. |
-| `POST /reviews`; `PATCH, DELETE /reviews/[id]`; `POST /reviews/upload-image` | Customer review creation/ownership updates; admin moderation is also handled by the item route. |
-| `GET /proof-reports/[bookingId]` | Authorized service-proof report data. |
-
-### Customer routes
-
-| Methods and route | Responsibility |
-| --- | --- |
-| `GET /customer`, `GET /customer/dashboard` | Current customer summary/dashboard. |
-| `GET /customer/services`, `GET /customer/services/[serviceId]/add-ons` | Booking-ready catalog. |
-| `GET /customer/booking-addresses` | Saved address choices with service-area data. |
-| `GET /customer/bookings`, `POST /customer/bookings/create` | List owned bookings and create one. |
-| `POST /customer/bookings/availability` | Validate a proposed time slot. |
-| `POST /customer/bookings/price-preview`, `POST /customer/bookings/price-preview/batch` | Trusted single/batch price estimates. |
-| `PATCH /customer/bookings/[bookingId]` | Edit allowed fields on an owned booking. |
-| `POST /customer/bookings/[bookingId]/cancel`, `POST /customer/bookings/[bookingId]/reschedule` | Customer cancellation/rescheduling. |
-| `GET /customer/payments`, `GET /customer/payments/[paymentId]`, `GET /customer/payments/booking/[bookingId]` | Owned payment history/detail. |
-| `POST /customer/payments/booking/[bookingId]/checkout` | Create Stripe Checkout. |
-| `POST /customer/payments/booking/[bookingId]/pay` | Test/direct payment flow used by the application. |
-| `GET /customer/payments/verify` | Verify a returned Stripe Checkout session. |
-
-### Cleaner routes
-
-| Methods and route | Responsibility |
-| --- | --- |
-| `GET, PUT /cleaner/availability` | Read/update the current cleaner's weekly availability. |
-| `GET /cleaner/jobs`, `GET /cleaner/jobs/[id]` | Assigned job list/detail. |
-| `PATCH /cleaner/jobs/[id]/action` | Apply allowed assignment/job lifecycle actions. |
-| `GET, PATCH /cleaner/jobs/[id]/proof` | Read/update checklist, issues, and proof state. |
-| `POST /cleaner/jobs/[id]/proof/upload` | Upload a before/after proof image. |
-
-### Admin routes
-
-| Route group | Methods and responsibility |
-| --- | --- |
-| `/admin/dashboard` | `GET` KPI/dashboard data. |
-| `/admin/users`, `/admin/users/[id]`, `/admin/users/[id]/block` | List/detail/delete/block general users. |
-| `/admin/customers`, `/admin/customers/[id]`, `/admin/customers/[id]/block` | Customer CRUD and suspension. |
-| `/admin/cleaners`, `/admin/cleaners/[id]`, `/admin/cleaners/[id]/block` | Cleaner CRUD and suspension. |
-| `/admin/services`, `/admin/services/[id]`, `/admin/services/[id]/image` | Catalog CRUD and cover-image upload/removal. |
-| `/admin/bookings`, `/admin/bookings/options`, `/admin/bookings/[id]` | Booking queue, form options, creation, and detail. |
-| `/admin/bookings/[id]/status` | Change status and append audit history. |
-| `/admin/bookings/[id]/assign-cleaner` | New account-based cleaner assignment. |
-| `/admin/bookings/[id]/assign` | Legacy name-based assignment compatibility endpoint. |
-| `/admin/payments`, `/admin/payments/[id]` | Payment list/detail. |
-| `/admin/payments/[id]/mark-cash-paid`, `/fail`, `/refund` | Admin payment transitions. |
-| `/admin/promo-codes`, `/admin/promo-codes/[id]` | Promo-code CRUD. |
-| `/admin/contact-messages` | `GET` searchable, filterable, paginated contact inbox and status totals. |
-| `/admin/contact-messages/[id]` | `PATCH` message handling status and administrator assignment. |
-| `/admin/settings` | `GET/PATCH` business settings. |
-| `/admin/reports/bookings`, `/revenue`, `/popular-services`, `/export` | Reporting datasets and document export. |
-| `/admin/dev/seed-addons` | Admin-only development data mutation; disable/remove in production. |
-
-### Internal and compatibility routes
-
-| Methods and route | Responsibility |
-| --- | --- |
-| `GET /internal/bookings/reconcile` | Cron-protected booking status reconciliation. |
-| `GET /internal/notifications/process` | Cron-protected queued notification processing. |
-| `GET /bookings` | Legacy health-like placeholder returning `{ "message": "OK" }`; it does not list bookings. |
-| `/bookings/availability`, `/bookings/calculate-price`, `/bookings/cancel`, `/bookings/id`, `/bookings/reschedule` | Handler-less legacy placeholders. Use `/customer/bookings/*`. |
-| `/services/id`, `/promo-codes` | Handler-less placeholders. Use `/services/[slug]` and authenticated `/promo-codes/validate`. |
-
-## 9. Authentication and authorization
-
-- The cookie name is `cleannest_token`.
-- It is HTTP-only, `SameSite=Lax`, path `/`, secure in production, and currently has a fixed seven-day max age.
-- The JWT contains user ID (`sub`) and role, is signed with `AUTH_SECRET`, and defaults to a seven-day expiry.
-- Every authenticated request reloads the user and rejects missing, invalid, deleted, non-active, or unauthorized users.
-- `requireUser()` provides authentication; `requireRole(...)`/`requireAdmin()` provide API RBAC.
-- `middleware.ts` checks only whether the cookie exists and redirects unauthenticated page requests to login. It does not verify JWTs or roles and is a UX layer, not a security boundary.
-- API routes return JSON 401/403 responses rather than middleware redirects.
-- Customer and cleaner services must additionally scope queried resources by the current user/assignment; role checks alone do not prove record ownership.
-- Public signup permits customer and cleaner roles. Admin creation is intentionally outside public registration.
-
-The UI also contains client-side auth guards/layout redirects, but server-side route/service checks are authoritative.
-
-## 10. Important implementation decisions
-
-- **Server-owned pricing:** all persisted money values are calculated from database catalog/area/promo data and saved as snapshots. Never trust client totals.
-- **Service layer:** route handlers parse/authenticate and delegate to services. Put multi-document workflow logic in `src/services`, not React components.
-- **Audit records:** status, reschedule, assignment, payment, and promo-use history are explicit records rather than inferred from current state.
-- **Serverless database cache:** `connectDB()` caches the Mongoose connection/promise on `globalThis`.
-- **Storage separation:** binary files live in Supabase; MongoDB stores metadata/public URLs.
-- **Soft business deactivation:** services/areas/add-ons and users use active/status fields where historical references must remain valid.
-- **Central validation:** Zod validators handle request payloads; Mongoose hooks enforce persistence invariants.
-- **Time zone:** automated booking decisions use `BUSINESS_TIME_ZONE`, not the server machine's local zone.
-- **Route groups:** parentheses organize layouts without changing URLs. The customer group therefore serves `/dashboard`, `/bookings`, etc.; active cleaner/admin paths use real URL prefixes.
-
-Multi-document booking/payment workflows do not appear to use MongoDB transactions consistently. If the deployment uses a replica set (Atlas does), transactions would reduce partial-write risk in creation, promo redemption, status history, assignment, and payment synchronization.
-
-## 11. Running, quality checks, and testing
-
-Available scripts:
-
-```bash
+Shared pricing utilities
+
+src/services/bookingPriceService.ts
+
+Trusted booking-price calculation
+
+src/lib/bookingScheduleRules.ts
+
+Scheduling rules
+
+src/services/bookingAvailabilityService.ts
+
+Capacity, overlap, blocked-time, and availability checks
+
+src/lib/stripe.ts
+
+Stripe server client
+
+src/lib/supabase.ts
+
+Upload buckets and storage helpers
+
+src/lib/email.ts
+
+SMTP transport and transactional email generation
+
+src/services/*
+
+Business workflows and database access
+
+src/validators/*
+
+Zod request contracts
+
+src/models/*
+
+Mongoose schemas, hooks, and indexes
+
+Getting Started
+
+Prerequisites
+
+Node.js 20 or a compatible current LTS release
+
+npm
+
+MongoDB Atlas or another reachable MongoDB deployment
+
+Optional for complete functionality:
+
+SMTP credentials
+
+Stripe test credentials
+
+Supabase project and storage buckets
+
+Stripe CLI for local webhook testing
+
+Installation
+
+Clone the repository and enter the directory containing package.json.
+
+git clone <repository-url>
+cd CleanNest
+
+Install the exact lockfile dependencies.
+
+npm ci
+
+Create the local environment file.
+
+PowerShell
+
+Copy-Item .env.local.example .env.local
+
+macOS/Linux
+
+cp .env.local.example .env.local
+
+Configure at least:
+
+MONGODB_URI=
+AUTH_SECRET=
+
+Seed the service and add-on catalog.
+
+npm run seed:catalog
+
+Start the development server.
+
+npm run dev
+
+Open:
+
+http://localhost:3000
+
+Faster Dependency Installation
+
+When package-lock.json is present:
+
+npm ci --prefer-offline --no-audit --no-fund
+
+When peer-dependency resolution blocks installation:
+
+npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
+
+Local Email Behavior
+
+When EMAIL_SERVER is blank, email content is written to the server console instead of being sent. This includes development OTP codes.
+
+Stripe and Supabase features still require their respective external services.
+
+Environment Variables
+
+Never commit .env.local, expose server-only secrets through NEXT_PUBLIC_*, or use production credentials in local development.
+
+Required
+
+Variable
+
+Purpose
+
+MONGODB_URI
+
+MongoDB connection string
+
+AUTH_SECRET
+
+Secret used to sign session JWTs
+
+Application and Authentication
+
+Variable
+
+Required
+
+Default / Purpose
+
+AUTH_TOKEN_EXPIRES_IN
+
+No
+
+JWT lifetime; defaults to 7d
+
+APP_URL
+
+Recommended
+
+Public application URL; defaults to http://localhost:3000
+
+BUSINESS_TIME_ZONE
+
+No
+
+Booking time zone; defaults to Asia/Beirut
+
+CLEANNEST_MAX_SIMULTANEOUS_BOOKINGS
+
+No
+
+Global capacity fallback
+
+CRON_SECRET
+
+Scheduled jobs
+
+Bearer secret for internal cron routes
+
+Email
+
+Variable
+
+Required
+
+Purpose
+
+EMAIL_SERVER
+
+Production email
+
+Nodemailer SMTP URL
+
+EMAIL_FROM
+
+Production email
+
+Authenticated sender identity
+
+EMAIL_REPLY_TO
+
+No
+
+Default reply-to address
+
+CONTACT_EMAIL
+
+No
+
+Public contact-form inbox
+
+EMAIL_RETURN_PATH
+
+No
+
+SMTP envelope and bounce address
+
+EMAIL_MESSAGE_DOMAIN
+
+No
+
+Domain used in generated message IDs
+
+EMAIL_DKIM_DOMAIN
+
+No
+
+DKIM signing domain
+
+EMAIL_DKIM_SELECTOR
+
+No
+
+DKIM selector
+
+EMAIL_DKIM_PRIVATE_KEY
+
+No
+
+DKIM private key
+
+Stripe
+
+Variable
+
+Required
+
+Purpose
+
+STRIPE_SECRET_KEY
+
+Card payments
+
+Stripe server key
+
+STRIPE_WEBHOOK_SECRET
+
+Webhooks
+
+Verifies Stripe webhook signatures
+
+Supabase Storage
+
+Variable
+
+Required
+
+Purpose
+
+SUPABASE_URL
+
+Uploads
+
+Supabase project URL
+
+SUPABASE_SERVICE_ROLE_KEY
+
+Uploads
+
+Server-only service-role key
+
+SUPABASE_AVATAR_BUCKET
+
+No
+
+Avatar bucket; defaults to avatars
+
+SUPABASE_REVIEW_BUCKET
+
+No
+
+Review-image bucket; defaults to review-images
+
+SUPABASE_SERVICE_IMAGE_BUCKET
+
+No
+
+Service-image bucket; defaults to service-images
+
+SUPABASE_PROOF_BUCKET
+
+No
+
+Proof-image bucket
+
+Cleaner Demo Mode
+
+Variable
+
+Required
+
+Purpose
+
+ENABLE_DEMO_CHECK_IN
+
+No
+
+Server-side location bypass
+
+NEXT_PUBLIC_ENABLE_DEMO_CHECK_IN
+
+No
+
+Matching client-visible demo flag
+
+Keep both values disabled in production.
+
+Initial Admin Seed
+
+Variable
+
+Required
+
+Purpose
+
+ADMIN_NAME
+
+Admin seed
+
+Initial administrator name
+
+ADMIN_EMAIL
+
+Admin seed
+
+Initial administrator email
+
+ADMIN_PASSWORD
+
+Admin seed
+
+Initial administrator password
+
+The current .env.local.example should be updated to include CLEANNEST_MAX_SIMULTANEOUS_BOOKINGS and the three ADMIN_* variables.
+
+Available Scripts
+
 npm run dev
 npm run dev:turbo
 npm run build
@@ -415,84 +668,1020 @@ npm run lint
 npm run format
 npm run seed:catalog
 npm run seed
-```
 
-Recommended pre-commit validation:
+Recommended Validation
 
-```bash
 npx tsc --noEmit
 npm run build
-```
 
-Validation performed on 2026-07-27:
+Core Workflows
 
-- `npx tsc --noEmit`: passed.
-- `npm run lint`: passed with no warnings/errors; Next.js reports that `next lint` is deprecated.
-- `npm run build`: passed and generated 96 static pages plus the dynamic route handlers.
+Registration and Email Verification
 
-There is currently no automated unit/integration/end-to-end test suite or `test` script. Until one is added, manually smoke-test:
+A customer or cleaner submits /api/auth/register.
 
-1. Register, capture the OTP from SMTP/server output, verify, log out, and log in.
-2. Create and default an address in an active service area.
-3. Preview availability/price and create cash and card bookings.
-4. Complete Stripe Checkout and confirm both success-return and webhook state.
-5. Reschedule/cancel and verify history and notifications.
-6. Assign an account-based cleaner, progress a job, and upload service proof.
-7. Complete a booking and submit/moderate a review.
-8. Exercise admin filters, payment actions, reports, promo codes, and settings.
-9. Call internal routes with and without valid cron authorization.
+The password is hashed with bcrypt.
 
-Use a disposable database and Stripe test mode for development/testing.
+A pending_verification user is stored with a hashed OTP and expiry.
 
-## 12. Deployment
+The raw OTP is sent through SMTP or logged locally.
 
-### Vercel
+/api/auth/verify-email validates the OTP and activates the account.
 
-1. Import the repository and set the project root to the directory containing `package.json`.
-2. Configure all required environment variables separately for Preview and Production.
-3. Set `APP_URL` to the deployed canonical HTTPS origin.
-4. Use MongoDB Atlas network access suitable for Vercel's runtime.
-5. Create Supabase buckets/permissions and test public upload URLs.
-6. Create a Stripe webhook targeting:
+A JWT is created and stored in the session cookie.
 
-   ```text
-   https://your-domain.example/api/webhooks/stripe
-   ```
+Login rejects invalid, suspended, or unverified accounts.
 
-7. Subscribe it to the Checkout/payment/refund events handled in `src/app/api/webhooks/stripe/route.ts`, then set its signing secret.
-8. Configure `CRON_SECRET`. `vercel.json` deploys the five-minute booking reconciliation schedule.
-9. Add a schedule for `/api/internal/notifications/process` if queued notifications should be delivered automatically.
-10. Run `npm run build` before promotion and smoke-test with production-like external-service test credentials.
+Forgot-password and reset-password use a separate OTP flow.
 
-The build output is started with `npm run start` on a traditional Node host. Such a host must independently schedule the two internal GET routes and send the expected bearer authorization.
+Customer Booking
 
-## 13. Known issues and future improvements
+The customer loads active services, add-ons, and saved addresses.
 
-Prioritized maintenance items:
+The server calculates a trusted price preview.
 
-1. **Split `scripts/seed.ts`.** It contains a legacy service seed and first-admin seed in the same module, starts both asynchronously, and shares/disconnects the same Mongoose connection. Keep catalog work in `seedCatalog.ts` and create a dedicated `seedAdmin.ts`.
-2. **Consolidate cleaner architecture.** Remove or migrate legacy `assignedCleanerName`, name-only assignment history, `/admin/bookings/[id]/assign`, and stale comments once all consumers use cleaner accounts and `CleanerAssignment`.
-3. **Resolve duplicate cleaner page trees.** `src/app/(cleaner)` produces unprefixed URLs such as `/today`, while `src/app/cleaner` produces `/cleaner/today`. Confirm the intended tree and remove the other.
-4. **Add automated tests.** Prioritize pricing, capacity/overlap, booking creation rollback, authorization/ownership, status transitions, promo limits, Stripe idempotency, and cron behavior.
-5. **Modernize linting before Next.js 16.** It currently passes, but Next.js 15 reports `next lint` as deprecated and states that it will be removed in Next.js 16. Migrate to the ESLint CLI.
-6. **Make multi-document workflows atomic.** Use Mongoose sessions/transactions or robust compensating/idempotent operations.
-7. **Schedule notification processing.** Only booking reconciliation is present in `vercel.json`.
-8. **Align session lifetimes.** JWT expiry is configurable, but cookie max age is hard-coded to seven days.
-9. **Unify RBAC helpers.** `src/lib/auth.ts` and `src/lib/rbac.ts` both define role guards, while several admin routes define local wrappers.
-10. **Fix type/schema drift.** The shared `Gender` type exposes only `male | female`, while the Mongoose schema also accepts `other | prefer_not_to_say`.
-11. **Review public proof-image privacy.** Proof and review storage can be public; consider private buckets and signed URLs.
-12. **Remove development mutation endpoints from production.** `/api/admin/dev/seed-addons` should be development-gated or removed.
-13. **Audit legacy dependencies/routes.** Confirm Cloudinary packages and compatibility `/api/bookings` are unused before removal.
-14. **Add observability and recovery.** Structured logs, error monitoring, job metrics, Stripe webhook replay visibility, and notification dead-letter handling are not documented/implemented as a complete operational system.
-15. **Document data migrations/backups.** There is no formal migration runner, schema-versioning strategy, or restore procedure. Add these before substantial production data accumulates.
+Availability is checked against:
 
-## 14. Handover checklist for the next developer
+Business scheduling rules
 
-- Read this file, `README.md`, and `docs/email-deliverability.md`.
-- Create a fresh local environment and run the verified validation commands.
-- Use `seed:catalog`; repair the admin seed before using `seed`.
-- Trace route -> validator -> service -> model for any feature change.
-- Preserve server-side authorization, ownership checks, pricing, availability, and audit writes.
-- Use account-based cleaner assignments for new work.
-- Test external integrations in SMTP sandbox/test mode, Stripe test mode, and non-production Supabase/MongoDB projects.
-- Update this document whenever routes, models, environment variables, deployment jobs, or major workflows change.
+Service and add-on duration
+
+Service-area capacity
+
+Existing bookings
+
+Cleaner availability
+
+Blocked periods
+
+Booking creation revalidates all inputs, pricing, availability, and promo-code rules.
+
+The server writes:
+
+Booking
+
+Add-on snapshots
+
+Initial status history
+
+Promo-code usage
+
+Payment record
+
+Notifications
+
+Rescheduling and cancellation enforce status and time restrictions and append audit history.
+
+Payment
+
+Cash bookings create a cash payment record.
+
+Card checkout creates or reuses a Stripe Checkout Session.
+
+Stripe webhooks are the durable source of asynchronous payment state changes.
+
+Admins can mark cash payments as paid, mark failures, and refund eligible payments.
+
+Payment services synchronize both payment and booking payment status.
+
+Local webhook forwarding:
+
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+
+Store the emitted whsec_... value in:
+
+STRIPE_WEBHOOK_SECRET=
+
+Cleaner Operations
+
+A cleaner can:
+
+Maintain weekly availability
+
+View assigned jobs
+
+Accept or decline supported assignments
+
+Mark on-the-way
+
+Check in and check out
+
+Complete proof checklists
+
+Upload before/after images
+
+Report issues
+
+Complete permitted job actions
+
+Reviews and Proof
+
+Customers can review eligible completed bookings.
+
+Review images are uploaded to Supabase Storage.
+
+Admins can moderate reviews.
+
+Cleaner service-proof data is protected by server-side ownership and role checks.
+
+Notifications and Cron Jobs
+
+Internal routes:
+
+GET /api/internal/bookings/reconcile
+GET /api/internal/notifications/process
+
+Both routes require cron authorization.
+
+vercel.json currently schedules booking reconciliation. Notification processing must be scheduled separately.
+
+Database Models
+
+Identity and Customer Data
+
+Model
+
+Purpose
+
+User
+
+Authentication, role, status, profile, OTPs, and password-reset data
+
+Address
+
+Customer-owned saved locations and default-address state
+
+Notification
+
+In-app and email notification queue
+
+NotificationPreference
+
+User delivery preferences
+
+ContactMessage
+
+Public customer enquiries
+
+Catalog and Coverage
+
+Model
+
+Purpose
+
+Service
+
+Cleaning-service catalog
+
+AddOn
+
+Reusable optional extras
+
+ServiceAddon
+
+Service-to-add-on relationship and overrides
+
+ServiceArea
+
+Geographic coverage, fee, and capacity
+
+Settings
+
+Business-wide configuration
+
+Booking and Operations
+
+Model
+
+Purpose
+
+Booking
+
+Customer booking, schedule, pricing snapshot, payment state, and lifecycle
+
+BookingAddOn
+
+Selected add-on snapshots
+
+BookingStatusHistory
+
+Status audit trail
+
+BookingRescheduleHistory
+
+Schedule-change audit trail
+
+BookingCleanerAssignmentHistory
+
+Legacy name-based assignment history
+
+CleanerAssignment
+
+Account-based cleaner assignment
+
+CleanerAvailability
+
+Cleaner weekly availability
+
+BlockedTime
+
+Unavailable time ranges
+
+ServiceProof
+
+Operational proof, photos, checklist, and issues
+
+Commercial Data
+
+Model
+
+Purpose
+
+Payment
+
+Cash/card payment records and provider metadata
+
+PromoCode
+
+Discount rules and constraints
+
+PromoCodeUsage
+
+Redemption audit and usage-limit enforcement
+
+Review
+
+Booking-linked customer review and moderation state
+
+Important Invariants
+
+Booking prices are recalculated on the server.
+
+Booking totals use:
+
+base amount + add-ons + service-area fee - discount
+
+End time must be later than start time.
+
+Booking numbers and service slugs are unique.
+
+Status, reschedule, assignment, payment, and promo histories are explicit records.
+
+Payment currency is currently fixed to USD.
+
+API Overview
+
+All application routes are under /api.
+
+Public and Authentication
+
+Method
+
+Route
+
+Purpose
+
+GET
+
+/api/services
+
+Public active service catalog
+
+GET
+
+/api/services/[slug]
+
+Service details
+
+GET
+
+/api/reviews
+
+Approved reviews
+
+GET
+
+/api/reviews/[id]
+
+Review details
+
+POST
+
+/api/contact
+
+Submit a public enquiry
+
+POST
+
+/api/auth/register
+
+Create a pending account
+
+POST
+
+/api/auth/verify-email
+
+Verify account OTP
+
+POST
+
+/api/auth/resend-otp
+
+Resend verification OTP
+
+POST
+
+/api/auth/login
+
+Start a session
+
+POST
+
+/api/auth/logout
+
+End a session
+
+GET
+
+/api/auth/me
+
+Inspect the current session
+
+POST
+
+/api/auth/forgot-password
+
+Request password-reset OTP
+
+POST
+
+/api/auth/reset-password
+
+Reset password
+
+POST
+
+/api/webhooks/stripe
+
+Apply Stripe events
+
+Shared Authenticated Routes
+
+Method
+
+Route
+
+Purpose
+
+GET, PUT
+
+/api/profile
+
+Profile management
+
+PUT
+
+/api/profile/password
+
+Password change
+
+POST
+
+/api/profile/avatar
+
+Avatar upload
+
+GET, POST
+
+/api/addresses
+
+Address list and creation
+
+PATCH, DELETE
+
+/api/addresses/[id]
+
+Address update and deletion
+
+PATCH
+
+/api/addresses/[id]/default
+
+Set default address
+
+GET
+
+/api/notifications
+
+Notification inbox
+
+PATCH
+
+/api/notifications/[id]/read
+
+Mark one notification as read
+
+POST
+
+/api/notifications/read-all
+
+Mark all as read
+
+GET, PUT
+
+/api/notifications/preferences
+
+Notification preferences
+
+POST
+
+/api/promo-codes/validate
+
+Validate a promo code
+
+POST
+
+/api/reviews
+
+Create a review
+
+PATCH, DELETE
+
+/api/reviews/[id]
+
+Update/delete owned review
+
+POST
+
+/api/reviews/upload-image
+
+Upload review image
+
+GET
+
+/api/proof-reports/[bookingId]
+
+Authorized proof report
+
+Customer Routes
+
+Method
+
+Route
+
+Purpose
+
+GET
+
+/api/customer
+
+Current-customer summary
+
+GET
+
+/api/customer/dashboard
+
+Customer dashboard
+
+GET
+
+/api/customer/services
+
+Booking-ready services
+
+GET
+
+/api/customer/services/[serviceId]/add-ons
+
+Service add-ons
+
+GET
+
+/api/customer/booking-addresses
+
+Serviceable saved addresses
+
+GET
+
+/api/customer/bookings
+
+Customer booking history
+
+POST
+
+/api/customer/bookings/create
+
+Create a booking
+
+POST
+
+/api/customer/bookings/availability
+
+Check a slot
+
+POST
+
+/api/customer/bookings/price-preview
+
+Trusted price preview
+
+POST
+
+/api/customer/bookings/price-preview/batch
+
+Batch price preview
+
+PATCH
+
+/api/customer/bookings/[bookingId]
+
+Edit an owned booking
+
+POST
+
+/api/customer/bookings/[bookingId]/cancel
+
+Cancel an owned booking
+
+POST
+
+/api/customer/bookings/[bookingId]/reschedule
+
+Reschedule an owned booking
+
+GET
+
+/api/customer/payments
+
+Payment history
+
+GET
+
+/api/customer/payments/[paymentId]
+
+Payment details
+
+GET
+
+/api/customer/payments/booking/[bookingId]
+
+Payment by booking
+
+POST
+
+/api/customer/payments/booking/[bookingId]/checkout
+
+Create Stripe Checkout
+
+POST
+
+/api/customer/payments/booking/[bookingId]/pay
+
+Direct/test payment flow
+
+GET
+
+/api/customer/payments/verify
+
+Verify returned Checkout session
+
+Cleaner Routes
+
+Method
+
+Route
+
+Purpose
+
+GET, PUT
+
+/api/cleaner/availability
+
+Weekly availability
+
+GET
+
+/api/cleaner/jobs
+
+Assigned-job list
+
+GET
+
+/api/cleaner/jobs/[id]
+
+Job details
+
+PATCH
+
+/api/cleaner/jobs/[id]/action
+
+Apply lifecycle action
+
+GET, PATCH
+
+/api/cleaner/jobs/[id]/proof
+
+Proof state
+
+POST
+
+/api/cleaner/jobs/[id]/proof/upload
+
+Upload proof image
+
+Admin Route Groups
+
+Route Group
+
+Responsibility
+
+/api/admin/dashboard
+
+KPIs and dashboard data
+
+/api/admin/users
+
+General-user management
+
+/api/admin/customers
+
+Customer management
+
+/api/admin/cleaners
+
+Cleaner management
+
+/api/admin/services
+
+Service catalog and images
+
+/api/admin/bookings
+
+Booking management and assignment
+
+/api/admin/payments
+
+Payment management
+
+/api/admin/promo-codes
+
+Promo-code management
+
+/api/admin/contact-messages
+
+Contact enquiry workflow
+
+/api/admin/settings
+
+Business configuration
+
+/api/admin/reports
+
+Reporting and document export
+
+Internal Routes
+
+Method
+
+Route
+
+Purpose
+
+GET
+
+/api/internal/bookings/reconcile
+
+Time-driven booking reconciliation
+
+GET
+
+/api/internal/notifications/process
+
+Process queued notifications
+
+Authentication and Authorization
+
+Session cookie: cleannest_token
+
+Cookie properties:
+
+HTTP-only
+
+SameSite=Lax
+
+Path /
+
+Secure in production
+
+JWT payload includes:
+
+User ID in sub
+
+User role
+
+JWTs are signed with AUTH_SECRET.
+
+Authenticated requests reload the user from the database.
+
+Missing, invalid, deleted, inactive, or unauthorized accounts are rejected.
+
+requireUser() authenticates.
+
+requireRole(...) and requireAdmin() enforce role access.
+
+Customer and cleaner services also enforce record ownership.
+
+Middleware checks only for cookie presence and is not a security boundary.
+
+API authorization is enforced server-side.
+
+Route Groups
+
+Parenthesized folders organize layouts but do not appear in URLs.
+
+For example:
+
+src/app/(customer)/bookings/page.tsx
+
+is served at:
+
+/bookings
+
+not:
+
+/customer/bookings
+
+Testing and Quality Checks
+
+Recommended before every merge:
+
+npx tsc --noEmit
+npm run build
+
+Additional commands:
+
+npm run lint
+npm run format
+
+Current Validation Status
+
+Validation recorded on 2026-07-27:
+
+npx tsc --noEmit passed
+
+npm run lint passed without warnings or errors
+
+npm run build passed
+
+Manual Smoke-Test Checklist
+
+Register and verify a new account.
+
+Log out and log in.
+
+Create, edit, default, and delete an address.
+
+Preview booking price and availability.
+
+Create cash and card bookings.
+
+Complete Stripe Checkout and verify webhook state.
+
+Reschedule and cancel a booking.
+
+Confirm history and notifications.
+
+Assign a cleaner.
+
+Progress a cleaner job and upload proof.
+
+Complete a booking and submit a review.
+
+Moderate the review as an admin.
+
+Exercise admin filters, payment actions, reports, promo codes, and settings.
+
+Call internal routes with valid and invalid cron authorization.
+
+Use:
+
+A disposable MongoDB database
+
+Stripe test mode
+
+Non-production Supabase buckets
+
+SMTP sandbox or console email output
+
+There is currently no automated unit, integration, or end-to-end test suite.
+
+Deployment
+
+Vercel
+
+Import the repository.
+
+Set the project root to the directory containing package.json.
+
+Configure Preview and Production environment variables separately.
+
+Set APP_URL to the canonical HTTPS origin.
+
+Configure MongoDB Atlas network access for the deployment.
+
+Create and verify Supabase storage buckets.
+
+Create a Stripe webhook:
+
+https://your-domain.example/api/webhooks/stripe
+
+Configure the Stripe webhook signing secret.
+
+Configure CRON_SECRET.
+
+Confirm the booking-reconciliation schedule in vercel.json.
+
+Add a schedule for notification processing when required.
+
+Run a production build before promotion.
+
+npm run build
+
+Traditional Node Hosting
+
+Start the built application with:
+
+npm run start
+
+A traditional host must independently schedule:
+
+/api/internal/bookings/reconcile
+/api/internal/notifications/process
+
+and include the expected bearer authorization.
+
+Security Notes
+
+Never trust browser-calculated prices.
+
+Never expose AUTH_SECRET, Stripe secrets, or Supabase service-role keys.
+
+Keep cleaner demo check-in disabled in production.
+
+Verify customer ownership for addresses, bookings, payments, and reviews.
+
+Verify cleaner assignment ownership for job and proof routes.
+
+Validate every request with Zod.
+
+Keep API routes responsible for authorization even when UI guards exist.
+
+Review proof-image and review-image privacy before production.
+
+Prefer private storage buckets and signed URLs for sensitive operational images.
+
+Use Stripe webhook signatures for durable payment updates.
+
+Add transactions or compensating operations to multi-document workflows.
+
+Known Issues and Roadmap
+
+High Priority
+
+Split scripts/seed.ts
+
+Separate catalog and admin seeding.
+
+Avoid concurrent workflows sharing and disconnecting the same Mongoose connection.
+
+Consolidate cleaner architecture
+
+Migrate fully to account-based CleanerAssignment.
+
+Remove legacy assignedCleanerName flows after compatibility is no longer required.
+
+Resolve duplicate cleaner page trees
+
+Confirm whether /today or /cleaner/today is authoritative.
+
+Remove the unused route tree.
+
+Add automated tests
+
+Pricing
+
+Capacity and overlap
+
+Authorization and ownership
+
+Booking rollback
+
+Promo limits
+
+Stripe idempotency
+
+Cron behavior
+
+Make multi-document workflows atomic
+
+Use Mongoose sessions and transactions where appropriate.
+
+Medium Priority
+
+Migrate from deprecated next lint behavior to the ESLint CLI.
+
+Schedule notification processing.
+
+Align JWT and cookie expiration.
+
+Unify RBAC helpers.
+
+Resolve shared type and schema drift.
+
+Review public proof-image visibility.
+
+Remove or gate development mutation endpoints.
+
+Audit legacy routes and unused Cloudinary packages.
+
+Operational Improvements
+
+Add structured logging and error monitoring.
+
+Add Stripe webhook replay visibility.
+
+Add notification dead-letter handling.
+
+Document migrations, backups, and restore procedures.
+
+Developer Handover Checklist
+
+Before taking ownership of the project:
+
+Read this README.
+
+Read docs/DEVELOPER_HANDOVER.md.
+
+Read docs/email-deliverability.md.
+
+Create a fresh .env.local.
+
+Run npm ci.
+
+Run npm run seed:catalog.
+
+Run npx tsc --noEmit.
+
+Run npm run build.
+
+Trace changes through:
+
+route -> validator -> service -> model
+
+Preserve:
+
+Server-side pricing
+
+Availability checks
+
+Role authorization
+
+Resource ownership
+
+Audit history
+
+Payment synchronization
+
+Use account-based cleaner assignments for new work.
+
+Test third-party integrations only with non-production credentials.
+
+Update documentation when routes, models, environment variables, or workflows change.
+
+Contributing
+
+Create a feature branch.
+
+git switch -c feature/your-feature
+
+Make focused changes.
+
+Run quality checks.
+
+npx tsc --noEmit
+npm run build
+
+Commit with a clear message.
+
+git add .
+git commit -m "Add descriptive change"
+
+Push the branch and open a pull request.
+
+License
+
+Add the project license here before public distribution.
+
+<p align="center">
+  Built for a cleaner, simpler, and more reliable service experience.
+</p>
