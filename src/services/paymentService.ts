@@ -61,9 +61,12 @@ async function notifyCustomerOfPayment(bookingId: string, status: PaymentStatus)
 
   await notifyActiveAdmins({
     type: "payment_update",
-    title: `Payment ${status}`,
-    message: `${labels[status]} Booking ${booking.bookingNumber}.`,
-    href: "/admin/payments",
+    title: status === "paid" ? "Paid booking ready for review" : `Payment ${status}`,
+    message:
+      status === "paid"
+        ? `Booking ${booking.bookingNumber} is paid and is now available in the booking queue.`
+        : `${labels[status]} Booking ${booking.bookingNumber}.`,
+    href: status === "paid" ? `/admin/bookings/${bookingId}` : "/admin/payments",
     bookingId,
     dedupeKey: `admin-payment:${bookingId}:${status}`,
     email: false,

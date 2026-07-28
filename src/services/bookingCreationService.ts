@@ -623,18 +623,25 @@ export async function createCustomerBooking({
       email: true,
     }).catch((error) => console.error("[notification:booking-created]", error));
 
-    await notifyActiveAdmins({
-      type: "booking_created",
-      title: source === "admin" ? "Onsite booking created" : "New booking requires approval",
-      message:
-        source === "admin"
-          ? `Onsite booking ${createdBooking.bookingNumber} was created by an administrator.`
-          : `Booking ${createdBooking.bookingNumber} was submitted and is waiting for review.`,
-      href: `/admin/bookings/${createdBooking._id.toString()}`,
-      bookingId: createdBooking._id.toString(),
-      dedupeKey: `admin-booking-created:${createdBooking._id.toString()}`,
-      email: false,
-    }).catch((error) => console.error("[notification:admin-booking-created]", error));
+    /*
+     * A customer card booking exists before checkout is complete. Do not
+     * announce it to admins until payment succeeds; paymentService sends that
+     * notification when the booking becomes operationally visible.
+     */
+    if (source === "admin" || input.paymentMethod === "cash") {
+      await notifyActiveAdmins({
+        type: "booking_created",
+        title: source === "admin" ? "Onsite booking created" : "New booking requires approval",
+        message:
+          source === "admin"
+            ? `Onsite booking ${createdBooking.bookingNumber} was created by an administrator.`
+            : `Cash booking ${createdBooking.bookingNumber} was submitted and is waiting for review.`,
+        href: `/admin/bookings/${createdBooking._id.toString()}`,
+        bookingId: createdBooking._id.toString(),
+        dedupeKey: `admin-booking-created:${createdBooking._id.toString()}`,
+        email: false,
+      }).catch((error) => console.error("[notification:admin-booking-created]", error));
+    }
 
     return {
       booking: {

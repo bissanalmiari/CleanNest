@@ -65,6 +65,22 @@ export async function getAllBookings(filters: BookingListFilters = {}) {
 
   const match: Record<string, unknown> = {};
 
+  /*
+   * Customer card bookings are persisted before the customer enters the
+   * checkout flow. Keep abandoned, pending, and failed card attempts out of
+   * the operational queue. Cash bookings remain visible because payment is
+   * intentionally collected after service, and admin-created bookings remain
+   * visible regardless of payment state.
+   *
+   * Refunded bookings were successfully paid previously and must remain in
+   * operational/history views.
+   */
+  match.$or = [
+    { source: "admin" },
+    { paymentMethod: "cash" },
+    { paymentStatus: { $in: ["paid", "refunded"] } },
+  ];
+
   if (status) match.status = status;
   if (serviceId) match.serviceId = serviceId;
 

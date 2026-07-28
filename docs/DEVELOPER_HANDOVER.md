@@ -669,6 +669,18 @@ npm run format
 npm run seed:catalog
 npm run seed
 
+Database Cleanup
+
+Audit abandoned customer card bookings without changing data:
+
+npx tsx scripts/cleanupUnpaidCustomerCardBookings.ts
+
+Permanently delete the audited bookings and their dependent records:
+
+npx tsx scripts/cleanupUnpaidCustomerCardBookings.ts --execute
+
+The cleanup protects bookings that have a paid or refunded payment record, runs deletions in a MongoDB transaction, and restores promo-code usage counters. Always run the dry-run command first.
+
 Recommended Validation
 
 npx tsc --noEmit
@@ -729,6 +741,8 @@ Promo-code usage
 Payment record
 
 Notifications
+
+Customer card bookings are stored before checkout so payment has a stable booking ID. While their payment is unpaid, pending, or failed, they remain visible to the customer but are excluded from the admin booking queue and do not trigger a new-booking admin notification. They enter the admin queue automatically after payment succeeds and remain visible if later refunded. Customer cash bookings remain visible immediately because payment is collected after service. Admin-created bookings are always visible.
 
 Rescheduling and cancellation enforce status and time restrictions and append audit history.
 
