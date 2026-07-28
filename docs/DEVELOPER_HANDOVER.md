@@ -681,6 +681,19 @@ npx tsx scripts/cleanupUnpaidCustomerCardBookings.ts --execute
 
 The cleanup protects bookings that have a paid or refunded payment record, runs deletions in a MongoDB transaction, and restores promo-code usage counters. Always run the dry-run command first.
 
+Payment Diagnostics and Recovery
+
+Audit MongoDB booking/payment consistency and compare stored Stripe sessions with Stripe:
+
+npx tsx scripts/auditPaymentConsistency.ts
+
+Preview or execute recovery of Stripe-completed payments that were not synchronized:
+
+npx tsx scripts/reconcileStripePayments.ts
+npx tsx scripts/reconcileStripePayments.ts --execute
+
+The reconciliation utility ignores unpaid Stripe sessions, repairs only Stripe-confirmed payments, updates the booking and payment together in a MongoDB transaction, and normalizes legacy Stripe records that were labelled as `test_card`.
+
 Recommended Validation
 
 npx tsc --noEmit
@@ -751,6 +764,8 @@ Payment
 Cash bookings create a cash payment record.
 
 Card checkout creates or reuses a Stripe Checkout Session.
+
+Checkout return URLs use `APP_URL` when configured and otherwise use the origin of the authenticated checkout request. Production should still define `APP_URL` explicitly. Configure `STRIPE_WEBHOOK_SECRET` for `/api/webhooks/stripe`; webhook processing failures return HTTP 500 so Stripe retries them. The success page also polls the authenticated verification endpoint briefly, providing an immediate fallback when the webhook is delayed.
 
 Stripe webhooks are the durable source of asynchronous payment state changes.
 

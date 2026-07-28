@@ -22,10 +22,7 @@ export async function POST(request: NextRequest) {
 
   if (!signature || !webhookSecret) {
     console.error("[stripe webhook] Missing signature or webhook secret");
-    return NextResponse.json(
-      { success: false, error: "Webhook not configured" },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: false, error: "Webhook not configured" }, { status: 400 });
   }
 
   const rawBody = await request.text();
@@ -35,24 +32,22 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
     console.error("[stripe webhook] Signature verification failed", err);
-    return NextResponse.json(
-      { success: false, error: "Invalid signature" },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: false, error: "Invalid signature" }, { status: 400 });
   }
 
   try {
-    if (
-      event.type === "checkout.session.completed" ||
-      event.type === "checkout.session.expired"
-    ) {
+    if (event.type === "checkout.session.completed" || event.type === "checkout.session.expired") {
       const session = event.data.object as Stripe.Checkout.Session;
       await handleStripeCheckoutWebhook(session);
     }
   } catch (err) {
     console.error("[stripe webhook] Failed to process event", err);
-    // Still acknowledge receipt so Stripe doesn't retry indefinitely for a
-    // problem on our side that a retry won't fix (e.g. a missing payment).
+    // A non-2xx response tells Stripe to retry temporary database or network
+    // failures. Acknowledging a failed update would permanently lose it.
+    return NextResponse.json(
+      { success: false, error: "Webhook processing failed" },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ received: true });

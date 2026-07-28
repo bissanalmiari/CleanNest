@@ -17,6 +17,12 @@ import "server-only";
 import { connectDB } from "@/lib/db";
 import Payment, { type IPayment } from "@/models/Payment";
 import Booking from "@/models/Booking";
+// Register every model referenced by nested populate() calls. Without these
+// imports, a cold serverless invocation can intermittently throw
+// MissingSchemaError until another route happens to register the model.
+import "@/models/Address";
+import "@/models/Service";
+import "@/models/User";
 import { AppError, NotFoundError, ForbiddenError } from "@/lib/apiError";
 import type { PaymentMethod, PaymentStatus } from "@/types/enums";
 import { createNotification, notifyActiveAdmins } from "@/services/notificationService";
@@ -277,14 +283,33 @@ export async function payBookingWithTestCard(
 /* Stripe Checkout                                                      */
 /* ------------------------------------------------------------------ */
 
-const APP_URL = process.env.APP_URL || "http://localhost:3000";
+function checkoutBaseUrl(requestOrigin?: string) {
+  const configuredUrl = process.env.APP_URL?.trim();
+  const value = configuredUrl || requestOrigin;
+  if (!value) {
+    throw new AppError(
+      "The application URL is not configured. Set APP_URL before starting Stripe checkout.",
+      503
+    );
+  }
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    throw new AppError("APP_URL must be a valid absolute URL.", 503);
+  }
+}
 
 /**
  * Creates a Stripe Checkout Session for a card booking and returns the
  * hosted checkout URL. The customer is redirected to Stripe's own page to
  * enter card details — CleanNest never touches the card number.
  */
-export async function createStripeCheckoutSession(bookingId: string, customerId: string) {
+export async function createStripeCheckoutSession(
+  bookingId: string,
+  customerId: string,
+  requestOrigin?: string
+) {
   await connectDB();
 
   const booking = await Booking.findById(bookingId).populate({
@@ -310,6 +335,7 @@ export async function createStripeCheckoutSession(bookingId: string, customerId:
 
   const serviceName =
     (booking.serviceId as unknown as { name?: string } | null)?.name ?? "CleanNest service";
+  const appUrl = checkoutBaseUrl(requestOrigin);
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -332,12 +358,15 @@ export async function createStripeCheckoutSession(bookingId: string, customerId:
       paymentId: payment._id.toString(),
       customerId,
     },
-    success_url: `${APP_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${APP_URL}/payments/pay/${booking._id.toString()}?canceled=1`,
+    success_url: `${appUrl}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/payments/pay/${booking._id.toString()}?canceled=1`,
   });
 
   payment.stripeCheckoutSessionId = session.id;
+  payment.provider = "stripe";
   payment.status = "pending";
+  payment.failureReason = undefined;
+  payment.failedAt = undefined;
   await payment.save();
   await syncBookingPaymentStatus(bookingId, "pending");
 
@@ -352,15 +381,35 @@ export async function createStripeCheckoutSession(bookingId: string, customerId:
  * Used by both the success-page verification call and the webhook handler,
  * so it's safe to call more than once for the same session. */
 async function applyStripeCheckoutResult(session: Stripe.Checkout.Session) {
-  const payment = await Payment.findOne({
+  const paymentForExactSession = await Payment.findOne({
     stripeCheckoutSessionId: session.id,
   });
+  /*
+   * A successful session may arrive after the database write that stores its
+   * session ID failed, so paid events may safely fall back to signed Stripe
+   * metadata. Expired events must match the currently active session exactly;
+   * otherwise an older abandoned retry could overwrite a newer successful
+   * payment.
+   */
+  const payment =
+    paymentForExactSession ??
+    (session.payment_status === "paid" && session.metadata?.paymentId
+      ? await Payment.findById(session.metadata.paymentId)
+      : null) ??
+    (session.payment_status === "paid" && session.metadata?.bookingId
+      ? await Payment.findOne({ bookingId: session.metadata.bookingId })
+      : null);
   if (!payment) return null;
 
-  if (payment.status === "paid") return payment;
+  if (payment.status === "refunded") {
+    await syncBookingPaymentStatus(payment.bookingId.toString(), "refunded");
+    return payment;
+  }
 
   if (session.payment_status === "paid") {
     payment.status = "paid";
+    payment.provider = "stripe";
+    payment.stripeCheckoutSessionId = session.id;
     payment.transactionReference = session.id;
     payment.stripePaymentIntentId =
       typeof session.payment_intent === "string"
@@ -370,6 +419,9 @@ async function applyStripeCheckoutResult(session: Stripe.Checkout.Session) {
     await payment.save();
     await syncBookingPaymentStatus(payment.bookingId.toString(), "paid");
     await notifyCustomerOfPayment(payment.bookingId.toString(), "paid");
+  } else if (payment.status === "paid") {
+    // Never allow a late failure/expiry event to downgrade a paid record.
+    await syncBookingPaymentStatus(payment.bookingId.toString(), "paid");
   } else if (session.status === "expired") {
     payment.status = "failed";
     payment.failureReason = "Stripe Checkout session expired.";

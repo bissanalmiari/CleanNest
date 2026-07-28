@@ -9,14 +9,18 @@ import { successResponse } from "@/lib/apiResponse";
 import { createStripeCheckoutSession } from "@/services/paymentService";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     const user = await requireRole("customer");
     const { bookingId } = await params;
 
-    const result = await createStripeCheckoutSession(bookingId, user.id);
+    const result = await createStripeCheckoutSession(
+      bookingId,
+      user.id,
+      new URL(request.url).origin
+    );
 
     return successResponse(result);
   } catch (error) {
