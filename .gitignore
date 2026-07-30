@@ -71,3 +71,6 @@ Desktop.ini
 
 # Local agent workspace metadata
 .agents/
+
+
+.env.local.example
