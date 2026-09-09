@@ -25,6 +25,7 @@ import CleanerFormModal, {
   type CleanerRow,
 } from "@/components/cleaners/CleanerFormModal";
 import { AccountStatusBadge } from "@/components/users/UserBadges";
+import AIReviewSummaryCard from "@/components/reviews/AIReviewSummaryCard";
 
 interface CleanerDetail extends CleanerRow {
   status: string;
@@ -332,6 +333,8 @@ export default function AdminCleanerDetailPage() {
           </div>
 
           <aside className="space-y-5">
+            <AIReviewSummaryCard cleanerId={cleanerId} />
+
             <div className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_rgba(11,37,69,0.08)]">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                 <CalendarCheck2 className="h-5 w-5" />
