@@ -8,7 +8,7 @@ import CleanerAssignment from "@/models/CleanerAssignment";
 import CleanerReviewSummary from "@/models/CleanerReviewSummary";
 import User from "@/models/User";
 import { AppError, NotFoundError } from "@/lib/apiError";
-import { summarizeReviews } from "@/lib/openai";
+import { summarizeReviews } from "@/lib/gemini";
 
 const REVIEWS_TO_SUMMARIZE = 20;
 const MIN_SUMMARY_LENGTH = 20;
