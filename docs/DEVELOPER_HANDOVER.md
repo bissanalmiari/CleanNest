@@ -709,9 +709,20 @@ The password is hashed with bcrypt.
 
 A pending_verification user is stored with a hashed OTP and expiry.
 
-The raw OTP is sent through SMTP or logged locally.
+The raw OTP is sent through SMTP. EMAIL_SERVER must be configured; registration
+reports unconfirmed email delivery explicitly when SMTP is unavailable, and the user
+can request a new verification code after the resend cooldown.
 
 /api/auth/verify-email validates the OTP and activates the account.
+
+Authentication attempt limits use the shared MongoDB `AuthRateLimit` collection with
+unique-key and TTL indexes; the production MongoDB user must be able to create
+these indexes. On Vercel, auth routes also use the edge-provided IP header for
+cross-account limits. Verification email and password-reset codes stay in the
+email body and are never included in action URLs.
+
+Inter and Poppins are bundled under `src/app/fonts` with their OFL licenses, so
+production builds do not need network access to Google Fonts.
 
 A JWT is created and stored in the session cookie.
 

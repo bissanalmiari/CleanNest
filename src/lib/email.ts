@@ -62,8 +62,8 @@ export interface SendEmailInput {
 
 /**
  * Sends an email via the configured SMTP server.
- * If EMAIL_SERVER isn't configured (e.g. local development), the message is
- * logged to the console instead of failing the request outright.
+ * Delivery requires an SMTP transport. A missing transport must never be
+ * mistaken for a delivered verification or password-reset code.
  */
 export async function sendEmail({
   to,
@@ -76,11 +76,7 @@ export async function sendEmail({
   const client = getTransporter();
 
   if (!client) {
-    console.warn(
-      `[email] EMAIL_SERVER is not set — logging email instead of sending.\n` +
-        `  to: ${to}\n  subject: ${subject}\n  body: ${text ?? html}`
-    );
-    return;
+    throw new Error("Email service is not configured");
   }
 
   await client.sendMail({
@@ -136,7 +132,8 @@ export async function sendOtpEmail(
     : "Use the code below to reset your password. If you didn't request this, you can safely ignore this email.";
 
   const actionPath = isVerify ? "/verify-email" : "/reset-password";
-  const actionUrl = `${APP_URL}${actionPath}?email=${encodeURIComponent(to)}&otp=${otp}`;
+  // Keep the OTP out of URLs, which can persist in browser history and logs.
+  const actionUrl = `${APP_URL}${actionPath}?email=${encodeURIComponent(to)}`;
   const includeActionLink = isPublicEmailUrl(actionUrl);
   const actionLabel = isVerify ? "Verify email" : "Reset password";
 

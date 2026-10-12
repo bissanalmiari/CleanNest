@@ -1,17 +1,21 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Poppins, Inter } from "next/font/google";
+import localFont from "next/font/local";
 
 import SafeMotionProvider from "@/components/shared/SafeMotionProvider";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const poppins = localFont({
+  src: [
+    { path: "./fonts/Poppins-Medium.ttf", weight: "500", style: "normal" },
+    { path: "./fonts/Poppins-SemiBold.ttf", weight: "600", style: "normal" },
+    { path: "./fonts/Poppins-Bold.ttf", weight: "700", style: "normal" },
+  ],
   variable: "--font-poppins",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "./fonts/Inter-Variable.ttf",
+  weight: "100 900",
   variable: "--font-inter",
 });
 

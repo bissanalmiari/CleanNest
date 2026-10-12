@@ -15,6 +15,7 @@ import {
   isWithinResendCooldown,
 } from "@/lib/otp";
 import { sendOtpEmail } from "@/lib/email";
+import { enforceAuthRateLimit } from "@/lib/authRateLimit";
 import {
   AppError,
   ConflictError,
@@ -33,8 +34,13 @@ import type {
 import type { PublicUser } from "@/types/user";
 
 const PASSWORD_SALT_ROUNDS = 12;
+const MINUTE = 60_000;
 
 function toPublicUser(userDoc: IUser): PublicUser {
+  // A document without timestamps must not turn completed account creation
+  // into a 500 while serializing its response.
+  const createdAt = userDoc.createdAt instanceof Date ? userDoc.createdAt : new Date();
+  const updatedAt = userDoc.updatedAt instanceof Date ? userDoc.updatedAt : createdAt;
   return {
     id: userDoc._id.toString(),
     name: userDoc.name,
@@ -47,16 +53,27 @@ function toPublicUser(userDoc: IUser): PublicUser {
     gender: userDoc.gender ?? null,
     preferredLanguage: userDoc.preferredLanguage,
     bio: userDoc.bio ?? null,
-    createdAt: userDoc.createdAt.toISOString(),
-    updatedAt: userDoc.updatedAt.toISOString(),
+    createdAt: createdAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
+}
+
+function logEmailDeliveryFailure(error: unknown): void {
+  const rawCode =
+    typeof error === "object" && error !== null && "code" in error ? error.code : undefined;
+  const code =
+    typeof rawCode === "string" && /^[A-Z0-9_]{1,32}$/.test(rawCode) ? rawCode : "UNKNOWN";
+  // SMTP errors may include credentials, message content, or the OTP.
+  console.error("[auth] verification email delivery failed", { code });
 }
 
 /**
  * Creates a new user in "pending_verification" status and emails them an OTP.
  * The account cannot log in until verifyEmailOtp() is called successfully.
  */
-export async function registerUser(input: RegisterValues): Promise<{ user: PublicUser }> {
+export async function registerUser(
+  input: RegisterValues
+): Promise<{ user: PublicUser; verificationEmailSent: boolean }> {
   await connectDB();
 
   const existing = await User.findOne({ email: input.email });
@@ -79,9 +96,16 @@ export async function registerUser(input: RegisterValues): Promise<{ user: Publi
     emailVerificationOtpExpires: getOtpExpiryDate(),
   });
 
-  await sendOtpEmail(userDoc.email, otp, "verify-email");
-
-  return { user: toPublicUser(userDoc) };
+  const user = toPublicUser(userDoc);
+  try {
+    await sendOtpEmail(userDoc.email, otp, "verify-email");
+    return { user, verificationEmailSent: true };
+  } catch (error) {
+    logEmailDeliveryFailure(error);
+    // The pending user and hashed code remain valid. The user can request a
+    // fresh code through resend-otp after its normal cooldown.
+    return { user, verificationEmailSent: false };
+  }
 }
 
 /**
@@ -91,6 +115,7 @@ export async function registerUser(input: RegisterValues): Promise<{ user: Publi
  */
 export async function loginUser(input: LoginValues): Promise<{ user: PublicUser; token: string }> {
   await connectDB();
+  await enforceAuthRateLimit("login", input.email, 10, 15 * MINUTE);
 
   const userDoc = await User.findOne({ email: input.email }).select("+passwordHash");
   if (!userDoc) {
@@ -121,6 +146,7 @@ export async function verifyEmailOtp(
   input: VerifyEmailValues
 ): Promise<{ user: PublicUser; token: string }> {
   await connectDB();
+  await enforceAuthRateLimit("verify-email", input.email, 5, 10 * MINUTE);
 
   const userDoc = await User.findOne({ email: input.email }).select(
     "+emailVerificationOtpHash +emailVerificationOtpExpires"
@@ -129,6 +155,9 @@ export async function verifyEmailOtp(
 
   if (userDoc.status === "active") {
     throw new AppError("This account is already verified", 409);
+  }
+  if (userDoc.status !== "pending_verification") {
+    throw new AppError("This account cannot be verified. Contact support for help.", 403);
   }
 
   if (!userDoc.emailVerificationOtpHash || isOtpExpired(userDoc.emailVerificationOtpExpires)) {
@@ -159,17 +188,30 @@ export async function resendEmailVerificationOtp(input: ResendOtpValues): Promis
   if (userDoc.status === "active") {
     throw new AppError("This account is already verified", 409);
   }
+  if (userDoc.status !== "pending_verification") {
+    throw new AppError("This account cannot request a verification code.", 403);
+  }
 
   if (isWithinResendCooldown(userDoc.emailVerificationOtpExpires)) {
     throw new TooManyRequestsError("Please wait a moment before requesting another code");
   }
+
+  // Both counters are atomic and shared across serverless instances. The
+  // one-minute counter also closes the check-then-save race above.
+  await enforceAuthRateLimit("resend-otp-minute", input.email, 1, MINUTE);
+  await enforceAuthRateLimit("resend-otp-hour", input.email, 5, 60 * MINUTE);
 
   const otp = generateOtp();
   userDoc.emailVerificationOtpHash = await hashOtp(otp);
   userDoc.emailVerificationOtpExpires = getOtpExpiryDate();
   await userDoc.save();
 
-  await sendOtpEmail(userDoc.email, otp, "verify-email");
+  try {
+    await sendOtpEmail(userDoc.email, otp, "verify-email");
+  } catch (error) {
+    logEmailDeliveryFailure(error);
+    throw new AppError("We couldn't confirm email delivery. Please try again shortly.", 503);
+  }
 }
 
 /**
@@ -179,6 +221,7 @@ export async function resendEmailVerificationOtp(input: ResendOtpValues): Promis
  */
 export async function forgotPassword(input: ForgotPasswordValues): Promise<void> {
   await connectDB();
+  await enforceAuthRateLimit("forgot-password", input.email, 5, 60 * MINUTE);
 
   const userDoc = await User.findOne({ email: input.email }).select("+passwordResetOtpExpires");
   if (!userDoc) return;
@@ -199,6 +242,7 @@ export async function forgotPassword(input: ForgotPasswordValues): Promise<void>
 /** Verifies the password-reset OTP and, if valid, sets the new password. */
 export async function resetPassword(input: ResetPasswordValues): Promise<void> {
   await connectDB();
+  await enforceAuthRateLimit("reset-password", input.email, 5, 10 * MINUTE);
 
   const userDoc = await User.findOne({ email: input.email }).select(
     "+passwordResetOtpHash +passwordResetOtpExpires"

@@ -45,6 +45,7 @@ function VerifyEmailForm() {
   const searchParams = useSearchParams();
 
   const email = searchParams.get("email") ?? "";
+  const registrationStatus = searchParams.get("registration");
 
   const { verifyEmail, resendOtp, loading, error, setError: setAuthError } = useAuth();
 
@@ -52,6 +53,7 @@ function VerifyEmailForm() {
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
+  const [deliveryFailed, setDeliveryFailed] = useState(registrationStatus === "delivery-failed");
 
   const {
     register,
@@ -124,6 +126,7 @@ function VerifyEmailForm() {
 
       if (result) {
         setCooldown(RESEND_COOLDOWN);
+        setDeliveryFailed(false);
         setResendSuccess("A new verification code has been sent to your email.");
       }
     } finally {
@@ -190,10 +193,27 @@ function VerifyEmailForm() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-500">
-          Enter the six-digit verification code sent to your email to activate your CleanNest
-          account.
+          {deliveryFailed
+            ? "Your account is ready for email verification. Request a new code when resend becomes available."
+            : "Enter the six-digit verification code sent to your email to activate your CleanNest account."}
         </p>
       </div>
+
+      {(registrationStatus === "sent" || registrationStatus === "delivery-failed") && (
+        <div className="mt-7 space-y-3">
+          <Alert variant="success">
+            {deliveryFailed
+              ? "Your CleanNest account was created."
+              : "Your CleanNest account was created. Check your email for a verification code."}
+          </Alert>
+          {deliveryFailed && (
+            <Alert variant="error">
+              We couldn&apos;t confirm email delivery. Check your inbox, or request a new code when
+              resend becomes available.
+            </Alert>
+          )}
+        </div>
+      )}
 
       {/* Email information */}
       <motion.div
@@ -226,7 +246,7 @@ function VerifyEmailForm() {
 
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-            Verification code sent to
+            {deliveryFailed ? "Account email" : "Verification code sent to"}
           </p>
 
           <p className="mt-1 truncate text-sm font-bold text-navy">

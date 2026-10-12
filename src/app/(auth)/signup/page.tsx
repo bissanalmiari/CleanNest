@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -32,11 +33,13 @@ const accountBenefits = [
 
 export default function SignupPage() {
   const { register: registerUser, loading, error } = useAuth();
+  const submissionStarted = useRef(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    getValues,
+    formState: { errors, isSubmitting },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -45,10 +48,13 @@ export default function SignupPage() {
   });
 
   async function onSubmit(values: SignupFormValues) {
-    await registerUser({
+    if (submissionStarted.current) return;
+    submissionStarted.current = true;
+    const result = await registerUser({
       ...values,
       role: "customer",
     } as RegisterValues);
+    if (!result) submissionStarted.current = false;
   }
 
   return (
@@ -129,6 +135,12 @@ export default function SignupPage() {
           className="mt-7"
         >
           <Alert variant="error">{error}</Alert>
+          <Link
+            href={`/verify-email?email=${encodeURIComponent(getValues("email") ?? "")}`}
+            className="mt-2 inline-block text-sm font-semibold text-primary hover:text-primary-dark"
+          >
+            Account already created? Verify your email or request a new code.
+          </Link>
         </motion.div>
       )}
 
@@ -264,24 +276,24 @@ export default function SignupPage() {
             delay: 0.3,
           }}
           whileHover={
-            loading
+            loading || isSubmitting
               ? undefined
               : {
                   y: -3,
                 }
           }
           whileTap={
-            loading
+            loading || isSubmitting
               ? undefined
               : {
                   scale: 0.98,
                 }
           }
         >
-          <Button type="submit" className="min-h-[54px] w-full" isLoading={loading}>
+          <Button type="submit" className="min-h-[54px] w-full" isLoading={loading || isSubmitting}>
             <span className="inline-flex items-center justify-center gap-2">
               Create CleanNest Account
-              {!loading && <ArrowRight className="h-5 w-5" />}
+              {!loading && !isSubmitting && <ArrowRight className="h-5 w-5" />}
             </span>
           </Button>
         </motion.div>

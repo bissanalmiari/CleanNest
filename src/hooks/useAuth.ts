@@ -4,7 +4,7 @@
 // for field-level validation (via the same zod schemas the API uses) and
 // call these functions on submit; this hook just handles the network call,
 // loading state, and turning API error shapes into a single `error` string.
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PublicUser } from "@/types/user";
 import type {
@@ -58,8 +58,11 @@ export function useAuth() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
 
   const run = useCallback(async <T>(fn: () => Promise<T>): Promise<T | null> => {
+    if (inFlight.current) return null;
+    inFlight.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -68,6 +71,7 @@ export function useAuth() {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       return null;
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   }, []);
@@ -76,11 +80,19 @@ export function useAuth() {
   const register = useCallback(
     (input: RegisterValues) =>
       run(async () => {
-        const { data } = await postJson<{ user: PublicUser; message: string }>(
-          "/api/auth/register",
-          input
-        );
-        router.push(`/verify-email?email=${encodeURIComponent(input.email)}`);
+        const { data } = await postJson<{
+          user: PublicUser;
+          message: string;
+          verificationEmailSent: boolean;
+        }>("/api/auth/register", input);
+        if (!data?.user || typeof data.verificationEmailSent !== "boolean") {
+          throw new Error("Registration response was incomplete. Please try again.");
+        }
+        const params = new URLSearchParams({
+          email: data.user.email,
+          registration: data.verificationEmailSent ? "sent" : "delivery-failed",
+        });
+        router.push(`/verify-email?${params.toString()}`);
         return data;
       }),
     [run, router]
